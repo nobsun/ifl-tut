@@ -8,7 +8,7 @@ style: |
     display: none;
   }
   code, pre {
-    font-family: 'HackGenNerd Console';
+    font-family: 'HackGenNerd Console', monospace;
   }
 paginate: true
 	
@@ -359,7 +359,7 @@ pprExpr (mkMulti n (EVar "f") (EVar "x"))
 ```
 
 ---
-### プリティプリント用抽象データ型
+### 1.5.2 プリティプリント用抽象データ型
 
 プリティプリントの問題を以下の2つに分解する
 - 必要な操作は何か
@@ -472,7 +472,15 @@ iDisplay seq = flatten [seq]
 flatten []              = ""
 flatten (INil : seqs)   = flatten seqs
 flatten (Istr s : seqs) = s ++ flatten seqs
-flatten (IAppend seq1 seq2 : seqs) = flatten (seq1 : seq2 : seqs)
+flatten (IAppend seq1 seq2 : seqs) = flatten (seq1 : seq2 : seqs)\begin{array}{lcl}
+\mathit{greeting} & \rightarrow & \mathit{hg}\;\mathit{person}\;\texttt{!} \\
+\mathit{hg} & \rightarrow & \texttt{hello} \\
+& \mid & \texttt{goodbye}
+\end{array}\begin{array}{lcl}
+\mathit{greeting} & \rightarrow & \mathit{hg}\;\mathit{person}\;\texttt{!} \\
+\mathit{hg} & \rightarrow & \texttt{hello} \\
+& \mid & \texttt{goodbye}
+\end{array}
 ```
 
 ---
@@ -529,4 +537,522 @@ iDisplay seq = flatten 0 [(seq, 0)]
 ```haskell
 flatten col ((INewline, indent) : seqs)
   = '\n' : space indent ++ flatten indent seqs
+flatten col ((IIndent seq, indent) : seqs)
+  = flatten col ((seq, col) : seqs)
 ```
+
+---
+#### 練習問題 1.6
+- `flatten` を `IAppend`、`IStr`、`INil` に対応させよ
+- `pprExpr` を `ELet` を含む式に適用して、正しく配置されるかを確かめよ
+  
+---
+#### 練習問題 1.7
+このプリティプリンタは、`IStr` が`'\n'`を含む文字列を持つとき正しく動作しない。
+`iStr` を変更して、改行文字が `INewline` に置き換るようにせよ。
+
+---
+### 1.5.5 中置演算子の優先順位
+
+中置演算子の適用は内部的には関数適用と同じなので、`pprExpr` で中置演算子の適用は中置記法に変換する必要がある。
+そのためには、以下のように演算子ごとに用意する
+
+```haskell
+pprExpr (EAp (EAp (EVar "+") e1) e2)
+  = iConcat [ pprAExpr e1, iStr " + ", pprAExpr e2 ]
+```
+ただし、これでは、括弧が多すぎるので、二項演算子の優先順位を考慮した関数が必要になる。ひとつの方法は、そのコンテキストでの優先順位を示す引数を導入することである。
+
+---
+### 1.5.6 その他の`Iseq`上の便利関数
+
+```haskell
+iNum :: Int -> Iseq             -- ^ 数の表示
+iNum n = iStr (show n)
+
+iFWNum :: Int -> Int -> Iseq    -- ^ 固定幅に右寄せで数を表示
+iFWNum width n
+  = iStr (space (width - length digits) ++ digits)
+    where
+      digits = show n
+
+iLayn :: [Iseq] -> Iseq         -- ^ リスト項目を番号付きで表示
+iLayn seqs = iConcat (map lay_item (zip [1..] seqs))
+  where
+    lay_item (n, seq)
+      = iConcat [ iFWNum 4 n, iStr ") ", iIndent seq, iNewline ]
+```
+---
+### 1.5.7 まとめ
+
+- 抽象データ型
+    - データの構成を隠蔽、スマートコンストラクタをインターフェイスとする
+    - Haskell ではモジュールを分離、データ構成子をエクスポートせず、スマートコンストラクタをエクスポートする
+  
+- 汎用化（generalisation）技法
+    - `iDisplay` を `flatten` で表現するのがその例
+
+---
+## 1.6 コア言語の構文解析器
+
+- コアプログラム（具象構文）を文字列として読む
+- 文字列を字句解析器でトークン列にする
+  ```haskell
+  clex :: String -> [Token]
+  ```
+- トークン列を構文解析器でコアプログラム（抽象構文）として解読する
+  ```haskell
+  syntax :: [Token] -> CoreProgram
+  ```
+
+---
+ここでは、
+```haskell
+parse :: String -> CoreProgram
+parse = syntax . clex
+```
+とする
+
+---
+### 1.6.1 字句解析
+
+```haskell
+type Token = String        -- A token is never empty
+
+clex (c:cs)
+  | isWhiteSpace c = clex cs
+  | isDigit c      = numToken : clex restCs
+      where
+        (numCs, restCs) = span isDigit cs
+        numToken        = c : numCs
+  | isAlpha c      = varToken : clex restCs
+      where
+        (idCs, restCs) = span isIdChar cs
+        varToken       = c : idCs
+  | otherwise      = [c] : clex cs
+clex []            = []
+```
+
+---
+補助関数
+
+```haskell
+isWhiteSpace :: Char -> Bool
+isIdChar     :: Char -> Bool
+
+usWhiteSpace c = c `elem` " \t\n"
+isIdChar c     = isAlpha c || isDigit c || c == '_'
+```
+
+---
+#### 練習問題 1.9
+
+字句解析器を変更して、インラインコメント（`--` から行末までがコメント）を無視するようにせよ
+
+---
+#### 練習問題 1.10
+
+現在の字句解析器は2文字の中置演算子を認識できない
+コアプログラムで使う2文字演算子は `twoCharOps` であたえられる
+字句解析器 clex を変更して、これらの演算子を認識できるようにせよ
+
+```haskell
+twoCharOps :: [String]
+twoChanOps = ["==", "~=", ">=", "<=", "->"]
+```
+
+---
+#### 練習問題 1.11
+
+構文解析器がパーズエラー箇所の行番号を報告できるように、トークンに行番号を付加するように字句解析器を改造せよ
+
+```haskell
+type Token = (Int, String)
+
+clex :: Int -> String -> [Token]
+```
+
+---
+### 1.6.2 構文解析のための基本ツール
+
+`Parser` 型の定義
+
+```
+type Parser a = [Token] -> a   -- NG
+```
+
+1. 構文解析器を部品化するなら、1つの構文解析器が消費した残りのトークン列を返すべき
+2. 文法に曖昧性があるときも、文法に沿った構文解析結果を返すためには構文解析結果をリストで表現すべき
+
+```haskell
+type Parser a = [Token] -> [(a, [Token])]
+```
+
+---
+小さな構文解析器の例
+
+```haskell
+-- |
+-- >>> pLit "hello" ["hello", "John", "!"]
+-- [("hello", ["John","!"])]
+pLit :: String -> Parser String
+pLit s (tok : toks) 
+  | s == tok  = [(s, toks)]
+  | otherwise = []
+pLit _ []     = []
+```
+
+---
+変数の構文解析器
+```haskell
+pVar :: Parse String
+pVar [] = []
+pVar (tok:toks) = case tok of
+  c:_ | isAlpha c -> [(tok,toks)]
+```
+これではキーワードも変数としてしまう。
+改良は練習問題 1.17
+
+---
+2つの構文解析器を選択肢とする
+
+```haskell
+pAlt :: Parser a -> Parser a -> Parser a
+pAlt p1 p2 toks = p1 toks ++ p2 toks
+```
+使用例
+```haskell
+pHelloOrGoodbye :: Parser String
+pHelloOrGoodbye = pLit "hello" `pAlt` pLit "goodbye"
+```
+---
+2つの構文解析器を連続適用して結果を組み合わせる
+
+```haskell
+pThen :: (a -> b -> c) -> Parser a -> Parser b -> Parser c
+pThen combine p1 p2 toks
+  = [ (combine v1 v2, toks2) | (v1, toks1) <- toks
+                             , (v2, toks2) <- toks1 ]
+```
+
+---
+単純な文法
+$$
+\begin{array}{lcl}
+\mathit{greeting} & \rightarrow & \mathit{hg}\;\mathit{person}\;\texttt{!} \\
+\mathit{hg} & \rightarrow & \texttt{hello} \\
+& \mid & \texttt{goodbye}
+\end{array}
+$$
+
+---
+構文解析器 `pGreeting`
+
+```haskell
+-- |
+-- >>> pGreeting ["goodbye", "James", "!"]
+-- [(("goodbye","James"),["!"])]
+
+pGreeting :: Parser (String, String)
+pGreeting = pThen mkPair pHelloOrGoodbye pVar
+  where
+    mkPair hg name = (hg, name)
+```
+
+---
+### 1.6.3 ツールを磨く
+
+前頁の`pGreeting`は文法に準拠していない
+
+改定版
+```haskell
+pGreeting = pThen keepFirst
+                  (pThen mkPair pHelloOrGoodbye pVar)
+                  (pLit "!")
+            where
+              keepFirst = const
+              mkPair    = (,)
+```
+---
+以下のように書けるほうがわかりやすい
+```haskell
+-- |
+-- >>> pGreeting ["goodbye", "James", "!"]
+-- [(("goodbye","James"),[])]
+
+pGreeting = pThen3 mkGreeting
+              pHelloOrGoodbye
+              pVar
+              (pLit "!")
+            where
+              mkGreeting hg name exlamation = (hg, name)
+```
+---
+#### 練習問題 1.12
+
+- `pThen3` の型を与え、定義し、テストせよ
+- `pThen4` （後で使う）を書け
+
+---
+繰り返し
+
+```haskell
+pZeroOrMore :: Parser a -> Parser [a]
+pZeroOrMore p = pOneOrMore p `pAlt` pEmpty []
+
+pEmpty :: a -> Parser a
+pEmpty = undefined
+
+pOneOrMore :: Parser a -> Parser [a]
+pOneOrMore = undefined
+```
+
+---
+#### 練習問題 1.13
+
+- `pOneOrMore` および `pEmpty` の定義を書け（ヒント： `pOneOrMore` から `pZeroOrMore` を呼ぶとよい）
+
+---
+構文解析の結果を処理できるようにと嬉しい
+
+```haskell
+pApply :: Paser a -> (a -> b) -> Parser b
+```
+---
+#### 練習問題 1.14
+
+`pApply` を定義し、テストせよ
+
+---
+区切り子を挟んで並べられた記号を構文解析するという場面もよく現れる。たとえば、セミコロンで区切られたスーパーコンビネータ定義のならびがある。
+
+```haskell
+pOneOrMoreWithSep :: Parser a -> Parser b -> Parser [a]
+pOneOrMoreWithSep p sep = undefined
+```
+
+---
+#### 練習問題 1.15
+
+`pOneOrMoreWithSep` を定義し、テストせよ
+
+以下のような、文法を解析するのに役立つ
+
+$$
+\begin{array}{lcl}
+\mathit{program} & \rightarrow & \mathit{sc}\;\mathit{programRest}\\
+\mathit{programRest} & \rightarrow & \texttt{;}\;\mathit{program}\\
+& \mid & \epsilon
+\end{array}
+$$
+
+---
+`pLit` および `pVar` の一般化
+
+```haskell
+pSat :: (String -> Bool) -> Parser String
+```
+
+`pLit` は `pSat` を使って以下のように定義できる
+
+```haskell
+pLit s = pSat (s ==)
+```
+
+---
+#### 練習問題 1.16
+
+- `pSat`を定義し、テストせよ
+- `pVar`を`pSat`を用いて定義せよ
+
+---
+#### 練習問題 1.17
+`pVar`の定義で、`pSat`に渡す述語を変更して、キーワードを認識しないようにせよ
+
+```haskell
+keywords :: [String]
+keywords = ["let", "letrec", "in", "case", "of", "Pack"]
+```
+
+---
+#### 練習問題 1.18
+数トークンを識別する
+```haskell
+pNum :: Parser Int
+```
+を書け
+
+---
+#### 練習問題 1.19
+
+構文エラーをおこす`let`式
+```
+f x = let x1 = x; x2 = x; ...; xn = x
+      of x1
+```
+を $n=5,10,15,20$のように$n$を増やしたときに簡約ステップ数はどのように増加するか。
+
+```haskell
+pOneOrMore (pLit "x") ["x", "x", "x", "x", "x", "x"]
+```
+を評価してみよ。
+
+余分な候補を除去するように`pOneOrMore`を定義せよ
+
+---
+### 1.6.4 コア言語の構文解析
+
+`syntax` は `pProgram` の結果から `CoreProgram` をとりだす
+
+```haskell
+syntax = takeFirstParse . pProgram
+  where
+    takeFirstParse ((prog, []) : others) = prog
+    takeFirstParse (parse      : others) = takeFirstParse others
+    takeFirstParse other                 = error "syntax error"
+```
+
+---
+`pProgram`
+```haskell
+pProgram :: Parser CoreProgram
+pProgram = pOneOrMoreWithSep pSc (pLit ";")
+
+pSc :: Parser CoreScDefn
+pSc = pThen4 mkSc pVar (pZeroOrMore pVar) (pLit "=") pExpr
+```
+
+---
+#### 練習問題 1.20
+`mkSc` を定義せよ
+
+---
+#### 練習問題 1.21
+関数適用と中置演算子適用の部分以外に対応した構文解析器を完成せよ
+
+以下のプログラムを構文解析器のテストに使え
+
+```
+f = 3 ;
+g x y = let z = y in z ;
+h x = case (let y = x in y) of
+        <1> -> 2
+        <2> -> 5
+```
+
+---
+#### 1.22
+「ぶらさがり `else` 問題」
+
+`<2>`の選択肢は外側の`case`のものか、内側の`case`のものか
+```
+f x y = case x of
+          <1> -> case y of
+                   <1> -> 1;
+          <2> -> 2
+```
+
+---
+### 1.6.5 左再帰
+
+適用式の生成規則は以下のようになる
+$$
+\begin{array}{lcl}
+\mathit{expr} & \rightarrow & \mathit{expr}\;\mathit{aexpr}
+\end{array}
+$$
+
+これをそのまま対応する構文解析器は
+
+```haskell
+pExpr = pThen EAp pExpr pAexpr
+```
+
+となるが、これは停止しない。
+
+---
+文法の生成規則が左再帰を含まないように変更する
+$$
+\begin{array}{lcll}
+\mathit{expr} & \rightarrow & \mathit{aexpr}_1\;\dots\;\mathit{aexpr}_n & (n \ge 1)
+\end{array}
+$$
+
+対応する構文解析器は
+
+
+```haskell
+pOneOrMore pAexpr `pApply` mkApChain
+```
+
+---
+#### 練習問題 1.23 
+
+```haskell
+mkApChain :: [CoreExpr] -> CoreExpr
+```
+
+を定義せよ。これを用いて、構文解析器が適用式を扱えるようにし、テストせよ
+
+---
+### 1.6.6 中置演算子の対応
+
+$$
+\begin{array}{lcll}
+\mathit{expr} & \rightarrow & \texttt{let}\;\mathit{defns}\;\texttt{in}\; \mathit{expr} & \\
+& \mid & \texttt{letrec}\;\mathit{defns}\;\texttt{in}\; \mathit{expr} & \\
+& \mid & \texttt{case}\;\mathit{expr}\;\texttt{of}\; \mathit{alts} & \\
+& \mid & \verb|\| \; \mathit{var}_1\;\dots\;\mathit{var}_n \; \verb|.| \; \mathit{expr} & (n \ge 1)\\
+& \mid & \mathit{aexpr}_1\;\dots\;\mathit{aexpr} & (n \ge 1) \\
+& & & \\
+\mathit{expr1} & \rightarrow & \mathit{expr2}\;\texttt{|}\;\mathit{expr1} & \\
+& \mid & \mathit{expr2} & \\
+\mathit{expr2} & \rightarrow & \mathit{expr3}\;\texttt{\&}\;\mathit{expr2} & \\
+& \mid & \mathit{expr3} & \\
+\mathit{expr3} & \rightarrow & \mathit{expr4}\;\mathit{relop}\;\mathit{expr4} & \\
+& \mid & \mathit{expr4} & \\
+\mathit{expr4} & \rightarrow & \mathit{expr5}\;\texttt{+}\;\mathit{expr4} & \\
+& \mid & \mathit{expr5}\;\texttt{-}\;\mathit{expr5} & \\
+& \mid & \mathit{expr5} & \\
+\mathit{expr5} & \rightarrow & \mathit{expr6}\;\texttt{*}\;\mathit{expr5} & \\
+& \mid & \mathit{expr6}\;\texttt{/}\;\mathit{expr6} & \\
+& \mid & \mathit{expr6} & \\
+\mathit{expr6} & \rightarrow & \mathit{aexpr}_1\;\dots\;\mathit{aexpr}_n & (n \ge 1) \\
+\end{array}
+$$
+
+---
+そのまま実装するとおそろしく効率が悪いので工夫が必要
+
+$$
+\begin{array}{lcl}
+\mathit{expr1} & \rightarrow & \mathit{expr2} \;\mathit{expr1c} \\
+\mathit{expr1c} & \rightarrow & \texttt{|} \; \mathit{expr1}\\
+& \mid & \epsilon
+\end{array}
+$$
+
+では、$\mathit{expr1c}$ に対応する構文解析器の型は？
+
+```haskell
+data PartialExpr = NoOp | FoundOp Name CoreExpr
+
+pExpr1c :: Parser PartialExpr
+pExpr1c = pThen FoundOp (pLit "|") pExpr1 `pAlt` pEmpty NoOp
+
+pExpr1 :: Parser CoreExpr
+pExpr1 = pThen assembleOp pExpr2 pExpr1c
+
+assembleOp :: CoreExpr -> PartialExpr -> CoreExpr
+assembleOp e1 NoOp = e1
+assembleOp e1 (BoundOp op e2) = EAp (EAp (EVar op) e1) e2
+```
+
+---
+#### 練習問題 1.24
+
+- 文法を変形して、構文解析器を完成させよ
+- 構文解析器をテストせよ
+
+
+
