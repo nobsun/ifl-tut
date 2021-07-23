@@ -241,7 +241,6 @@ double x = x + x
 ```
 
 ---
-具象構文
 $$
 \begin{array}{lrcll}
   \text{プログラム} & \mathit{program} & \rightarrow & \mathit{sc}_1\texttt{;}\dots\texttt{;}\mathit{sc}_n & n\ge 1\\ \\
@@ -259,6 +258,7 @@ $$
   & & \mid & \verb|(| \; \mathit{expr} \; \verb|)| & 括弧で囲まれた式 
 \end{array}
 $$
+
 ---
 $$
 \begin{array}{lrcll}
@@ -269,13 +269,8 @@ $$
 二項演算子 & \mathit{binop} & \rightarrow & \mathit{arithop} \; \mid \; \mathit{relop} \; \mid \mathit{boolop} & \\
 & \mathit{arithop}  & \rightarrow & \verb|+| \; \mid \; \verb|-| \; \mid \; \verb|*| \; \mid \; \verb|/| & 算術 \\
 & \mathit{relop} & \rightarrow & \verb|<| \; \mid \; \verb|<>=| \; \mid  \; \verb|==| \; \mid \; \verb|~=|  \; \mid \; \verb|>=| \; \mid \; \verb|>=| & 比較 \\
-& \mathit{boolop} & \rightarrow & \verb|&| \; \mid \; \texttt{|} & 論理
-\end{array}
-$$
+& \mathit{boolop} & \rightarrow & \verb|&| \; \mid \; \texttt{|} & 論理\\
 
----
-$$
-\begin{array}{lrcll}
 変数 & \mathit{var} & \rightarrow & \mathit{alpha} \; \mathit{varch}_1\;\dots\;\mathit{varch}_n & n \ge 0 \\
 & \mathit{alpha} & \rightarrow & アルファベット文字 \\
 & \mathit{varch} & \rightarrow & \mathit{alpha} \; \mid \; \mathit{digit} \; \mid \; \verb|_| \\\\
