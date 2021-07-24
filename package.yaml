@@ -64,3 +64,5 @@ tests:
     dependencies:
     - ifl-tut
     - doctest
+    - hspec
+    - main-tester

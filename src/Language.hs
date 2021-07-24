@@ -158,7 +158,7 @@ pprSc (name, args, body)
               iStr " = ", iIndent (pprExpr (0, N) body) ]
 
 pprArgs :: [Name] -> IseqRep
-pprArgs args = iInterleave iSpace (map iStr args)
+pprArgs args = iConcat (map (iAppend iSpace . iStr) args)
 
 --
 
@@ -257,6 +257,31 @@ type Priority = Int
 data Associativity
   = N | L | R | O deriving (Eq, Ord, Show)
 
+
+{- |
+>>> es1 = [varSampleE, numSampleE]
+>>> es2 = [constrSampleE10, constrSampleE21]
+>>> es3 = [appInfixSampleE, appInfixSampleE', appInfixSampleE'']
+>>> es4 = [letSampleE, caseSampleE, lambdaSampleE]
+>>> es = concat [es1,es2,es3,es4]
+>>> putStrLn $ iDisplay $ iLayn $ map (pprExpr (0, N)) es
+   1) var
+   2) 57
+   3) Pack{1,0}
+   4) Pack{2,1}
+   5) x + y < p * length xs
+   6) (12 / 2) / (6 / 3)
+   7) (12 * 2) / (6 * 3)
+   8) letrec
+        y = x + 1;
+        z = Y * 2
+      in z
+   9) case xxs of
+        <1> -> 0;
+        <2> x xs -> 1 + length xs
+  10) (\ x y -> Pack{1,2} x y)
+<BLANKLINE>
+-}
 pprExpr :: Fixity -> CoreExpr -> IseqRep
 pprExpr fx@(p, a) = \ case
   EVar v -> iStr v
@@ -282,7 +307,7 @@ pprExpr fx@(p, a) = \ case
     | otherwise -> iParen letexpr
     where
       letexpr = iConcat [ iStr keyword, iNewline
-                        , iIndent (pprDefns defns), iNewline
+                        , iStr "  ", iIndent (pprDefns defns), iNewline
                         , iStr "in ", pprExpr (0, N) expr ]
       keyword | isrec     = "letrec"
               | otherwise = "let"
@@ -294,14 +319,14 @@ pprExpr fx@(p, a) = \ case
                            iStr "  ", iIndent (iInterleave iNl (map pprAlt alts)) ]
       iNl = iConcat [ iStr ";", iNewline ]
       pprAlt (tag, args, rhs)
-        = iConcat [ iStr "<", iNum tag, iStr "> ",
+        = iConcat [ iStr "<", iNum tag, iStr ">",
                     pprArgs args, iStr " -> ",
                     iIndent (pprExpr (0, N) rhs) ]
   ELam args body
     | p <= 0    -> lambda
     | otherwise -> iParen lambda
     where
-      lambda = iConcat [ iStr "(\\", pprArgs args, iStr ". ", iIndent (pprExpr (0,N) body),
+      lambda = iConcat [ iStr "(\\", pprArgs args, iStr " -> ", iIndent (pprExpr (0,N) body),
                          iStr ")" ]
 
 pprDefns :: [(Name, CoreExpr)] -> IseqRep
