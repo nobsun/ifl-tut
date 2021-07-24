@@ -88,6 +88,9 @@ appInfixSampleE' = EAp (EAp (EVar "/") (EAp (EAp (EVar "/") (ENum 12)) (ENum 2))
 appInfixSampleE'' :: CoreExpr
 appInfixSampleE'' = EAp (EAp (EVar "/") (EAp (EAp (EVar "*") (ENum 12)) (ENum 2))) (EAp (EAp (EVar "*") (ENum 6)) (ENum 3))
 
+appInfixSampleE''' :: CoreExpr
+appInfixSampleE''' = EAp (EAp (EVar "*") (EAp (EAp (EVar "*") (ENum 12)) (ENum 2))) (EAp (EAp (EVar "*") (ENum 6)) (ENum 3))
+
 letSampleE :: CoreExpr
 letSampleE = ELet recursive 
                   [ ("y", EAp (EAp (EVar "+") (EVar "x")) (ENum 1))
@@ -261,7 +264,7 @@ data Associativity
 {- |
 >>> es1 = [varSampleE, numSampleE]
 >>> es2 = [constrSampleE10, constrSampleE21]
->>> es3 = [appInfixSampleE, appInfixSampleE', appInfixSampleE'']
+>>> es3 = [appInfixSampleE, appInfixSampleE', appInfixSampleE'', appInfixSampleE''']
 >>> es4 = [letSampleE, caseSampleE, lambdaSampleE]
 >>> es = concat [es1,es2,es3,es4]
 >>> putStrLn $ iDisplay $ iLayn $ map (pprExpr (0, N)) es
@@ -272,14 +275,15 @@ data Associativity
    5) x + y < p * length xs
    6) (12 / 2) / (6 / 3)
    7) (12 * 2) / (6 * 3)
-   8) letrec
+   8) 12 * 2 * 6 * 3
+   9) letrec
         y = x + 1;
         z = Y * 2
       in z
-   9) case xxs of
+  10) case xxs of
         <1> -> 0;
         <2> x xs -> 1 + length xs
-  10) (\ x y -> Pack{1,2} x y)
+  11) (\ x y -> Pack{1,2} x y)
 <BLANKLINE>
 -}
 pprExpr :: Fixity -> CoreExpr -> IseqRep
@@ -289,7 +293,7 @@ pprExpr fx@(p, a) = \ case
   EConstr tag arity
     -> iConcat [ iStr "Pack{", iNum tag, iStr ",", iNum arity, iStr "}" ]
   EAp (EAp (EVar op) e1) e2
-    | isJust mfx -> bool id iParen (fx >= fx') infixexpr
+    | isJust mfx -> bool id iParen (fx > fx') infixexpr
     where
       mfx = lookup op binOps
       fx'@(p', a') = fromJust mfx
