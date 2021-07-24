@@ -82,14 +82,17 @@ appInfixSampleE = EAp (EAp (EVar "<")
                            (EAp (EAp (EVar "+") (EVar "x")) (EVar "y")))
                       (EAp (EAp (EVar "*") (EVar "p")) (EAp (EVar "length") (EVar "xs")))
 
-appInfixSampleE' :: CoreExpr
-appInfixSampleE' = EAp (EAp (EVar "/") (EAp (EAp (EVar "/") (ENum 12)) (ENum 2))) (EAp (EAp (EVar "/") (ENum 6)) (ENum 3))
+appInfixSampleE1 :: CoreExpr
+appInfixSampleE1 = EAp (EAp (EVar "/") (EAp (EAp (EVar "/") (ENum 12)) (ENum 2))) (EAp (EAp (EVar "/") (ENum 6)) (ENum 3))
 
-appInfixSampleE'' :: CoreExpr
-appInfixSampleE'' = EAp (EAp (EVar "/") (EAp (EAp (EVar "*") (ENum 12)) (ENum 2))) (EAp (EAp (EVar "*") (ENum 6)) (ENum 3))
+appInfixSampleE2 :: CoreExpr
+appInfixSampleE2 = EAp (EAp (EVar "/") (EAp (EAp (EVar "*") (ENum 12)) (ENum 2))) (EAp (EAp (EVar "*") (ENum 6)) (ENum 3))
 
-appInfixSampleE''' :: CoreExpr
-appInfixSampleE''' = EAp (EAp (EVar "*") (EAp (EAp (EVar "*") (ENum 12)) (ENum 2))) (EAp (EAp (EVar "*") (ENum 6)) (ENum 3))
+appInfixSampleE3 :: CoreExpr
+appInfixSampleE3 = EAp (EAp (EVar "*") (EAp (EAp (EVar "*") (ENum 12)) (ENum 2))) (EAp (EAp (EVar "*") (ENum 6)) (ENum 3))
+
+appInfixSampleE4 :: CoreExpr
+appInfixSampleE4 = EAp (EAp (EVar "-") (EAp (EAp (EVar "*") (ENum 12)) (ENum 2))) (EAp (EAp (EVar "*") (ENum 6)) (ENum 3))
 
 letSampleE :: CoreExpr
 letSampleE = ELet recursive 
@@ -158,7 +161,7 @@ pprProgram prog = iInterleave (iAppend (iStr " ;") iNewline) (map pprSc prog)
 pprSc :: CoreScDefn -> IseqRep
 pprSc (name, args, body)
   = iConcat [ iStr name, if null args then iNil else iAppend iSpace (pprArgs args),
-              iStr " = ", iIndent (pprExpr (0, N) body) ]
+              iStr " = ", iIndent (pprExpr 0 body) ]
 
 pprArgs :: [Name] -> IseqRep
 pprArgs args = iConcat (map (iAppend iSpace . iStr) args)
@@ -255,8 +258,8 @@ binOps = [ ("*", (5, R))
          , ("&&", (2, N))
          , ("||", (1, N)) ]
 
-type Fixity = (Priority, Associativity)
-type Priority = Int
+type Fixity = (Precedence, Associativity)
+type Precedence = Int
 data Associativity
   = N | L | R | O deriving (Eq, Ord, Show)
 
@@ -264,10 +267,10 @@ data Associativity
 {- |
 >>> es1 = [varSampleE, numSampleE]
 >>> es2 = [constrSampleE10, constrSampleE21]
->>> es3 = [appInfixSampleE, appInfixSampleE', appInfixSampleE'', appInfixSampleE''']
+>>> es3 = [appInfixSampleE, appInfixSampleE1, appInfixSampleE2, appInfixSampleE3, appInfixSampleE4]
 >>> es4 = [letSampleE, caseSampleE, lambdaSampleE]
 >>> es = concat [es1,es2,es3,es4]
->>> putStrLn $ iDisplay $ iLayn $ map (pprExpr (0, N)) es
+>>> putStrLn $ iDisplay $ iLayn $ map (pprExpr 0) es
    1) var
    2) 57
    3) Pack{1,0}
@@ -275,63 +278,57 @@ data Associativity
    5) x + y < p * length xs
    6) (12 / 2) / (6 / 3)
    7) (12 * 2) / (6 * 3)
-   8) 12 * 2 * 6 * 3
-   9) letrec
+   8) (12 * 2) * (6 * 3)
+   9) 12 * 2 - 6 * 3
+  10) letrec
         y = x + 1;
         z = Y * 2
       in z
-  10) case xxs of
+  11) case xxs of
         <1> -> 0;
         <2> x xs -> 1 + length xs
-  11) (\ x y -> Pack{1,2} x y)
+  12) \ x y -> Pack{1,2} x y
 <BLANKLINE>
 -}
-pprExpr :: Fixity -> CoreExpr -> IseqRep
-pprExpr fx@(p, a) = \ case
+pprExpr :: Precedence -> CoreExpr -> IseqRep
+pprExpr p = \ case
   EVar v -> iStr v
   ENum n -> iNum n
   EConstr tag arity
     -> iConcat [ iStr "Pack{", iNum tag, iStr ",", iNum arity, iStr "}" ]
   EAp (EAp (EVar op) e1) e2
-    | isJust mfx -> bool id iParen (fx > fx') infixexpr
+    | isJust mfx -> bool id iParen (p >= p') infixexpr
     where
       mfx = lookup op binOps
       fx'@(p', a') = fromJust mfx
-      fx'' = (p', bool id (const O) (a' == N) a')
-      infixexpr = iConcat [ pprExpr fx'' e1
+      infixexpr = iConcat [ pprExpr p' e1
                           , iSpace, iStr op, iSpace
-                          , pprExpr fx'' e2 ]
-  EAp e1 e2
-    | fx <= (6, L) -> appexpr
-    | otherwise    -> iParen appexpr
+                          , pprExpr p' e2 ]
+  EAp e1 e2 -> bool id iParen (p > 6) appexpr
     where
-      appexpr = iConcat [ pprExpr (6, L) e1, iStr " ", pprExpr (6, O) e2]
+      appexpr = iConcat [ pprExpr 6 e1, iStr " ", pprExpr 7 e2]
   ELet isrec defns expr
-    | p <= 0    -> letexpr
-    | otherwise -> iParen letexpr
+    -> bool id iParen (p > 0) letexpr
     where
       letexpr = iConcat [ iStr keyword, iNewline
                         , iStr "  ", iIndent (pprDefns defns), iNewline
-                        , iStr "in ", pprExpr (0, N) expr ]
+                        , iStr "in ", pprExpr 0 expr ]
       keyword | isrec     = "letrec"
               | otherwise = "let"
   ECase e alts
-    | p <= 0    -> caseexpr
-    | otherwise -> iParen caseexpr
+    -> bool id iParen (p > 0) caseexpr
     where
-      caseexpr = iConcat [ iStr "case ", iIndent (pprExpr (0, N) e), iStr " of", iNewline,
+      caseexpr = iConcat [ iStr "case ", iIndent (pprExpr 0 e), iStr " of", iNewline,
                            iStr "  ", iIndent (iInterleave iNl (map pprAlt alts)) ]
       iNl = iConcat [ iStr ";", iNewline ]
       pprAlt (tag, args, rhs)
         = iConcat [ iStr "<", iNum tag, iStr ">",
                     pprArgs args, iStr " -> ",
-                    iIndent (pprExpr (0, N) rhs) ]
+                    iIndent (pprExpr 0 rhs) ]
   ELam args body
-    | p <= 0    -> lambda
-    | otherwise -> iParen lambda
+    -> bool id iParen (p > 0) lambda
     where
-      lambda = iConcat [ iStr "(\\", pprArgs args, iStr " -> ", iIndent (pprExpr (0,N) body),
-                         iStr ")" ]
+      lambda = iConcat [ iStr "\\", pprArgs args, iStr " -> ", iIndent (pprExpr 0 body) ]
 
 pprDefns :: [(Name, CoreExpr)] -> IseqRep
 pprDefns defns
@@ -341,4 +338,4 @@ pprDefns defns
 
 pprDefn :: (Name, CoreExpr) -> IseqRep
 pprDefn (name, expr)
-  = iConcat [ iStr name, iStr " = ", iIndent (pprExpr (0, N) expr) ]
+  = iConcat [ iStr name, iStr " = ", iIndent (pprExpr 0 expr) ]
