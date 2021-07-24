@@ -467,15 +467,7 @@ iDisplay seq = flatten [seq]
 flatten []              = ""
 flatten (INil : seqs)   = flatten seqs
 flatten (Istr s : seqs) = s ++ flatten seqs
-flatten (IAppend seq1 seq2 : seqs) = flatten (seq1 : seq2 : seqs)\begin{array}{lcl}
-\mathit{greeting} & \rightarrow & \mathit{hg}\;\mathit{person}\;\texttt{!} \\
-\mathit{hg} & \rightarrow & \texttt{hello} \\
-& \mid & \texttt{goodbye}
-\end{array}\begin{array}{lcl}
-\mathit{greeting} & \rightarrow & \mathit{hg}\;\mathit{person}\;\texttt{!} \\
-\mathit{hg} & \rightarrow & \texttt{hello} \\
-& \mid & \texttt{goodbye}
-\end{array}
+flatten (IAppend seq1 seq2 : seqs) = flatten (seq1 : seq2 : seqs)
 ```
 
 ---
