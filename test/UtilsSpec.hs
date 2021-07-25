@@ -1,15 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
-module LibSpec
+module UtilsSpec
   ( spec
   ) where
 
 import Data.String
 import qualified Codec.Binary.UTF8.String as U
 import qualified Data.ByteString as B
-import Test.Main
 import Test.Hspec
 import Text.Show.Unicode
-import Lib
+import Utils
 
 newtype UString a = UString a deriving Eq
 
@@ -23,11 +22,9 @@ instance Show a => Show (UString a) where
   show (UString s) = ushow s
 
 spec :: Spec
-spec = describe "someFunc" $ do
-  { it "「なんか関数」を標準出力に印字する." $ do
-    { result <- captureProcessResult Lib.someFunc
-    ; prExitCode result `shouldBe` ExitSuccess
-    ; prStderr result `shouldSatisfy` B.null
-    ; ustring (prStdout result) `shouldBe` "なんか関数\n"
+spec = do
+  { describe "space :: Int -> String -- スペース文字を指定個数含む文字列" $ do
+    { it "space 0 ==> \"\"" $ space 0 `shouldBe` ""
+    ; it "space 4 ==> \"    \"" $ space 4 `shouldBe` "    "
     }
   }
