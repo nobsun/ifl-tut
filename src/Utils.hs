@@ -11,9 +11,15 @@ stability:    experimental
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
-module Utils where
+module Utils 
+  ( space 
+  ) where
 
+{- | 半角スペースを指定個数含む文字列 
+>>> space 0
+""
+>>> space 4
+"    "
+-}
 space :: Int -> String
 space = (`replicate` ' ')
-
-

@@ -9,13 +9,14 @@ stability:    experimental
 {-# LANGUAGE ScopedTypeVariables #-}
 module Language where
 
-import Data.Bool
+import Data.Bool ( bool )
 import Data.Char
-import Data.Maybe
+import Data.Maybe ( fromJust, isJust )
+
 import Utils
 
-{- コア言語の式 -}
-
+{- ** コア式の抽象構文木 -}
+{- | 式 -}
 data Expr a
   = EVar Name                 -- ^ 変数
   | ENum Int                  -- ^ 数
@@ -34,27 +35,34 @@ data Expr a
       [a]                       -- ^ 束縛変数のリスト
       (Expr a)                  -- ^ λ抽象本体
 
+{- | コア式 -}
 type CoreExpr = Expr Name
 
+{- | 名前 -}
 type Name = String
 
+{- *** let 式 -}
 type IsRec = Bool
 recursive :: IsRec
 recursive = True
 nonRecursive :: IsRec
 nonRecursive = False
 
-{- バインダ -}
-
-bindersOf :: [(a, b)] -> [a]
+{- | バインダ -}
+type Binder a b = (a, b)
+bindersOf :: [Binder a b] -> [a]
 bindersOf defns = [ name | (name, rhs) <- defns ]
 
 rhssOf :: [(a, b)] -> [b]
 rhssOf defns = [ rhs | (name, rhs) <- defns ]
 
-{- 選択肢 -}
-
-type Alter a = (Int, [a], Expr a)
+{- | 選択肢 -}
+type Alter a 
+  = ( Tag      -- タグ
+    , [a]      -- 変数名リスト
+    , Expr a   -- 選択肢本体
+    ) 
+type Tag = Int
 type CoreAlter = Alter Name
 
 {- アトミック式の判別 -}
@@ -120,7 +128,7 @@ type CoreProgram = Program Name
 type ScDefn a = (Name, [a], Expr a)
 type CoreScDefn = ScDefn Name
 
-{- サンプル -}
+{- サンプルプログラム -}
 sampleProg :: CoreProgram
 sampleProg
   = [ ("main",   [],    EAp (EVar "double") (ENum 21))
@@ -339,3 +347,18 @@ pprDefns defns
 pprDefn :: (Name, CoreExpr) -> IseqRep
 pprDefn (name, expr)
   = iConcat [ iStr name, iStr " = ", iIndent (pprExpr 0 expr) ]
+
+{- 構文解析器 -}
+
+{- 字句解析器 -}
+
+type Location = Int
+type Token = (Location, String)
+tokloc :: Token -> Location
+tokloc = fst
+tokstr :: Token -> String
+tokstr = snd
+
+clex :: String -> [Token]
+clex = \ case
+  _ -> error "Not implemented"
