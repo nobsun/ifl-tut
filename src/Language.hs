@@ -10,10 +10,12 @@ stability:    experimental
 module Language where
 
 import Data.Bool ( bool )
-import Data.Char
+import Data.Char ( isDigit, isAlpha, isSpace )
 import Data.Maybe ( fromJust, isJust )
 
-import Utils
+import Iseq
+import Parser
+import Utils ( space )
 
 {- ** コア式の抽象構文木 -}
 {- | 式 -}
@@ -21,8 +23,8 @@ data Expr a
   = EVar Name                 -- ^ 変数
   | ENum Int                  -- ^ 数
   | EConstr                   -- ^ 構成子
-      Int                       -- ^ タグ
-      Int                       -- ^ アリティ
+      Tag                       -- ^ タグ
+      Arity                       -- ^ アリティ
   | EAp (Expr a) (Expr a)     -- ^ 適用
   | ELet                      -- ^ let(rec)式
       IsRec                     -- ^ 再帰的か
@@ -40,6 +42,10 @@ type CoreExpr = Expr Name
 
 {- | 名前 -}
 type Name = String
+
+{- | データ構成子 -}
+type Tag = Int
+type Arity = Int
 
 {- *** let 式 -}
 type IsRec = Bool
@@ -62,7 +68,6 @@ type Alter a
     , [a]      -- 変数名リスト
     , Expr a   -- 選択肢本体
     ) 
-type Tag = Int
 type CoreAlter = Alter Name
 
 {- アトミック式の判別 -}
@@ -174,85 +179,6 @@ pprSc (name, args, body)
 pprArgs :: [Name] -> IseqRep
 pprArgs args = iConcat (map (iAppend iSpace . iStr) args)
 
---
-
-class Iseq iseq where
-  iNil :: iseq
-  iStr :: String -> iseq
-  iAppend  :: iseq -> iseq -> iseq
-  iNewline :: iseq
-  iIndent  :: iseq -> iseq
-  iDisplay :: iseq -> String
-
-infixr 5 `iAppend`
-
-iConcat :: Iseq iseq => [iseq] -> iseq
-iConcat = foldr iAppend iNil
-
-iInterleave :: Iseq iseq => iseq -> [iseq] -> iseq
-iInterleave sep = \ case
-  []       -> iNil
-  [seq]    -> seq
-  seq:seqs -> seq `iAppend` sep `iAppend` iInterleave sep seqs
-
-iParen :: Iseq iseq => iseq -> iseq
-iParen seq = iConcat [ iStr "(", seq, iStr ")" ]
-
-iSpace :: Iseq iseq => iseq
-iSpace = iStr " "
-
-iNum :: Iseq iseq => Int -> iseq
-iNum = iStr . show
-
-iFWNum :: Iseq iseq => Int -> Int -> iseq
-iFWNum width n = iStr (space (width - length digits) ++ digits)
-  where
-    digits = show n
-
-iLayn :: Iseq iseq => [iseq] -> iseq
-iLayn seqs
-  = iConcat (zipWith layItem [1..] seqs)
-    where
-      layItem n seq
-        = iConcat [ iFWNum 4 n, iStr ") ", iIndent seq, iNewline ]
-  
-data IseqRep
-  = INil
-  | IStr String
-  | IAppend IseqRep IseqRep
-  | IIndent IseqRep
-  | INewline
-  deriving (Eq, Show)
-
-instance Iseq IseqRep where
-  iNil =  INil
-  iStr "" = INil
-  iStr cs = case break ('\n' ==) cs of
-      (_, "")   -> IStr cs
-      (xs,_:ys) -> case xs of
-        "" -> INewline `iAppend` iStr ys
-        _  -> IStr xs `iAppend` INewline `iAppend` iStr ys
-  iAppend INil seq2 = seq2
-  iAppend seq1 INil = seq1
-  iAppend seq1 seq2 = IAppend seq1 seq2
-  iIndent seq = IIndent seq
-  iNewline = INewline
-  iDisplay seq = flatten 0 [(seq, 0)]
-
-flatten :: Int
-        -> [(IseqRep, Int)]
-        -> String
-flatten col = \ case
-  (INil, indent) : seqs   -> flatten col seqs
-  (IStr s, indent) : seqs -> s ++ flatten (col + length s) seqs
-  (IAppend seq1 seq2, indent) : seqs
-    -> flatten col ((seq1, indent) : (seq2, indent) : seqs)
-  (INewline, indent) : seqs
-    -> '\n' : (space indent ++ flatten indent seqs)
-  (IIndent seq, indent) : seqs
-    -> flatten col ((seq, col) : seqs)
-  [] -> ""
-
 -- | Pretty printer for CoreExpr
 
 binOps :: [(Name, Fixity)]
@@ -350,15 +276,158 @@ pprDefn (name, expr)
 
 {- 構文解析器 -}
 
-{- 字句解析器 -}
+clex :: Loc -> String -> [Token]
+clex i ('-' : '-' : cs) = clex i (dropWhile ('\n' /=) cs)
+clex i (c1 : c2 : cs)
+  | isJust (lookup [c1,c2] binOps) = (i,[c1,c2]) : clex i cs
+clex i ('\n' : cs) = clex (succ i) cs
+clex i (c : cs)
+  | isDigit c = case span isDigit cs of 
+      (ds, rs) -> (i, c : ds) : clex i rs
+  | isAlpha c = case span isIdChar cs of
+      (vs, rs) -> (i, c : vs) : clex i rs
+  | isSpace c = clex i cs
+  | otherwise = (i,[c]) : clex i cs 
+clex _ "" = []
 
-type Location = Int
-type Token = (Location, String)
-tokloc :: Token -> Location
-tokloc = fst
-tokstr :: Token -> String
-tokstr = snd
+isIdChar :: Char -> Bool
+isIdChar c = isAlpha c || isDigit c || (c == '_')
 
-clex :: String -> [Token]
-clex = \ case
-  _ -> error "Not implemented"
+syntax :: [Token] -> CoreProgram
+syntax = takeFirstParse . pProgram
+
+parse :: String -> CoreProgram
+parse = syntax . clex 1
+
+pVar :: Parser String
+pVar = pSat ((&&) . isAlpha . head <*> (`notElem` keywords))
+
+keywords :: [String]
+keywords = ["let", "letrec", "case", "in", "of", "Pack"]
+
+{- コア言語の構文解析 -}
+
+takeFirstParse :: [(a, [Token])] -> a
+takeFirstParse = \ case
+  (x, []) : _ 
+    -> x
+  (_, (i,_) : _): ps 
+    -> case ps of
+      _ : _ -> takeFirstParse ps
+      []    -> error $ "syntax error at line " ++ show i
+  _ -> error  "syntax error at line 1"
+
+pProgram :: Parser CoreProgram
+pProgram = pOneOrMoreWithSep pSc (pLit ";")
+
+pSc :: Parser CoreScDefn
+pSc = mkSc <$$> pVar <**> pMunch pVar <** pLit "=" <**> pExpr
+
+mkSc :: Name -> [Name] -> CoreExpr -> (Name, [Name], CoreExpr)
+mkSc = (,,)
+
+{- コア式の構文解析器 -}
+pExpr :: Parser CoreExpr
+pExpr =  pELet `pAlt` pECase `pAlt` pELam `pAlt` pAexpr `pAlt` pExpr1
+
+pELet :: Parser CoreExpr
+pELet = ELet <$$> pIsRec  <**> pDefns <** pLit "in" <**> pExpr
+
+pIsRec :: Parser IsRec
+pIsRec = pLit "let" **> pEmpty nonRecursive
+  `pAlt` pLit "letrec" **> pEmpty recursive
+
+pDefns :: Parser [(Name, CoreExpr)]
+pDefns = pOneOrMoreWithSep pDefn (pLit ";")
+
+pDefn :: Parser (Name, CoreExpr)
+pDefn = (,) <$$> pVar <** pLit "=" <**> pExpr
+
+pECase :: Parser CoreExpr
+pECase = ECase <$$ pLit "case" <**> pExpr <** pLit "of" <**> pAlters
+
+pAlters :: Parser [CoreAlter]
+pAlters = pOneOrMoreWithSep pAlter (pLit ";")
+
+pAlter :: Parser CoreAlter
+pAlter = (,,) <$$> pTag <**> pMunch pVar <** pLit "->" <**> pExpr
+
+pTag :: Parser Tag
+pTag = pLit "<" **> pNum <** pLit ">"
+
+pELam :: Parser CoreExpr
+pELam = ELam <$$ pLit "\\" <**> pMunch1 pVar <** pLit "->" <**> pExpr
+
+pAexpr :: Parser CoreExpr
+pAexpr = pEVar `pAlt` pENum `pAlt` pEConstr
+  `pAlt` pParen pExpr
+
+pParen :: Parser CoreExpr -> Parser CoreExpr
+pParen p = pLit "(" **> p <** pLit ")"
+
+pEVar :: Parser CoreExpr
+pEVar = EVar <$$> pVar
+
+pENum :: Parser CoreExpr
+pENum = ENum <$$> pNum
+
+pEConstr :: Parser CoreExpr
+pEConstr = uncurry EConstr <$$ pLit "Pack" <** pLit "{" <**> pTagArity <** pLit "}"
+
+pTagArity :: Parser (Tag, Arity)
+pTagArity = (,) <$$> pNum <** pLit "," <**> pNum
+
+pExpr1 :: Parser CoreExpr
+pExpr1 = assembleOp <$$> pExpr2 <**> pExpr1c
+
+data PartialExpr
+  = NoOp
+  | FoundOp Name CoreExpr
+
+assembleOp :: CoreExpr -> PartialExpr -> CoreExpr
+assembleOp e = \ case
+  NoOp          -> e
+  FoundOp op e' -> EAp (EAp (EVar op) e) e'
+
+pExpr1c :: Parser PartialExpr
+pExpr1c = FoundOp <$$> pLit "||" <**> pExpr1
+   `pAlt` pEmpty NoOp
+
+pExpr2 :: Parser CoreExpr
+pExpr2 = assembleOp <$$> pExpr3 <**> pExpr2c
+
+pExpr2c :: Parser PartialExpr
+pExpr2c = FoundOp <$$> pLit "&&" <**> pExpr2
+   `pAlt` pEmpty NoOp
+
+pExpr3 :: Parser CoreExpr
+pExpr3 = assembleOp <$$> pExpr4 <**> pExpr3c
+
+pExpr3c :: Parser PartialExpr
+pExpr3c = FoundOp <$$> pRelop <**> pExpr4
+   `pAlt` pEmpty NoOp
+
+pRelop :: Parser String
+pRelop = pSat (`elem` relops)
+
+relops :: [String]
+relops = ["<", "<=", "==", "/=", ">=", ">"]
+
+pExpr4 :: Parser CoreExpr
+pExpr4 = assembleOp <$$> pExpr5 <**> pExpr4c
+
+pExpr4c :: Parser PartialExpr
+pExpr4c = FoundOp <$$> pLit "+" <**> pExpr4
+  `pAlt`  FoundOp <$$> pLit "-" <**> pExpr5
+  `pAlt`  pEmpty NoOp
+
+pExpr5 :: Parser CoreExpr
+pExpr5 = assembleOp <$$> pExpr6 <**> pExpr5c
+
+pExpr5c :: Parser PartialExpr
+pExpr5c = FoundOp <$$> pLit "*" <**> pExpr5
+  `pAlt`  FoundOp <$$> pLit "/" <**> pExpr6
+  `pAlt`  pEmpty NoOp
+
+pExpr6 :: Parser CoreExpr
+pExpr6 = foldl1 EAp <$$> pMunch1 pAexpr
