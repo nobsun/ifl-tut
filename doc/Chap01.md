@@ -350,7 +350,7 @@ mkMultiAp n e1 e2 = foldl EAp e1 (take n (repeat e2))
 さまざまな、$n$ について、以下の式を評価するのに必要なステップ数を計測せよ
 
 ```haskell
-pprExpr (mkMulti n (EVar "f") (EVar "x"))
+pprExpr (mkMultiAp n (EVar "f") (EVar "x"))
 ```
 
 ---
