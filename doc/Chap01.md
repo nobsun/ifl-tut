@@ -383,7 +383,7 @@ pprExpr (EVar v)    = iStr v
 pprExpr (EAp e1 e2) = pprExpr e1 `iAppend` iStr " " `iAppend` pprAExpr e2
 
 pprExpr (ELet isrec defns expr)
-  = iConcat [ iStr keyword, iNewline
+  = iConcat [ keyword, iNewline
             , iStr "  ", iIndent (pprDefns defns), iNewline
             , iStr "in ", pprExpr expr
             ]
