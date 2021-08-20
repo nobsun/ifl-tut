@@ -645,7 +645,7 @@ isIdChar c     = isAlpha c || isDigit c || c == '_'
 
 ```haskell
 twoCharOps :: [String]
-twoChanOps = ["==", "~=", ">=", "<=", "->"]
+twoCharOps = ["==", "~=", ">=", "<=", "->"]
 ```
 
 ---
