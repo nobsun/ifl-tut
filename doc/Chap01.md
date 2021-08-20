@@ -466,7 +466,7 @@ iDisplay seq = flatten [seq]
 ```haskell
 flatten []              = ""
 flatten (INil : seqs)   = flatten seqs
-flatten (Istr s : seqs) = s ++ flatten seqs
+flatten (IStr s : seqs) = s ++ flatten seqs
 flatten (IAppend seq1 seq2 : seqs) = flatten (seq1 : seq2 : seqs)
 ```
 
