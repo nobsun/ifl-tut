@@ -627,7 +627,7 @@ clex []            = []
 isWhiteSpace :: Char -> Bool
 isIdChar     :: Char -> Bool
 
-usWhiteSpace c = c `elem` " \t\n"
+isWhiteSpace c = c `elem` " \t\n"
 isIdChar c     = isAlpha c || isDigit c || c == '_'
 ```
 
