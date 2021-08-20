@@ -328,7 +328,7 @@ pprExpr (EAp e1 e2) = pprExpr e1 ++ " " ++ pprAExpr e2
 pprAExpr :: CoreExpr -> String
 pprAExpr e
   | isAtomicExpr e = pprExpr e
-  | otherewise     = "(" ++ pprExpr e ++ ")"
+  | otherwise     = "(" ++ pprExpr e ++ ")"
 ```
 
 ---
