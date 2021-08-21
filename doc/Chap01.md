@@ -923,7 +923,7 @@ pSc = pThen4 mkSc pVar (pZeroOrMore pVar) (pLit "=") pExpr
 f = 3 ;
 g x y = let z = y in z ;
 h x = case (let y = x in y) of
-        <1> -> 2
+        <1> -> 2;
         <2> -> 5
 ```
 
