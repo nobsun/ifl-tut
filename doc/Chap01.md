@@ -800,7 +800,7 @@ pOneOrMore = undefined
 - `pOneOrMore` および `pEmpty` の定義を書け（ヒント： `pOneOrMore` から `pZeroOrMore` を呼ぶとよい）
 
 ---
-構文解析の結果を処理できるようにと嬉しい
+構文解析の結果を処理できるようになると嬉しい
 
 ```haskell
 pApply :: Paser a -> (a -> b) -> Parser b
