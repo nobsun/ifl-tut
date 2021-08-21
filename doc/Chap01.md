@@ -33,7 +33,7 @@ double x = x + x
 - コアプログラムは，スーパーコンビネータ定義の集まり
 - コアプログラムの実行は，`main` を評価する
 - 関数はスーパーコンビネータで定義する
-- スーパーコンビネータにはCAFも含まれる
+- スーパーコンビネータにはCAFも含まれる{-# LANGUAGE BangPatterns #-}
 
 ---
 ### 1.1.1 局所定義
@@ -160,10 +160,8 @@ data Expr a
 - 束縛位置では`Name`を使う
 - 通常使う型名は、以下のようにする
 
-```hasklell
-type CoreExpr = Expr Name
-type Name = String
-```
+```hasklell{-# LANGUAGE BangPatterns #-}
+
 
 ---
 抽象構文木
@@ -609,14 +607,13 @@ type Token = String        -- A token is never empty
 clex (c:cs)
   | isWhiteSpace c = clex cs
   | isDigit c      = numToken : clex restCs
+  | isAlpha c      = varToken : clex restCs
+  | otherwise      = [c] : clex cs
       where
+        (idCs, restCs)  = span isIdChar cs
+        varToken        = c : idCs
         (numCs, restCs) = span isDigit cs
         numToken        = c : numCs
-  | isAlpha c      = varToken : clex restCs
-      where
-        (idCs, restCs) = span isIdChar cs
-        varToken       = c : idCs
-  | otherwise      = [c] : clex cs
 clex []            = []
 ```
 
