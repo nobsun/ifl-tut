@@ -607,13 +607,13 @@ type Token = String        -- A token is never empty
 clex (c:cs)
   | isWhiteSpace c = clex cs
   | isDigit c      = numToken : clex restCs
-  | isAlpha c      = varToken : clex restCs
+  | isAlpha c      = varToken : clex restCs'
   | otherwise      = [c] : clex cs
       where
         (idCs, restCs)  = span isIdChar cs
         varToken        = c : idCs
-        (numCs, restCs) = span isDigit cs
-        numToken        = c : numCs
+        (numCs, restCs') = span isDigit cs
+        numToken         = c : numCs
 clex []            = []
 ```
 
