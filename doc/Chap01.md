@@ -692,7 +692,7 @@ pLit _ []     = []
 ---
 変数の構文解析器
 ```haskell
-pVar :: Parse String
+pVar :: Parser String
 pVar [] = []
 pVar (tok:toks) = case tok of
   c:_ | isAlpha c -> [(tok,toks)]
