@@ -803,7 +803,7 @@ pOneOrMore = undefined
 構文解析の結果を処理できるようになると嬉しい
 
 ```haskell
-pApply :: Paser a -> (a -> b) -> Parser b
+pApply :: Parser a -> (a -> b) -> Parser b
 ```
 ---
 #### 練習問題 1.14
