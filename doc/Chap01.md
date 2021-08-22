@@ -644,7 +644,7 @@ isIdChar c     = isAlpha c || isDigit c || c == '_'
 twoCharOps :: [String]
 twoCharOps = ["==", "/=", ">=", "<=", "->"]
 ```
-`~=`
+`~=`を`/=`に変更
 
 ---
 #### 練習問題 1.11
