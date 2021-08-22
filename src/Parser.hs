@@ -130,7 +130,7 @@ pThen3 combine p1 p2 p3 = combine <$$> p1 <**> p2 <**> p3
 pThen4 combine p1 p2 p3 p4 = combine <$$> p1 <**> p2 <**> p3 <**> p4
 -}
 
-infixl 4 <$$>, <$$, <**>, <**
+infixl 4 <$$>, <$$, <**>, <**, **>
 
 pMunch :: Parser a -> Parser [a]
 pMunch p = pMunch1 p `pAlt'` pEmpty []
