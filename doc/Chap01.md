@@ -326,7 +326,7 @@ pprExpr (EAp e1 e2) = pprExpr e1 ++ " " ++ pprAExpr e2
 pprAExpr :: CoreExpr -> String
 pprAExpr e
   | isAtomicExpr e = pprExpr e
-  | otherewise     = "(" ++ pprExpr e ++ ")"
+  | otherwise     = "(" ++ pprExpr e ++ ")"
 ```
 
 ---
@@ -348,7 +348,7 @@ mkMultiAp n e1 e2 = foldl EAp e1 (take n (repeat e2))
 さまざまな、$n$ について、以下の式を評価するのに必要なステップ数を計測せよ
 
 ```haskell
-pprExpr (mkMulti n (EVar "f") (EVar "x"))
+pprExpr (mkMultiAp n (EVar "f") (EVar "x"))
 ```
 
 ---
@@ -381,7 +381,7 @@ pprExpr (EVar v)    = iStr v
 pprExpr (EAp e1 e2) = pprExpr e1 `iAppend` iStr " " `iAppend` pprAExpr e2
 
 pprExpr (ELet isrec defns expr)
-  = iConcat [ iStr keyword, iNewline
+  = iConcat [ keyword, iNewline
             , iStr "  ", iIndent (pprDefns defns), iNewline
             , iStr "in ", pprExpr expr
             ]
@@ -464,7 +464,7 @@ iDisplay seq = flatten [seq]
 ```haskell
 flatten []              = ""
 flatten (INil : seqs)   = flatten seqs
-flatten (Istr s : seqs) = s ++ flatten seqs
+flatten (IStr s : seqs) = s ++ flatten seqs
 flatten (IAppend seq1 seq2 : seqs) = flatten (seq1 : seq2 : seqs)
 ```
 
@@ -644,6 +644,7 @@ isIdChar c     = isAlpha c || isDigit c || c == '_'
 twoCharOps :: [String]
 twoCharOps = ["==", "/=", ">=", "<=", "->"]
 ```
+`~=`
 
 ---
 #### 練習問題 1.11
@@ -689,7 +690,7 @@ pLit _ []     = []
 ---
 変数の構文解析器
 ```haskell
-pVar :: Parse String
+pVar :: Parser String
 pVar [] = []
 pVar (tok:toks) = case tok of
   c:_ | isAlpha c -> [(tok,toks)]
@@ -715,8 +716,8 @@ pHelloOrGoodbye = pLit "hello" `pAlt` pLit "goodbye"
 ```haskell
 pThen :: (a -> b -> c) -> Parser a -> Parser b -> Parser c
 pThen combine p1 p2 toks
-  = [ (combine v1 v2, toks2) | (v1, toks1) <- toks
-                             , (v2, toks2) <- toks1 ]
+  = [ (combine v1 v2, toks2) | (v1, toks1) <- p1 toks
+                             , (v2, toks2) <- p2 toks1 ]
 ```
 
 ---
@@ -797,10 +798,10 @@ pOneOrMore = undefined
 - `pOneOrMore` および `pEmpty` の定義を書け（ヒント： `pOneOrMore` から `pZeroOrMore` を呼ぶとよい）
 
 ---
-構文解析の結果を処理できるようにと嬉しい
+構文解析の結果を処理できるようになると嬉しい
 
 ```haskell
-pApply :: Paser a -> (a -> b) -> Parser b
+pApply :: Parser a -> (a -> b) -> Parser b
 ```
 ---
 #### 練習問題 1.14
@@ -920,7 +921,7 @@ pSc = pThen4 mkSc pVar (pZeroOrMore pVar) (pLit "=") pExpr
 f = 3 ;
 g x y = let z = y in z ;
 h x = case (let y = x in y) of
-        <1> -> 2
+        <1> -> 2;
         <2> -> 5
 ```
 
