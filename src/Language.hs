@@ -36,6 +36,7 @@ data Expr a
   | ELam                      -- ^ λ抽象
       [a]                       -- ^ 束縛変数のリスト
       (Expr a)                  -- ^ λ抽象本体
+  deriving Show
 
 {- | コア式 -}
 type CoreExpr = Expr Name
@@ -60,7 +61,8 @@ bindersOf :: [Binder a b] -> [a]
 bindersOf defns = [ name | (name, rhs) <- defns ]
 
 rhssOf :: [(a, b)] -> [b]
-rhssOf defns = [ rhs | (name, rhs) <- defns ]
+rhssOf defns = [ rhs | (name, rhs) <- defns ]{-# LANGUAGE BangPatterns #-}
+
 
 {- | 選択肢 -}
 type Alter a 

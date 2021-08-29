@@ -290,3 +290,23 @@ $n$ および $m$ の初期値 $N$ および $M$ と現在の $n$、$m$、$d$、
 ---
 #### 練習問題 2.3
 状態が最終状態であるかを判断する述語 `multFinal :: multState -> Bool` を定義し、初期状態 `(2,3,0,0)` からかけ算機械を走らせると、最終状態が `(2,0,0,6)` になることを示せ。
+
+---
+## 2.3 Mark 1: 最小雛形具体化グラフ簡約器
+
+マシン状態： $(\mathit{stack}, \mathit{dump}, \mathit{heap}, \mathit{globals})$ の4つ組
+- $\mathit{stack}$: ヒープ上のノードを特定するアドレスのスタック
+    - $a_1 : s$ という記法は、$a_1$ がスタックトップ、$s$ がのこりのスタックであることを示す
+- $\mathit{dump}$: 正格なプリミティブ演算の引数評価に先立ち、スパインのスタックを記録
+- $\mathit{heap}$: タグ付きノードを集めたもの
+    - $h[a : node]$ という記法は、ヒープ $h$ において、$a$ はノード$\mathit{node}$のアドレスであることを示す
+- $\mathit{globals}$: スーパーコンビネータおよびプリミティブを表すノードへのアドレス
+
+---
+ノードの表現
+```haskell
+data Node
+  = NAp Addr Addr
+  | NSupercomb Name [Name] CoreExpr
+  | NNum Int
+```
