@@ -157,6 +157,8 @@ getargs heap stack = case stack of
       getarg addr = arg
         where
           NAp fun arg = hLookup heap addr
+  []       -> error "Empty stack"
+
 
 instantiate :: CoreExpr         -- Body of suprercombinator
             -> TiHeap           -- Heap before instatiation
@@ -172,6 +174,7 @@ instantiate expr heap env = case expr of
   EConstr tag arity    -> instantiateConstr tag arity heap env
   ELet isrec defs body -> instantiateLet isrec defs body heap env
   ECase e alts         -> error "Can't instantiate case exprs"
+  ELam vs e            -> error "Can't instantiate lambda abstractions"
 
 instantiateConstr tag arity heap env
   = error "Can't instantiate constructors yet"
