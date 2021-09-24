@@ -11,14 +11,16 @@ import Language
 
 --- Structure of the implementation
 
-runProg :: String -> String
-runProg = showResults . eval . compile . parse
+run :: String -> String
+run = showResults . eval . compile . parse
 
 type TiState = (TiStack, TiDump, TiHeap, TiGlobals, TiStats)
 
 type TiStack = [Addr]
 
 data TiDump = DummyTiDump deriving Show
+
+initialTiDump :: TiDump
 initialTiDump = DummyTiDump
 
 type TiHeap = Heap Node
@@ -29,38 +31,16 @@ data Node = NAp Addr Addr                   -- ^ Application
 
 type TiGlobals = Assoc Name Addr
 
-type TiStats
-  = ( Int  -- total reductions
-    , Int  -- supercombinator reductions
-    , Int  -- primitive reductions
-    )
+type TiStats = Int
 
 tiStatInitial :: TiStats
-tiStatInitial  = (0, 0, 0)
+tiStatInitial = 0
 
-tiStatIncTotalSteps :: TiStats -> TiStats
-tiStatIncTotalSteps stats = case stats of
-  (total, sc, pm) -> (total + 1 , sc, pm)
+tiStatIncSteps :: TiStats -> TiStats
+tiStatIncSteps s = s + 1
 
-tiStatIncScSteps :: TiStats -> TiStats
-tiStatIncScSteps stats = case stats of
-  (total, sc, pm) -> (total, sc + 1, pm)
-
-tiStatIncPmSteps :: TiStats -> TiStats
-tiStatIncPmSteps stats = case stats of
-  (total, sc, pm) -> (total, sc, pm + 1)
-
-tiStatGetTotalSteps :: TiStats -> Int
-tiStatGetTotalSteps stats = case stats of
-  (total, _, _) -> total
-
-tiStatGetScSteps :: TiStats -> Int
-tiStatGetScSteps stats = case stats of
-  (_, sc, _) -> sc
-
-tiStatGetPmSteps :: TiStats -> Int
-tiStatGetPmSteps stats = case stats of
-  (_, _, pc) -> pc
+tiStatGetSteps :: TiStats -> Int
+tiStatGetSteps s = s
 
 applyToStats :: (TiStats -> TiStats) -> TiState -> TiState
 applyToStats f state = case state of
@@ -100,19 +80,7 @@ eval state = state : restStates
     nextState = doAdmin (step state)
 
 doAdmin :: TiState -> TiState
-doAdmin state = case state of
-  (a:stack, _, heap, _, _) -> case hLookup heap a of
-    NSupercomb _ _ _ -> doAdminTotal $ doAdminSc state
-    _                -> doAdminTotal $ state
-
-doAdminTotal :: TiState -> TiState
-doAdminTotal state = applyToStats tiStatIncTotalSteps state
-
-doAdminSc :: TiState -> TiState
-doAdminSc state = applyToStats tiStatIncScSteps state
-
-doAdminPm :: TiState -> TiState
-doAdminPm state = applyToStats tiStatIncPmSteps state
+doAdmin state = applyToStats tiStatIncSteps state
 
 tiFinal :: TiState -> Bool
 tiFinal state = case state of
@@ -191,8 +159,7 @@ showResults states
 
 showState :: TiState -> IseqRep
 showState (stack, dump, heap, globals, stats)
-  = iConcat [ showStack heap stack, iNewline
-            , showHeap heap, iNewline]
+  = iConcat [ showStack heap stack, iNewline ]
 
 showStack :: TiHeap -> TiStack -> IseqRep
 showStack heap stack
@@ -235,45 +202,44 @@ showFWAddr addr = iStr (space (4 - length str) ++ str)
 showStats :: TiState -> IseqRep
 showStats (stack, dump, heap, globals, stats)
   = iConcat [ iNewline, iNewline, iStr "Total number of steps = "
-            , iNum (tiStatGetTotalSteps stats)
-            , showHeapStats stats
+            , iNum (tiStatGetSteps stats)
             ]
 
-showHeapStats :: TiStats -> IseqRep
-showHeapStats (a, u, f)
-  = iConcat [ iNewline, iStr "Heap allocation count = "
-            , iNum a
-            , iNewline, iStr "Heap update count     = "
-            , iNum u
-            , iNewline, iStr "Heap free count       = "
-            , iNum f
-            ]
+-- showHeapStats :: TiStats -> IseqRep
+-- showHeapStats (a, u, f)
+--   = iConcat [ iNewline, iStr "Heap allocation count = "
+--             , iNum a
+--             , iNewline, iStr "Heap update count     = "
+--             , iNum u
+--             , iNewline, iStr "Heap free count       = "
+--             , iNum f
+--             ]
 
-showHeap :: TiHeap -> IseqRep
-showHeap heap@(_, _, useds)
-  = iConcat
-    [ iStr "Heap  ["
-    , iIndent (iInterleave iNewline (map showHeapItem useds))
-    , iStr " ]"
-    ]
-    where
-      showHeapItem (addr, node)
-        = iConcat [ showFWAddr addr, iStr ": "
-                  , showNode node
-                  ]
+-- showHeap :: TiHeap -> IseqRep
+-- showHeap heap@(_, _, useds)
+--   = iConcat
+--     [ iStr "Heap  ["
+--     , iIndent (iInterleave iNewline (map showHeapItem useds))
+--     , iStr " ]"
+--     ]
+--     where
+--       showHeapItem (addr, node)
+--         = iConcat [ showFWAddr addr, iStr ": "
+--                   , showNode node
+--                   ]
       
-showStack' :: TiHeap -> TiStack -> IseqRep
-showStack' heap stack
-  = iConcat
-    [ iStr "Stk ["
-    , iIndent (iInterleave iNewline (map showStackItem stack))
-    , iStr " ]"
-    ]
-    where
-      showStackItem addr
-        = iConcat [ showFWAddr addr, iStr ": "
-                  , showStkNode heap (hLookup heap addr)
-                  ]
+-- showStack' :: TiHeap -> TiStack -> IseqRep
+-- showStack' heap stack
+--   = iConcat
+--     [ iStr "Stk ["
+--     , iIndent (iInterleave iNewline (map showStackItem stack))
+--     , iStr " ]"
+--     ]
+--     where
+--       showStackItem addr
+--         = iConcat [ showFWAddr addr, iStr ": "
+--                   , showStkNode heap (hLookup heap addr)
+--                   ]
 
 -- Test
 

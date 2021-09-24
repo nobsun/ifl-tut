@@ -116,13 +116,7 @@ square   @            @   \
 ```
    Stack
 --+------+--
-                   @*  fizzbuzz:
-    main:                 Main.hs
-    source-dirs:          app/fizzbuzz/repl
-    dependencies:
-    - interaction-wrapper
-
-
+                   @*
                   / \
                  @   E3
                 / \
@@ -310,3 +304,253 @@ data Node
   | NSupercomb Name [Name] CoreExpr
   | NNum Int
 ```
+- `NAp`$a_1$ $a_2$ はアドレス$a_1$にあるノードのアドレス$a_2$にあるノードへの適用を表す
+- `NSupercomb` $\mathit{args}$ $\mathit{body}$ は引数$\mathit{args}$と本体$\mathit{body}$をもつスーパーコンビネータを表す
+- `NNum` $n$ は整数$n$を表す
+
+---
+状態遷移規則
+
+(2.1)
+$$
+\begin{array}{rrrcll}
+& a:s & d & & h[a:\texttt{NAp}\;a_1\;a_2] & f\\
+\Longrightarrow & a_1 : a : s & d && h & f \\
+\end{array}
+$$
+
+---
+状態遷移規則
+
+(2.2)
+$$
+\begin{array}{rrrcll}
+& a_0 : a_1 : \dots : a_n : s & d && h[a_0 : \texttt{NSupercomb}\;[x_1,\dots,x_n]\;\mathit{body}] & f \\
+\Longrightarrow & a_r : s & d && h' & f \\
+\end{array}
+$$
+ここで、$(h',a_r) = \mathit{instantiate}\;\mathit{body}\;h\;f[x_1 \mapsto a_1,\dots,x_n \mapsto a_n]$
+
+---
+関数 $\mathit{instatiate}$ の引数は、
+1. 具体化する式
+2. ヒープ
+3. 名前からヒープ上のアドレスへのグローバルマッピング $f$ をスタックにある引数名からヒープアドレスへのマッピングで拡張したもの
+
+返り値は、
+
+- 新しいヒープと、新しく構成されたインスタンスの（ルートノードの）アドレス
+
+---
+### 2.3.2 実装の構造
+
+```haskell
+run :: String -> String
+run = showResult . eval . compile . parse
+```
+
+---
+
+1. `parse` はソースコード(`:: String`)を構文解析して`CoreProgram`を構成する関数（教科書とは意味を変更）
+```haskell
+parse :: String -> CoreProgram
+```
+2. `compile` は `CoreProgram` を雛形具体化機械の初期状態に変換
+```haskell
+compile :: CoreProgram -> TiState
+```
+3. `eval` はプログラム実行関数、初期状態から状態遷移を繰り返し、最終状態にまで遷移させ、結果は通過したすべての状態のリスト
+```haskell
+eval :: TiState -> [TiState]
+```
+4. `showResult` は最終結果を整形して表示する
+```haskell
+showResult :: [TiState] -> String
+```
+
+---
+### 2.3.3 パーザ
+
+`Language`モジュールをインポートする
+
+---
+### 2.3.4 コンパイラ
+
+`TiState`
+```haskell
+type TiState = (TiStack, TiDump, TiHeap, TiGlobals, TiStats)
+```
+
+---
+1. `TiStack` スパインスタック、ヒープアドレス`Addr`のスタック
+```haskell
+type TiStack = [Addr]
+```
+
+---
+2. `TiDump` ダンプ、2.6節までは不要。ダミー
+```haskell
+data TiDump = DummyTiDump
+initalTiDump :: TiDump
+initalTiDump = DummyTiDump
+```
+
+---
+3. `TiHeap` は `Node`を格納するヒープ
+```haskell
+type TiHeap = Heap Node
+type Heap a = (Int, [Addr], [(Addr, a)])
+```
+`Heap` は使用アドレス数、未使用アドレス集合、アドレスと内容の2つ組のリスト、の3つを組にしたもの
+
+---
+4. `TiGlobal` はスーパーコンビネータ名とその定義が納められているヒープ上のアドレスの連想リスト
+```haskell
+type TiGlobals = Assoc Name Addr
+type Assoc a b = [(a, b)]
+```
+
+---
+5. `TiStats` 実行時性能統計のためのデータ収集用、ひとまずステップカウント
+```haskell
+type TiStats = Int
+
+tiStatInitial :: TiStats
+tiStatInitial = 0
+
+tiStatIncSteps :: TiStats -> TiStats
+tiStatIncSteps s = s + 1
+tiStatGetSteps :: TiStats -> Int
+tiStatGetSteps s = s
+
+applyToStats :: (TiStats -> TiStats) -> TiState -> TiState
+applyToStats f (stack, dump, heap, scDefs, stats)
+  = (stack, dump, heap, scDefs, f stats)
+```
+
+---
+`compile`
+```haskell
+compile program
+  = (initialStack, initalTiDump, initialHeap, globals, tiStatInitial)
+    where
+      scDefs = program ++ preludeDefs ++ extraPreludeDefs
+      (initialHeap, globals) = buildInitialHeap scDefs
+      initialStack = [addressOfMain]
+      addressOfMain = aLookup globals "main" (eerror "main is not defined")
+
+extraPreludeDefs :: CoreProgram
+extraPreludeDefs = []
+```
+
+---
+`buildInitialHeap` プログラムから`NSupercomb`ノードを含むヒープと、スーパーコンビネータ名とヒープ上のアドレスの対応を示す連想リストを構成する。
+
+```haskell
+buildInitialHeap :: [CoreScDefn] -> (TiHeap, TiGlobals)
+buildInitialHeap scDefs = mapAccumL allocateSc hInitial scDefs
+
+allocateSc :: TiHeap -> CoreScDefn -> (TiHeap, (Name, Addr))
+allocateSc heap scDefn = case scDefn of
+  (name, args, body) -> (heap', (name, addr))
+    where
+      (heap', addr) = hAlloc heap (NSupercomb name args body)
+```
+
+---
+### 2.3.5 評価器
+
+```haskell
+eval state = state : restStates
+  where
+    restStates
+      | tiFinal state = []
+      | otherwise     = eval nextState
+    nextState = doAdmin (step state)
+
+doAdmin :: TiState -> TiState
+doAdmin state = applyToStats tiStatIncSteps state
+```
+
+---
+最終状態の判定
+- 計算はスタックに単一の数またはデータオブジェクトが含まれる状態になったときにのみ停止する
+
+```haskell
+tiFinal :: TiState -> Bool
+tiFinal state = case state of
+  ([soleAddr], _, heap, _, _) -> isDataNode (hLookup heap soleAddr)
+  ([], _, _, _, _)            -> error "Empty stack!"
+  _                           -> False
+
+isDataNode :: Node -> Bool
+isDataNode node = case node of
+  NNum _ -> True
+  _      -> False
+```
+
+---
+`step` ある状態から1つ次の状態への遷移
+```haskell
+step :: TiState -> TiState
+step state = case state of
+  (stack, dump, heap, globals, stats) -> dispatch (hLookup heap (head stack))
+  where
+    dispatch (NNum n)                  = numStep state n
+    dispatch (NAp a1 a2)               = apStep  state a1 a2
+    dispatch (NSupercomb sc args body) = scStep  state sc args body
+```
+
+---
+`NNum`ノードと`NAp`ノードはやさしい
+
+```haskell
+numStep :: TiState -> Int -> TiState
+numStep state n = error "Number applied as a function"
+
+apStep :: TiState -> Addr -> Addr -> TiState
+apStep state a1 a2 = case state of
+  (stack, dump, heap, globals, stats) -> (a1:stack, dump, heap, globals, stats)
+```
+
+---
+スーパーコンビネータの適用： 
+1. 本体を具体化、引数名をスタックにあるアドレスと結びつける（規則2.2）
+2. 簡約可能項のルートを含む引数をスタックから除去、簡約結果をスタックにプッシュ
+
+（Mark 1 では更新は行わない）
+```haskell
+scStep :: TiState -> Name -> [Name] -> CoreExpr -> TiState
+scStep state scName argNames body = case state of
+  (stack, dump, heap, globals, stats)
+    -> if length stack < length argNames + 1
+       then error "Too few argments given"
+       else (stack', dump, heap', globals, stats)
+    where
+      stack' = resultAddr : drop (length argNames + 1) stack
+      (heap', resultAddr) = instantiate body heap env
+      env = argBindings ++ globals
+      argBindings = zip argNames (getargs heap stack)
+```
+
+---
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
