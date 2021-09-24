@@ -534,23 +534,115 @@ scStep state scName argNames body = case state of
 ```
 
 ---
+`getargs` スタックにある引数名に対応するヒープ上の実引数ノードのアドレスを取得する
+```haskell
+getargs :: TiHeap -> TiStack -> [Addr]
+getargs heap stack = case stack of
+  sc:stack' -> map getarg stack'
+    where
+      getarg addr = arg
+        where
+          NAp fun arg = hLookup heap addr
+  []       -> error "Empty stack"
+```
 
+---
+`instantiate`
+```haskell
+instantiate :: CoreExpr         -- Body of suprercombinator
+            -> TiHeap           -- Heap before instatiation
+            -> Assoc Name Addr  -- Association of names to address
+            -> (TiHeap, Addr)   -- Heap after instatiation, and address of root of instance
+instantiate expr heap env = case expr of
+  ENum n               -> hAlloc heap  (NNum n)
+  EAp e1 e2            -> hAlloc heap2 (NAp a1 a2)
+    where
+      (heap1, a1) = instantiate e1 heap  env
+      (heap2, a2) = instantiate e2 heap1 env 
+  EVar v               -> (heap, aLookup env v (error ("Undefined name " ++ show v)))
+  EConstr tag arity    -> instantiateConstr tag arity heap env
+  ELet isrec defs body -> instantiateLet isrec defs body heap env
+  ECase e alts         -> error "Can't instantiate case exprs"
+  ELam vs e            -> error "Can't instantiate lambda abstractions"
+```
 
+---
+### 2.3.6 結果の整形
+`showResults`
+```haskell
+showResults :: [TiState] -> String
+showResults states
+  = iDisplay (iConcat [ iLayn (map showState states)
+                      , showStats (last states)
+                      ])
+```
+`showState`
+```haskell
+showState :: TiState -> IseqRep
+showState (stack, dump, heap, globals, stats)
+  = iConcat [ showStack heap stack, iNewline ]
+```
 
+---
+`showStack`
+```haskell
+showStack :: TiHeap -> TiStack -> IseqRep
+showStack heap stack
+  = iConcat
+    [ iStr "Stack ["
+    , iIndent (iInterleave iNewline (map showStackItem stack))
+    , iStr " ]"
+    ]
+    where
+      showStackItem addr
+        = iConcat [ showFWAddr addr, iStr ": "
+                  , showStkNode heap (hLookup heap addr)
+                  ]
+```
 
+---
+`showStkNode`
+```haskell
+showStkNode :: TiHeap -> Node -> IseqRep
+showStkNode heap (NAp funAddr argAddr)
+  = iConcat [ iStr "NAp ", showFWAddr funAddr
+            , iStr " ", showFWAddr argAddr, iStr " ("
+            , showNode (hLookup heap argAddr), iStr ")"
+            ]
+showStkNode heap node = showNode node
+```
 
+---
+`showNode`
+```haskell
+showNode :: Node -> IseqRep
+showNode node = case node of
+  NAp a1 a2 -> iConcat [ iStr "NAp ", showAddr a1
+                       , iStr " ",    showAddr a2
+                       ]
+  NSupercomb name args body
+            -> iStr ("NSupercomb " ++ name)
+  NNum n    -> iStr "NNum " `iAppend` iNum n
+```
 
+---
+`showAddr`
+```haskell
+showAddr :: Addr -> IseqRep
+showAddr addr = iStr (showaddr addr)
 
+showFWAddr :: Addr -> IseqRep
+showFWAddr addr = iStr (space (4 - length str) ++ str)
+  where
+    str = show addr
+```
 
-
-
-
-
-
-
-
-
-
-
-
-
+---
+`showStats`
+```haskell
+showStats :: TiState -> IseqRep
+showStats (stack, dump, heap, globals, stats)
+  = iConcat [ iNewline, iNewline, iStr "Total number of steps = "
+            , iNum (tiStatGetSteps stats)
+            ]
+```

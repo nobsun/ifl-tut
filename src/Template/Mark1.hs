@@ -205,42 +205,6 @@ showStats (stack, dump, heap, globals, stats)
             , iNum (tiStatGetSteps stats)
             ]
 
--- showHeapStats :: TiStats -> IseqRep
--- showHeapStats (a, u, f)
---   = iConcat [ iNewline, iStr "Heap allocation count = "
---             , iNum a
---             , iNewline, iStr "Heap update count     = "
---             , iNum u
---             , iNewline, iStr "Heap free count       = "
---             , iNum f
---             ]
-
--- showHeap :: TiHeap -> IseqRep
--- showHeap heap@(_, _, useds)
---   = iConcat
---     [ iStr "Heap  ["
---     , iIndent (iInterleave iNewline (map showHeapItem useds))
---     , iStr " ]"
---     ]
---     where
---       showHeapItem (addr, node)
---         = iConcat [ showFWAddr addr, iStr ": "
---                   , showNode node
---                   ]
-      
--- showStack' :: TiHeap -> TiStack -> IseqRep
--- showStack' heap stack
---   = iConcat
---     [ iStr "Stk ["
---     , iIndent (iInterleave iNewline (map showStackItem stack))
---     , iStr " ]"
---     ]
---     where
---       showStackItem addr
---         = iConcat [ showFWAddr addr, iStr ": "
---                   , showStkNode heap (hLookup heap addr)
---                   ]
-
 -- Test
 
 testProg0, testProg1, testProg2 :: String
