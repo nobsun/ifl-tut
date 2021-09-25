@@ -990,9 +990,9 @@ $$
 & \mid & \verb|\| \; \mathit{var}_1\;\dots\;\mathit{var}_n \; \verb|.| \; \mathit{expr} & (n \ge 1)\\
 & \mid & \mathit{aexpr}_1\;\dots\;\mathit{aexpr} & (n \ge 1) \\
 & & & \\
-\mathit{expr1} & \rightarrow & \mathit{expr2}\;\texttt{|}\;\mathit{expr1} & \\
+\mathit{expr1} & \rightarrow & \mathit{expr2}\;\texttt{||}\;\mathit{expr1} & \\
 & \mid & \mathit{expr2} & \\
-\mathit{expr2} & \rightarrow & \mathit{expr3}\;\texttt{\&}\;\mathit{expr2} & \\
+\mathit{expr2} & \rightarrow & \mathit{expr3}\;\texttt{\&\&}\;\mathit{expr2} & \\
 & \mid & \mathit{expr3} & \\
 \mathit{expr3} & \rightarrow & \mathit{expr4}\;\mathit{relop}\;\mathit{expr4} & \\
 & \mid & \mathit{expr4} & \\
@@ -1012,7 +1012,7 @@ $$
 $$
 \begin{array}{lcl}
 \mathit{expr1} & \rightarrow & \mathit{expr2} \;\mathit{expr1c} \\
-\mathit{expr1c} & \rightarrow & \texttt{|} \; \mathit{expr1}\\
+\mathit{expr1c} & \rightarrow & \texttt{||} \; \mathit{expr1}\\
 & \mid & \epsilon
 \end{array}
 $$
@@ -1023,14 +1023,14 @@ $$
 data PartialExpr = NoOp | FoundOp Name CoreExpr
 
 pExpr1c :: Parser PartialExpr
-pExpr1c = pThen FoundOp (pLit "|") pExpr1 `pAlt` pEmpty NoOp
+pExpr1c = pThen FoundOp (pLit "||") pExpr1 `pAlt` pEmpty NoOp
 
 pExpr1 :: Parser CoreExpr
 pExpr1 = pThen assembleOp pExpr2 pExpr1c
 
 assembleOp :: CoreExpr -> PartialExpr -> CoreExpr
 assembleOp e1 NoOp = e1
-assembleOp e1 (BoundOp op e2) = EAp (EAp (EVar op) e1) e2
+assembleOp e1 (FoundOp op e2) = EAp (EAp (EVar op) e1) e2
 ```
 
 ---
