@@ -523,9 +523,7 @@ apStep state a1 a2 = case state of
 scStep :: TiState -> Name -> [Name] -> CoreExpr -> TiState
 scStep state scName argNames body = case state of
   (stack, dump, heap, globals, stats)
-    -> if length stack < length argNames + 1
-       then error "Too few argments given"
-       else (stack', dump, heap', globals, stats)
+    -> (stack', dump, heap', globals, stats)
     where
       stack' = resultAddr : drop (length argNames + 1) stack
       (heap', resultAddr) = instantiate body heap env
@@ -646,3 +644,88 @@ showStats (stack, dump, heap, globals, stats)
             , iNum (tiStatGetSteps stats)
             ]
 ```
+
+---
+#### 練習問題 2.4
+ここまでの実装をテストせよ
+```haskell
+testProg0, testProg1, testProg2 :: String
+testProg0 = "main = S K K 3"
+testProg1 = "main = S K K" -- wrong (not saturated)
+testProg2 = "id = S K K ;\n\
+            \main = twice twice twice id 3"
+
+test :: String -> IO ()
+test = putStrLn . showResults . eval . compile . parse
+```
+
+---
+#### 練習問題 2.5
+`showState`を改変してヒープの内容をすべて表示するようにせよ。
+```haskell
+showState :: TiState -> IseqRep
+showState (stack, dump, heap, globals, stats)
+  = iConcat [ showStack heap stack, iNewline
+            , showHeap heap, iNewline
+            ]
+
+showHeap :: TiHeap -> IseqRep
+showHeap heap = case heap of
+  (_,_,contents) -> iConcat
+    [ iStr "Heap  ["
+    , iIndent (iInterleave iNewline (map showHeapItem contents))
+    , iStr " ]"
+    ]
+  where
+    showHeapItem (addr, node)
+      = iConcat [ showFWAddr addr, iStr ": "
+                , showNode node
+                ]
+```
+
+---
+#### 練習問題 2.6
+`scStep` が引数が充満でない場合に適切なエラーを表示するようにせよ。
+```haskell
+scStep :: TiState -> Name -> [Name] -> CoreExpr -> TiState
+scStep state scName argNames body = case state of
+  (stack, dump, heap, globals, stats)
+    | length stack < length argNames + 1
+      -> error "Too few argments given"
+    | otherwise
+      -> (stack', dump, heap', globals, stats)
+    where
+      stack' = resultAddr : drop (length argNames + 1) stack
+      (heap', resultAddr) = instantiate body heap env
+      env = argBindings ++ globals
+      argBindings = zip argNames (getargs heap stack)
+```
+
+---
+#### 練習問題 2.7
+より多くの実行時情報を収集するようにせよ。
+- プリミティブの簡約とスーパーコンビネータの簡約を分けて計数
+- ヒープ操作（とくにアロケーション）の回数
+- スタックの最大深さ
+
+---
+#### 練習問題 2.8
+`instantiate`に渡す環境`env`は、
+```
+env = argBindings ++ globals
+```
+と定義されているが、これを
+```
+env = globals ++ argBindings
+```
+とするとどうなるか
+
+---
+#### 練習問題 2.9
+`eval` の定義を
+```
+eval state
+  | tiFinal state = [state]
+  | otherwise     = state : eval nextState
+```
+としたほうが、わかりやすそうにみえるが、この定義には欠点がある。それはどのようなものか。

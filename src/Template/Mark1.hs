@@ -110,8 +110,13 @@ apStep state a1 a2 = case state of
 
 scStep :: TiState -> Name -> [Name] -> CoreExpr -> TiState
 scStep state scName argNames body = case state of
-  (stack, dump, heap, globals, stats) -> if length stack < length argNames + 1 then error "Too few argments given"
-                                         else (stack', dump, heap', globals, stats)
+  (stack, dump, heap, globals, stats)
+  {- -}
+    | length stack < length argNames + 1
+      -> error "Too few argments given"
+  -- -}
+    | otherwise
+      -> (stack', dump, heap', globals, stats)
     where
       stack' = resultAddr : drop (length argNames + 1) stack
       (heap', resultAddr) = instantiate body heap env
@@ -159,7 +164,10 @@ showResults states
 
 showState :: TiState -> IseqRep
 showState (stack, dump, heap, globals, stats)
-  = iConcat [ showStack heap stack, iNewline ]
+  = iConcat $ [ showStack heap stack, iNewline ]
+  {- --
+  ++ [ showHeap heap, iNewline ]
+  -- -}
 
 showStack :: TiHeap -> TiStack -> IseqRep
 showStack heap stack
@@ -199,6 +207,19 @@ showFWAddr addr = iStr (space (4 - length str) ++ str)
   where
     str = show addr
 
+showHeap :: TiHeap -> IseqRep
+showHeap heap = case heap of
+  (_,_,contents) -> iConcat
+    [ iStr "Heap  ["
+    , iIndent (iInterleave iNewline (map showHeapItem contents))
+    , iStr " ]"
+    ]
+  where
+    showHeapItem (addr, node)
+      = iConcat [ showFWAddr addr, iStr ": "
+                , showNode node
+                ]
+
 showStats :: TiState -> IseqRep
 showStats (stack, dump, heap, globals, stats)
   = iConcat [ iNewline, iNewline, iStr "Total number of steps = "
@@ -210,8 +231,8 @@ showStats (stack, dump, heap, globals, stats)
 testProg0, testProg1, testProg2 :: String
 testProg0 = "main = S K K 3"
 testProg1 = "main = S K K" -- wrong (not saturated)
-testProg2 = "id x = x;\n\
+testProg2 = "id = S K K ;\n\
             \main = twice twice twice id 3"
 
-test :: Int -> String -> String
-test steps = showResults . take steps . eval . compile . parse
+test :: String -> IO ()
+test = putStrLn . showResults . eval . compile . parse
