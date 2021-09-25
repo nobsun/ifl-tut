@@ -437,7 +437,7 @@ compile program
       scDefs = program ++ preludeDefs ++ extraPreludeDefs
       (initialHeap, globals) = buildInitialHeap scDefs
       initialStack = [addressOfMain]
-      addressOfMain = aLookup globals "main" (eerror "main is not defined")
+      addressOfMain = aLookup globals "main" (error "main is not defined")
 
 extraPreludeDefs :: CoreProgram
 extraPreludeDefs = []

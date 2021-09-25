@@ -4,6 +4,7 @@ import Data.List
 
 import Utils
 import Heap
+import Stack
 import Iseq
 import Language
 
@@ -16,7 +17,7 @@ run = showResults . eval . compile . parse
 
 type TiState = (TiStack, TiDump, TiHeap, TiGlobals, TiStats)
 
-type TiStack = [Addr]
+type TiStack = Stack Addr
 
 data TiDump = DummyTiDump deriving Show
 
@@ -31,16 +32,36 @@ data Node = NAp Addr Addr                   -- ^ Application
 
 type TiGlobals = Assoc Name Addr
 
-type TiStats = Int
+data TiStats = TiStats
+  { totalSteps_ :: Int
+  , scSteps_    :: Int
+  , primSteps_  :: Int
+  }
 
 tiStatInitial :: TiStats
-tiStatInitial = 0
+tiStatInitial = TiStats 
+  { totalSteps_ = 0
+  , scSteps_    = 0
+  , primSteps_  = 0
+  }
 
-tiStatIncSteps :: TiStats -> TiStats
-tiStatIncSteps s = s + 1
+tiStatIncTotalSteps :: TiStats -> TiStats
+tiStatIncTotalSteps stats = stats { totalSteps_ = succ (totalSteps_ stats) }
 
-tiStatGetSteps :: TiStats -> Int
-tiStatGetSteps s = s
+tiStatGetTotalSteps :: TiStats -> Int
+tiStatGetTotalSteps = totalSteps_
+
+tiStatIncScSteps :: TiStats -> TiStats
+tiStatIncScSteps stats = stats { scSteps_ = succ (scSteps_ stats) }
+
+tiStatGetScSteps :: TiStats -> Int
+tiStatGetScSteps = scSteps_
+
+tiStatIncPrimSteps :: TiStats -> TiStats
+tiStatIncPrimSteps stats = stats { primSteps_ = succ (primSteps_ stats) }
+
+tiStatGetPrimSteps :: TiStats -> Int
+tiStatGetPrimSteps = primSteps_
 
 applyToStats :: (TiStats -> TiStats) -> TiState -> TiState
 applyToStats f state = case state of
@@ -54,14 +75,14 @@ compile prog
     where
       scDefs = prog ++ preludeDefs ++ extraPreludeDefs
       (initialHeap, globals) = buildInitialHeap scDefs
-      initialStack = [addressOfMain]
+      initialStack = push addressOfMain emptyStack
       addressOfMain = aLookup globals "main" (error "main is not defined")
 
 extraPreludeDefs :: CoreProgram
 extraPreludeDefs = []
 
 buildInitialHeap :: [CoreScDefn] -> (TiHeap, TiGlobals)
-buildInitialHeap scDefs = mapAccumL allocateSc hInitial scDefs
+buildInitialHeap = mapAccumL allocateSc hInitial
 
 allocateSc :: TiHeap -> CoreScDefn -> (TiHeap, (Name, Addr))
 allocateSc heap scDefn = case scDefn of
@@ -77,16 +98,23 @@ eval state = state : restStates
     restStates
       | tiFinal state = []
       | otherwise     = eval nextState
-    nextState = doAdmin (step state)
+    nextState = doAdminTotalSteps (step state)
 
-doAdmin :: TiState -> TiState
-doAdmin state = applyToStats tiStatIncSteps state
+doAdminTotalSteps :: TiState -> TiState
+doAdminTotalSteps = applyToStats tiStatIncTotalSteps
+
+doAdminScSteps :: TiState -> TiState
+doAdminScSteps = applyToStats tiStatIncScSteps
+
+doAdminPrimSteps :: TiState -> TiState
+doAdminPrimSteps = applyToStats tiStatIncPrimSteps
+
 
 tiFinal :: TiState -> Bool
 tiFinal state = case state of
-  ([soleAddr], _, heap, _, _) -> isDataNode (hLookup heap soleAddr)
-  ([], _, _, _, _)            -> error "Empty stack!"
-  _                           -> False
+  (Stack _ _ [soleAddr], _, heap, _, _) -> isDataNode (hLookup heap soleAddr)
+  (Stack _ _ [], _, _, _, _)            -> error "Empty stack!"
+  _                                     -> False
 
 isDataNode :: Node -> Bool
 isDataNode node = case node of
@@ -95,43 +123,39 @@ isDataNode node = case node of
 
 step :: TiState -> TiState
 step state = case state of
-  (stack, dump, heap, globals, stats) -> dispatch (hLookup heap (head stack))
+  (stack, dump, heap, globals, stats) -> dispatch (hLookup heap (fst (pop stack)))
   where
     dispatch (NNum n)                  = numStep state n
     dispatch (NAp a1 a2)               = apStep  state a1 a2
-    dispatch (NSupercomb sc args body) = scStep  state sc args body
+    dispatch (NSupercomb sc args body) = doAdminScSteps (scStep  state sc args body)
 
 numStep :: TiState -> Int -> TiState
 numStep state n = error "Number applied as a function"
 
 apStep :: TiState -> Addr -> Addr -> TiState
 apStep state a1 a2 = case state of
-  (stack, dump, heap, globals, stats) -> (a1:stack, dump, heap, globals, stats)
+  (stack, dump, heap, globals, stats) -> (push a1 stack, dump, heap, globals, stats)
 
 scStep :: TiState -> Name -> [Name] -> CoreExpr -> TiState
 scStep state scName argNames body = case state of
   (stack, dump, heap, globals, stats)
-  {- -}
-    | length stack < length argNames + 1
+    | depth_ stack < length argNames + 1
       -> error "Too few argments given"
-  -- -}
     | otherwise
       -> (stack', dump, heap', globals, stats)
     where
-      stack' = resultAddr : drop (length argNames + 1) stack
+      stack' = push resultAddr (discard (length argNames + 1) stack)
       (heap', resultAddr) = instantiate body heap env
       env = argBindings ++ globals
       argBindings = zip argNames (getargs heap stack)
 
 getargs :: TiHeap -> TiStack -> [Addr]
-getargs heap stack = case stack of
-  sc:stack' -> map getarg stack'
+getargs heap stack = case pop stack of
+  (sc, stack') -> map getarg (stack_ stack')
     where
       getarg addr = arg
         where
           NAp fun arg = hLookup heap addr
-  []       -> error "Empty stack"
-
 
 instantiate :: CoreExpr         -- Body of suprercombinator
             -> TiHeap           -- Heap before instatiation
@@ -149,8 +173,10 @@ instantiate expr heap env = case expr of
   ECase e alts         -> error "Can't instantiate case exprs"
   ELam vs e            -> error "Can't instantiate lambda abstractions"
 
+instantiateConstr :: Tag -> Arity -> TiHeap -> Assoc Name Addr -> (TiHeap, Addr)
 instantiateConstr tag arity heap env
   = error "Can't instantiate constructors yet"
+instantiateLet :: IsRec -> Assoc Name CoreExpr -> CoreExpr -> TiHeap -> Assoc Name Addr -> (TiHeap, Addr)
 instantiateLet isrec defs body heap env
   = error "Can't instantiate let(rec)s yet"
 
@@ -164,16 +190,15 @@ showResults states
 
 showState :: TiState -> IseqRep
 showState (stack, dump, heap, globals, stats)
-  = iConcat $ [ showStack heap stack, iNewline ]
-  {- --
-  ++ [ showHeap heap, iNewline ]
-  -- -}
+  = iConcat [ showStack heap stack, iNewline
+            , showHeap heap, iNewline
+            ]
 
 showStack :: TiHeap -> TiStack -> IseqRep
 showStack heap stack
   = iConcat
     [ iStr "Stack ["
-    , iIndent (iInterleave iNewline (map showStackItem stack))
+    , iIndent (iInterleave iNewline (map showStackItem (stack_ stack)))
     , iStr " ]"
     ]
     where
@@ -208,8 +233,8 @@ showFWAddr addr = iStr (space (4 - length str) ++ str)
     str = show addr
 
 showHeap :: TiHeap -> IseqRep
-showHeap heap = case heap of
-  (_,_,contents) -> iConcat
+showHeap heap = case contents_ heap of
+  contents -> iConcat
     [ iStr "Heap  ["
     , iIndent (iInterleave iNewline (map showHeapItem contents))
     , iStr " ]"
@@ -222,11 +247,20 @@ showHeap heap = case heap of
 
 showStats :: TiState -> IseqRep
 showStats (stack, dump, heap, globals, stats)
-  = iConcat [ iNewline, iNewline, iStr "Total number of steps = "
-            , iNum (tiStatGetSteps stats)
+  = iConcat [ iNewline
+            , iNewline, iStr "Total number of steps = "
+            , iNum (tiStatGetTotalSteps stats)
+            , iNewline, iStr "             Sc steps = "
+            , iNum (tiStatGetScSteps stats)
+            , iNewline, iStr "           Prim steps = "
+            , iNum (tiStatGetPrimSteps stats)
+            , iNewline, iStr "     Allocation count = "
+            , iNum (allocs_ heap)
+            , iNewline, iStr "   Max depth of stack = "
+            , iNum (maxDepth_ stack)
             ]
 
--- Test
+-- Test(Stack a)
 
 testProg0, testProg1, testProg2 :: String
 testProg0 = "main = S K K 3"
