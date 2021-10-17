@@ -729,3 +729,6 @@ eval state
   | otherwise     = state : eval nextState
 ```
 としたほうが、わかりやすそうにみえるが、この定義には欠点がある。それはどのようなものか。
+
+---
+
