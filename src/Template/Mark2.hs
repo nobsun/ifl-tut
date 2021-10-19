@@ -8,7 +8,7 @@ import Stack
 import Iseq
 import Language
 
--- Mark 1 : A minimal template instatioation graph reducer
+-- Mark 2 : A minimal template instatioation graph reducer
 
 --- Structure of the implementation
 
@@ -190,9 +190,6 @@ instantiateLet isrec defs body heap env
             where
                 (heap1, addr) =instantiate rhs heap rhsEnv
 
-
-
-
 -- Formatting the results
 
 showResults :: [TiState] -> String
@@ -222,10 +219,13 @@ showStack heap stack
 
 showStkNode :: TiHeap -> Node -> IseqRep
 showStkNode heap (NAp funAddr argAddr)
-  = iConcat [ iStr "NAp ", showFWAddr funAddr
-            , iStr " ", showFWAddr argAddr, iStr " ("
-            , showNode (hLookup heap argAddr), iStr ")"
-            ]
+  = iConcat [ iStr "NAp ", showFWAddr f$$
+\begin{array}{rrrcll}
+& a_0 : a_1 : \dots : a_n : s & d && h[a_0 : \texttt{NSupercomb}\;[x_1,\dots,x_n]\;\mathit{body}] & f \\
+\Longrightarrow & a_r : s & d && h'[a_n : \texttt{NInd}\;a_r] & f \\
+\end{array}
+$$
+
 showStkNode heap node = showNode node
 
 showNode :: Node -> IseqRep
@@ -280,6 +280,23 @@ testProg0 = "main = S K K 3"
 testProg1 = "main = S K K" -- wrong (not saturated)
 testProg2 = "id = S K K ;\n\
             \main = twice twice twice id 3"
+
+testProg3 :: String
+testProg3
+  = unlines
+  [ "pair x y f = f x y ;"
+  , "fst p = p K ;"
+  , "snd p = p K1 ;"
+  , "f x y = letrec"
+  , "            a = pair x b ;"
+  , "            b = pair y a"
+  , "        in"
+  , "        fst (snd (snd (snd a))) ;"
+  , "main = f 3 4"
+  ]
+
+testProg4 :: String
+testProg4 = "main = letrec f = f x in f"
 
 test :: String -> IO ()
 test = putStrLn . showResults . eval . compile . parse
