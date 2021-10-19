@@ -8,7 +8,7 @@ import Stack
 import Iseq
 import Language
 
--- Mark 2 : A minimal template instatioation graph reducer
+-- Mark 2 : let(red) expression
 
 --- Structure of the implementation
 
@@ -219,13 +219,10 @@ showStack heap stack
 
 showStkNode :: TiHeap -> Node -> IseqRep
 showStkNode heap (NAp funAddr argAddr)
-  = iConcat [ iStr "NAp ", showFWAddr f$$
-\begin{array}{rrrcll}
-& a_0 : a_1 : \dots : a_n : s & d && h[a_0 : \texttt{NSupercomb}\;[x_1,\dots,x_n]\;\mathit{body}] & f \\
-\Longrightarrow & a_r : s & d && h'[a_n : \texttt{NInd}\;a_r] & f \\
-\end{array}
-$$
-
+  = iConcat [ iStr "NAp ", showFWAddr funAddr
+            , iStr " ", showFWAddr argAddr, iStr " ("
+            , showNode (hLookup heap argAddr), iStr ")"
+            ]
 showStkNode heap node = showNode node
 
 showNode :: Node -> IseqRep
@@ -300,3 +297,4 @@ testProg4 = "main = letrec f = f x in f"
 
 test :: String -> IO ()
 test = putStrLn . showResults . eval . compile . parse
+

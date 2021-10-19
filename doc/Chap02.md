@@ -731,4 +731,60 @@ eval state
 としたほうが、わかりやすそうにみえるが、この定義には欠点がある。それはどのようなものか。
 
 ---
+## Mark 2 : let(rec) 式
+`instantiate` を拡張して、`ELet`項に対応する
 
+---
+#### 練習問題 2.10
+`instantiate`の定義に非再帰的`let`式に対応する等式を加えよ。
+
+`ELet nonRecursive defs body` を具体化する
+1. `defs`の各定義の右辺を具体化する
+2. `defs`の各定義の左辺（名前）と新たに具体化されたものとを結びつけて環境を拡張する
+3. 拡張された環境と式本体を渡して`instantiate`を呼ぶ
+
+---
+#### 練習問題 2.11
+再帰的`let`に`instantiate`が対応できるようにせよ
+
+（ヒント）前問のステップ 1 で `instantiate` に既存の環境を渡していたが、代りにステップ 2 で拡張した環境を渡すようにする
+
+---
+```haskell
+instantiateLet :: IsRec -> Assoc Name CoreExpr -> CoreExpr -> TiHeap -> Assoc Name Addr -> (TiHeap, Addr)
+instantiateLet isrec defs body heap env
+  = instantiate body heap' env'
+    where
+        (heap', extraBindings) = mapAccumL instantiateRhs heap defs
+        env' = extraBindings ++ env
+        rhsEnv | isrec     = env'
+               | otherwise = env
+        instantiateRhs heap (name, rhs)
+          = (heap1, (name, addr))
+            where
+                (heap1, addr) =instantiate rhs heap rhsEnv
+```
+
+---
+テストプログラム
+```
+pair x y f = f x y ;
+fst p = p K ;
+snd p = p K1 ;
+f x y = letrec
+            a = pair x b ;
+            b = pair y a
+        in
+        fst (snd (snd (snd a))) ;
+main = f 3 4
+```
+結果は`4`である
+
+---
+#### 練習問題 2.12
+以下のプログラムを実行するとどうなるか？
+
+```
+main = letrec f = f x in f
+```
+Haskellのような強い型付けを行う言語でも同じ問題が起きるか？
