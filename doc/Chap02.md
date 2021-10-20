@@ -788,3 +788,98 @@ main = f 3 4
 main = letrec f = f x in f
 ```
 Haskellのような強い型付けを行う言語でも同じ問題が起きるか？
+
+---
+## Mark 3: 更新の追加
+
+---
+
+遷移規則(2.2)の代わりに(2.3)を使う
+
+(2.3)
+$$
+\begin{array}{rrrcll}
+& a_0 : a_1 : \dots : a_n : s & d && h[a_0 : \texttt{NSupercomb}\;[x_1,\dots,x_n]\;\mathit{body}] & f \\
+\Longrightarrow & a_r : s & d && h'[a_n : \texttt{NInd}\;a_r] & f \\
+\end{array}
+$$
+ここで、$(h',a_r) = \mathit{instantiate}\;\mathit{body}\;h\;f[x_1 \mapsto a_1,\dots,x_n \mapsto a_n]$である。$\mathit{instantiate}$が返す結果のルートへの間接参照$a_r$で、ノード$a_n$を上書きする。
+
+---
+スパインをアンワインドするときに間接参照に出会す可能性があるので、その場合に対応する規則(2.4)を追加する。
+
+(2.4)
+$$
+\begin{array}{rrrcll}
+& a : s & d && h[a : \texttt{NInd}\;a_1] & f \\
+\Longrightarrow & a_1 : s & d && h & f \\
+\end{array}
+$$
+
+---
+新しい規則を実装するには以下を行う
+
+1. `Node`型に新しいデータ構成子`NInd`を追加。それに伴い`showNode`もこれに対応する必要がある
+```haskell
+data Node = NAp Addr Addr                    -- Application
+          | NSupercomb Name [Name] CoreExpr  -- Supercombinator
+          | NNum Int                         -- Number
+          | NInd Addr                        -- Indirection
+```
+
+2. 規則(2.3)対応：リデックスのルートを`hUpdate`をつかって、結果の間接参照に置き換えるように、`scStep`を変更する
+3. 規則(2.4)対応：`dispatch`の定義に間接参照を扱う等式を追加
+
+
+---
+#### 練習問題 2.13
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
