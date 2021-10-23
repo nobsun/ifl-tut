@@ -28,6 +28,7 @@ type TiHeap = Heap Node
 data Node = NAp Addr Addr                   -- ^ Application
           | NSupercomb Name [Name] CoreExpr -- ^ Supercombinator
           | NNum Int                        -- ^ Number
+          | NInd Addr                       -- ^ Indirection
           deriving Show
 
 type TiGlobals = Assoc Name Addr
@@ -128,6 +129,7 @@ step state = case state of
     dispatch (NNum n)                  = numStep state n
     dispatch (NAp a1 a2)               = apStep  state a1 a2
     dispatch (NSupercomb sc args body) = doAdminScSteps (scStep  state sc args body)
+    dispatch (NInd a)                  = indStep state a
 
 numStep :: TiState -> Int -> TiState
 numStep state n = error "Number applied as a function"
@@ -136,18 +138,33 @@ apStep :: TiState -> Addr -> Addr -> TiState
 apStep state a1 a2 = case state of
   (stack, dump, heap, globals, stats) -> (push a1 stack, dump, heap, globals, stats)
 
+
 scStep :: TiState -> Name -> [Name] -> CoreExpr -> TiState
 scStep state scName argNames body = case state of
   (stack, dump, heap, globals, stats)
-    | depth_ stack < length argNames + 1
-      -> error "Too few argments given"
-    | otherwise
-      -> (stack', dump, heap', globals, stats)
+    | depth_ stack < argsLen + 1 -> error "Too few argments ginven"
+    | otherwise                  -> (stack', dump, heap', globals, stats)
     where
-      stack' = push resultAddr (discard (length argNames + 1) stack)
+      argsLen   = length argNames
+      stack'    = discard argsLen stack
+      (root, _) = pop stack'
+      heap'     = instantiateAndUpdate body root heap (bindings ++ globals)
+      bindings  = zip argNames (getargs heap stack)
+
+{- not optimized
+scStep state scName argNames body = case state of
+  (stack, dump, heap, globals, stats)
+    | depth_ stack < argsLen + 1 -> error "Too few argments given"
+    | otherwise                  -> (stack'', dump, heap'', globals, stats)
+    where
+      argsLen = length argNames
+      (an, stack') = pop (discard argsLen stack)
+      stack'' = push resultAddr stack'
       (heap', resultAddr) = instantiate body heap env
+      heap'' = hUpdate heap' an (NInd resultAddr)
       env = argBindings ++ globals
       argBindings = zip argNames (getargs heap stack)
+-}
 
 getargs :: TiHeap -> TiStack -> [Addr]
 getargs heap stack = case pop stack of
@@ -156,6 +173,11 @@ getargs heap stack = case pop stack of
       getarg addr = arg
         where
           NAp fun arg = hLookup heap addr
+
+indStep :: TiState -> Addr -> TiState
+indStep state a = case state of
+  (stack, dump, heap, globals, stats)
+    -> (push a (discard 1 stack), dump, heap, globals, stats)
 
 instantiate :: CoreExpr         -- Body of suprercombinator
             -> TiHeap           -- Heap before instatiation
@@ -189,6 +211,36 @@ instantiateLet isrec defs body heap env
           = (heap1, (name, addr))
             where
                 (heap1, addr) =instantiate rhs heap rhsEnv
+
+instantiateAndUpdate
+  :: CoreExpr         -- ^ Body of supercombinator
+  -> Addr             -- ^ Address of node to update
+  -> TiHeap           -- ^ Heap before instatiation
+  -> Assoc Name Addr  -- ^ Associate parameters to addresses
+  -> TiHeap           -- ^ Heap after instantiation
+instantiateAndUpdate expr updAddr heap env = case expr of
+  ENum n    -> hUpdate heap updAddr (NNum n)
+  EAp e1 e2 -> hUpdate heap'' updAddr (NAp a1 a2)
+    where
+      (heap',  a1) = instantiate e1 heap  env
+      (heap'', a2) = instantiate e2 heap' env
+  EVar v    -> hUpdate heap updAddr (NInd varAddr)
+    where
+      varAddr = aLookup env v (error ("Undefined name " ++ show v))
+  ELet isrec defs body
+            -> instantiateAndUpdate body updAddr heap' env'
+    where
+      (heap', extraBindings) = mapAccumL instantiateRhs heap defs
+      env' = extraBindings ++ env
+      rhsEnv | isrec     = env'
+             | otherwise = env
+      instantiateRhs heap (name, rhs)
+        = (heap', (name, addr))
+          where
+            (heap', addr) = instantiate rhs heap rhsEnv
+  EConstr tag arity
+            -> error "not yet implemented"
+  _         -> error "Not yet implemented"
 
 -- Formatting the results
 
@@ -233,6 +285,7 @@ showNode node = case node of
   NSupercomb name args body
             -> iStr ("NSupercomb " ++ name)
   NNum n    -> iStr "NNum " `iAppend` iNum n
+  NInd a    -> iStr "NInd " `iAppend` showAddr a
 
 showAddr :: Addr -> IseqRep
 showAddr addr = iStr (showaddr addr)
@@ -294,6 +347,20 @@ testProg3
 
 testProg4 :: String
 testProg4 = "main = letrec f = f x in f"
+
+testProg5 :: String
+testProg5
+  = unlines
+  [ "id x = x ;"
+  , "main = twice twice id 3"
+  ]
+
+testProg6 :: String
+testProg6
+  = unlines
+  [ "id x = x ;"
+  , "main = twice twice twice id 3"
+  ]
 
 test :: String -> IO ()
 test = putStrLn . showResults . eval . compile . parse

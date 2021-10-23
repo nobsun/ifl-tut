@@ -834,52 +834,51 @@ data Node = NAp Addr Addr                    -- Application
 ---
 #### 練習問題 2.13
 
+間接参照による更新を実装せよ。以下のプログラムの実行を、Mark 1 と Mark 3 で走らせ効果を比較せよ。
+```
+id x = x ;
+main = twice twice id 3
+```
+まず、手で簡約を行ってどう計算されるか確認せよ
+```
+main = twice twice twice id 3
+```
+と定義した場合どうなるか。
+
+---
+### 2.5.1 間接参照の低減
+
+あきらかに不要な間接参照を構成しないようにする。
+
+```haskell
+instantiateAndUpdate
+  :: CoreExpr         -- ^ スーパーコンビネータの本体
+  -> Addr             -- ^ 更新するノードのアドレス
+  -> TiHeap           -- ^ 具体化前のヒープ
+  -> Assoc Name Addr  -- ^ 仮引数からアドレスへの連想リスト
+  -> TiHeap           -- ^ 具体化語のヒープ
+```
+
+---
+式が関数適用であったときの `instantiateAndUpdate` の定義
+```haskell
+instantiateAndUpdate (EAp e1 e2) updAddr heap env
+  = hUpdate heap2 updAddr (NAp a a2)
+    where
+      (heap1, a1) = instantiate e1 heap  env
+      (heap2, a2) = instantiate e2 heap1 env
+```
+更新の必要があるのはルートノードだけなので、`e1`および`e2`に対しては元の`instantiate`にする
+
+---
+#### 練習問題 2.14
+
+`instantiateAndUpdate`の定義を完成せよ。以下の点に留意すること
+- 具体化する式が単なる変数なら、間接参照が必要である。（なぜか）
+- `let(rec)`式に対する再帰的な具体化の部分は注意深く考えること。
 
 
+`scStep`を`instantiateAndUpdate`を呼ぶように変更せよ
+- `scStep`でおこなっていた更新のコードは取り除け。
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+簡約段数とヒープアロケーション数を計測し、効果を確かめよ。

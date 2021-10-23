@@ -1,0 +1,775 @@
+>>> test "id x = x ;\nmain = twice twice id 3"
+   1) Stack [   2: NSupercomb main ]
+      Heap  [   8: NSupercomb twice
+                7: NSupercomb compose
+                6: NSupercomb S
+                5: NSupercomb K1
+                4: NSupercomb K
+                3: NSupercomb I
+                2: NSupercomb main
+                1: NSupercomb id ]
+      
+   2) Stack [  12: NAp   10   11 (NNum 3) ]
+      Heap  [   2: NInd #12
+               12: NAp #10 #11
+               11: NNum 3
+               10: NAp #9 #1
+                9: NAp #8 #8
+                8: NSupercomb twice
+                7: NSupercomb compose
+                6: NSupercomb S
+                5: NSupercomb K1
+                4: NSupercomb K
+                3: NSupercomb I
+                1: NSupercomb id ]
+      
+   3) Stack [  10: NAp    9    1 (NSupercomb id)
+               12: NAp   10   11 (NNum 3) ]
+      Heap  [   2: NInd #12
+               12: NAp #10 #11
+               11: NNum 3
+               10: NAp #9 #1
+                9: NAp #8 #8
+                8: NSupercomb twice
+                7: NSupercomb compose
+                6: NSupercomb S
+                5: NSupercomb K1
+                4: NSupercomb K
+                3: NSupercomb I
+                1: NSupercomb id ]
+      
+   4) Stack [   9: NAp    8    8 (NSupercomb twice)
+               10: NAp    9    1 (NSupercomb id)
+               12: NAp   10   11 (NNum 3) ]
+      Heap  [   2: NInd #12
+               12: NAp #10 #11
+               11: NNum 3
+               10: NAp #9 #1
+                9: NAp #8 #8
+                8: NSupercomb twice
+                7: NSupercomb compose
+                6: NSupercomb S
+                5: NSupercomb K1
+                4: NSupercomb K
+                3: NSupercomb I
+                1: NSupercomb id ]
+      
+   5) Stack [   8: NSupercomb twice
+                9: NAp    8    8 (NSupercomb twice)
+               10: NAp    9    1 (NSupercomb id)
+               12: NAp   10   11 (NNum 3) ]
+      Heap  [   2: NInd #12
+               12: NAp #10 #11
+               11: NNum 3
+               10: NAp #9 #1
+                9: NAp #8 #8
+                8: NSupercomb twice
+                7: NSupercomb compose
+                6: NSupercomb S
+                5: NSupercomb K1
+                4: NSupercomb K
+                3: NSupercomb I
+                1: NSupercomb id ]
+      
+   6) Stack [  14: NAp   13    8 (NSupercomb twice)
+               10: NAp    9    1 (NSupercomb id)
+               12: NAp   10   11 (NNum 3) ]
+      Heap  [   9: NInd #14
+               14: NAp #13 #8
+               13: NAp #7 #8
+                2: NInd #12
+               12: NAp #10 #11
+               11: NNum 3
+               10: NAp #9 #1
+                8: NSupercomb twice
+                7: NSupercomb compose
+                6: NSupercomb S
+                5: NSupercomb K1
+                4: NSupercomb K
+                3: NSupercomb I
+                1: NSupercomb id ]
+      
+   7) Stack [  13: NAp    7    8 (NSupercomb twice)
+               14: NAp   13    8 (NSupercomb twice)
+               10: NAp    9    1 (NSupercomb id)
+               12: NAp   10   11 (NNum 3) ]
+      Heap  [   9: NInd #14
+               14: NAp #13 #8
+               13: NAp #7 #8
+                2: NInd #12
+               12: NAp #10 #11
+               11: NNum 3
+               10: NAp #9 #1
+                8: NSupercomb twice
+                7: NSupercomb compose
+                6: NSupercomb S
+                5: NSupercomb K1
+                4: NSupercomb K
+                3: NSupercomb I
+                1: NSupercomb id ]
+      
+   8) Stack [   7: NSupercomb compose
+               13: NAp    7    8 (NSupercomb twice)
+               14: NAp   13    8 (NSupercomb twice)
+               10: NAp    9    1 (NSupercomb id)
+               12: NAp   10   11 (NNum 3) ]
+      Heap  [   9: NInd #14
+               14: NAp #13 #8
+               13: NAp #7 #8
+                2: NInd #12
+               12: NAp #10 #11
+               11: NNum 3
+               10: NAp #9 #1
+                8: NSupercomb twice
+                7: NSupercomb compose
+                6: NSupercomb S
+                5: NSupercomb K1
+                4: NSupercomb K
+                3: NSupercomb I
+                1: NSupercomb id ]
+      
+   9) Stack [  16: NAp    8   15 (NAp #8 #1)
+               12: NAp   10   11 (NNum 3) ]
+      Heap  [  10: NInd #16
+               16: NAp #8 #15
+               15: NAp #8 #1
+                9: NInd #14
+               14: NAp #13 #8
+               13: NAp #7 #8
+                2: NInd #12
+               12: NAp #10 #11
+               11: NNum 3
+                8: NSupercomb twice
+                7: NSupercomb compose
+                6: NSupercomb S
+                5: NSupercomb K1
+                4: NSupercomb K
+                3: NSupercomb I
+                1: NSupercomb id ]
+      
+  10) Stack [   8: NSupercomb twice
+               16: NAp    8   15 (NAp #8 #1)
+               12: NAp   10   11 (NNum 3) ]
+      Heap  [  10: NInd #16
+               16: NAp #8 #15
+               15: NAp #8 #1
+                9: NInd #14
+               14: NAp #13 #8
+               13: NAp #7 #8
+                2: NInd #12
+               12: NAp #10 #11
+               11: NNum 3
+                8: NSupercomb twice
+                7: NSupercomb compose
+                6: NSupercomb S
+                5: NSupercomb K1
+                4: NSupercomb K
+                3: NSupercomb I
+                1: NSupercomb id ]
+      
+  11) Stack [  18: NAp   17   15 (NAp #8 #1)
+               12: NAp   10   11 (NNum 3) ]
+      Heap  [  16: NInd #18
+               18: NAp #17 #15
+               17: NAp #7 #15
+               10: NInd #16
+               15: NAp #8 #1
+                9: NInd #14
+               14: NAp #13 #8
+               13: NAp #7 #8
+                2: NInd #12
+               12: NAp #10 #11
+               11: NNum 3
+                8: NSupercomb twice
+                7: NSupercomb compose
+                6: NSupercomb S
+                5: NSupercomb K1
+                4: NSupercomb K
+                3: NSupercomb I
+                1: NSupercomb id ]
+      
+  12) Stack [  17: NAp    7   15 (NAp #8 #1)
+               18: NAp   17   15 (NAp #8 #1)
+               12: NAp   10   11 (NNum 3) ]
+      Heap  [  16: NInd #18
+               18: NAp #17 #15
+               17: NAp #7 #15
+               10: NInd #16
+               15: NAp #8 #1
+                9: NInd #14
+               14: NAp #13 #8
+               13: NAp #7 #8
+                2: NInd #12
+               12: NAp #10 #11
+               11: NNum 3
+                8: NSupercomb twice
+                7: NSupercomb compose
+                6: NSupercomb S
+                5: NSupercomb K1
+                4: NSupercomb K
+                3: NSupercomb I
+                1: NSupercomb id ]
+      
+  13) Stack [   7: NSupercomb compose
+               17: NAp    7   15 (NAp #8 #1)
+               18: NAp   17   15 (NAp #8 #1)
+               12: NAp   10   11 (NNum 3) ]
+      Heap  [  16: NInd #18
+               18: NAp #17 #15
+               17: NAp #7 #15
+               10: NInd #16
+               15: NAp #8 #1
+                9: NInd #14
+               14: NAp #13 #8
+               13: NAp #7 #8
+                2: NInd #12
+               12: NAp #10 #11
+               11: NNum 3
+                8: NSupercomb twice
+                7: NSupercomb compose
+                6: NSupercomb S
+                5: NSupercomb K1
+                4: NSupercomb K
+                3: NSupercomb I
+                1: NSupercomb id ]
+      
+  14) Stack [  20: NAp   15   19 (NAp #15 #11) ]
+      Heap  [  12: NInd #20
+               20: NAp #15 #19
+               19: NAp #15 #11
+               16: NInd #18
+               18: NAp #17 #15
+               17: NAp #7 #15
+               10: NInd #16
+               15: NAp #8 #1
+                9: NInd #14
+               14: NAp #13 #8
+               13: NAp #7 #8
+                2: NInd #12
+               11: NNum 3
+                8: NSupercomb twice
+                7: NSupercomb compose
+                6: NSupercomb S
+                5: NSupercomb K1
+                4: NSupercomb K
+                3: NSupercomb I
+                1: NSupercomb id ]
+      
+  15) Stack [  15: NAp    8    1 (NSupercomb id)
+               20: NAp   15   19 (NAp #15 #11) ]
+      Heap  [  12: NInd #20
+               20: NAp #15 #19
+               19: NAp #15 #11
+               16: NInd #18
+               18: NAp #17 #15
+               17: NAp #7 #15
+               10: NInd #16
+               15: NAp #8 #1
+                9: NInd #14
+               14: NAp #13 #8
+               13: NAp #7 #8
+                2: NInd #12
+               11: NNum 3
+                8: NSupercomb twice
+                7: NSupercomb compose
+                6: NSupercomb S
+                5: NSupercomb K1
+                4: NSupercomb K
+                3: NSupercomb I
+                1: NSupercomb id ]
+      
+  16) Stack [   8: NSupercomb twice
+               15: NAp    8    1 (NSupercomb id)
+               20: NAp   15   19 (NAp #15 #11) ]
+      Heap  [  12: NInd #20
+               20: NAp #15 #19
+               19: NAp #15 #11
+               16: NInd #18
+               18: NAp #17 #15
+               17: NAp #7 #15
+               10: NInd #16
+               15: NAp #8 #1
+                9: NInd #14
+               14: NAp #13 #8
+               13: NAp #7 #8
+                2: NInd #12
+               11: NNum 3
+                8: NSupercomb twice
+                7: NSupercomb compose
+                6: NSupercomb S
+                5: NSupercomb K1
+                4: NSupercomb K
+                3: NSupercomb I
+                1: NSupercomb id ]
+      
+  17) Stack [  22: NAp   21    1 (NSupercomb id)
+               20: NAp   15   19 (NAp #15 #11) ]
+      Heap  [  15: NInd #22
+               22: NAp #21 #1
+               21: NAp #7 #1
+               12: NInd #20
+               20: NAp #15 #19
+               19: NAp #15 #11
+               16: NInd #18
+               18: NAp #17 #15
+               17: NAp #7 #15
+               10: NInd #16
+                9: NInd #14
+               14: NAp #13 #8
+               13: NAp #7 #8
+                2: NInd #12
+               11: NNum 3
+                8: NSupercomb twice
+                7: NSupercomb compose
+                6: NSupercomb S
+                5: NSupercomb K1
+                4: NSupercomb K
+                3: NSupercomb I
+                1: NSupercomb id ]
+      
+  18) Stack [  21: NAp    7    1 (NSupercomb id)
+               22: NAp   21    1 (NSupercomb id)
+               20: NAp   15   19 (NAp #15 #11) ]
+      Heap  [  15: NInd #22
+               22: NAp #21 #1
+               21: NAp #7 #1
+               12: NInd #20
+               20: NAp #15 #19
+               19: NAp #15 #11
+               16: NInd #18
+               18: NAp #17 #15
+               17: NAp #7 #15
+               10: NInd #16
+                9: NInd #14
+               14: NAp #13 #8
+               13: NAp #7 #8
+                2: NInd #12
+               11: NNum 3
+                8: NSupercomb twice
+                7: NSupercomb compose
+                6: NSupercomb S
+                5: NSupercomb K1
+                4: NSupercomb K
+                3: NSupercomb I
+                1: NSupercomb id ]
+      
+  19) Stack [   7: NSupercomb compose
+               21: NAp    7    1 (NSupercomb id)
+               22: NAp   21    1 (NSupercomb id)
+               20: NAp   15   19 (NAp #15 #11) ]
+      Heap  [  15: NInd #22
+               22: NAp #21 #1
+               21: NAp #7 #1
+               12: NInd #20
+               20: NAp #15 #19
+               19: NAp #15 #11
+               16: NInd #18
+               18: NAp #17 #15
+               17: NAp #7 #15
+               10: NInd #16
+                9: NInd #14
+               14: NAp #13 #8
+               13: NAp #7 #8
+                2: NInd #12
+               11: NNum 3
+                8: NSupercomb twice
+                7: NSupercomb compose
+                6: NSupercomb S
+                5: NSupercomb K1
+                4: NSupercomb K
+                3: NSupercomb I
+                1: NSupercomb id ]
+      
+  20) Stack [  24: NAp    1   23 (NAp #1 #19) ]
+      Heap  [  20: NInd #24
+               24: NAp #1 #23
+               23: NAp #1 #19
+               15: NInd #22
+               22: NAp #21 #1
+               21: NAp #7 #1
+               12: NInd #20
+               19: NAp #15 #11
+               16: NInd #18
+               18: NAp #17 #15
+               17: NAp #7 #15
+               10: NInd #16
+                9: NInd #14
+               14: NAp #13 #8
+               13: NAp #7 #8
+                2: NInd #12
+               11: NNum 3
+                8: NSupercomb twice
+                7: NSupercomb compose
+                6: NSupercomb S
+                5: NSupercomb K1
+                4: NSupercomb K
+                3: NSupercomb I
+                1: NSupercomb id ]
+      
+  21) Stack [   1: NSupercomb id
+               24: NAp    1   23 (NAp #1 #19) ]
+      Heap  [  20: NInd #24
+               24: NAp #1 #23
+               23: NAp #1 #19
+               15: NInd #22
+               22: NAp #21 #1
+               21: NAp #7 #1
+               12: NInd #20
+               19: NAp #15 #11
+               16: NInd #18
+               18: NAp #17 #15
+               17: NAp #7 #15
+               10: NInd #16
+                9: NInd #14
+               14: NAp #13 #8
+               13: NAp #7 #8
+                2: NInd #12
+               11: NNum 3
+                8: NSupercomb twice
+                7: NSupercomb compose
+                6: NSupercomb S
+                5: NSupercomb K1
+                4: NSupercomb K
+                3: NSupercomb I
+                1: NSupercomb id ]
+      
+  22) Stack [  23: NAp    1   19 (NAp #15 #11) ]
+      Heap  [  24: NInd #23
+               20: NInd #24
+               23: NAp #1 #19
+               15: NInd #22
+               22: NAp #21 #1
+               21: NAp #7 #1
+               12: NInd #20
+               19: NAp #15 #11
+               16: NInd #18
+               18: NAp #17 #15
+               17: NAp #7 #15
+               10: NInd #16
+                9: NInd #14
+               14: NAp #13 #8
+               13: NAp #7 #8
+                2: NInd #12
+               11: NNum 3
+                8: NSupercomb twice
+                7: NSupercomb compose
+                6: NSupercomb S
+                5: NSupercomb K1
+                4: NSupercomb K
+                3: NSupercomb I
+                1: NSupercomb id ]
+      
+  23) Stack [   1: NSupercomb id
+               23: NAp    1   19 (NAp #15 #11) ]
+      Heap  [  24: NInd #23
+               20: NInd #24
+               23: NAp #1 #19
+               15: NInd #22
+               22: NAp #21 #1
+               21: NAp #7 #1
+               12: NInd #20
+               19: NAp #15 #11
+               16: NInd #18
+               18: NAp #17 #15
+               17: NAp #7 #15
+               10: NInd #16
+                9: NInd #14
+               14: NAp #13 #8
+               13: NAp #7 #8
+                2: NInd #12
+               11: NNum 3
+                8: NSupercomb twice
+                7: NSupercomb compose
+                6: NSupercomb S
+                5: NSupercomb K1
+                4: NSupercomb K
+                3: NSupercomb I
+                1: NSupercomb id ]
+      
+  24) Stack [  19: NAp   15   11 (NNum 3) ]
+      Heap  [  23: NInd #19
+               24: NInd #23
+               20: NInd #24
+               15: NInd #22
+               22: NAp #21 #1
+               21: NAp #7 #1
+               12: NInd #20
+               19: NAp #15 #11
+               16: NInd #18
+               18: NAp #17 #15
+               17: NAp #7 #15
+               10: NInd #16
+                9: NInd #14
+               14: NAp #13 #8
+               13: NAp #7 #8
+                2: NInd #12
+               11: NNum 3
+                8: NSupercomb twice
+                7: NSupercomb compose
+                6: NSupercomb S
+                5: NSupercomb K1
+                4: NSupercomb K
+                3: NSupercomb I
+                1: NSupercomb id ]
+      
+  25) Stack [  15: NInd #22
+               19: NAp   15   11 (NNum 3) ]
+      Heap  [  23: NInd #19
+               24: NInd #23
+               20: NInd #24
+               15: NInd #22
+               22: NAp #21 #1
+               21: NAp #7 #1
+               12: NInd #20
+               19: NAp #15 #11
+               16: NInd #18
+               18: NAp #17 #15
+               17: NAp #7 #15
+               10: NInd #16
+                9: NInd #14
+               14: NAp #13 #8
+               13: NAp #7 #8
+                2: NInd #12
+               11: NNum 3
+                8: NSupercomb twice
+                7: NSupercomb compose
+                6: NSupercomb S
+                5: NSupercomb K1
+                4: NSupercomb K
+                3: NSupercomb I
+                1: NSupercomb id ]
+      
+  26) Stack [  22: NAp   21    1 (NSupercomb id)
+               19: NAp   15   11 (NNum 3) ]
+      Heap  [  23: NInd #19
+               24: NInd #23
+               20: NInd #24
+               15: NInd #22
+               22: NAp #21 #1
+               21: NAp #7 #1
+               12: NInd #20
+               19: NAp #15 #11
+               16: NInd #18
+               18: NAp #17 #15
+               17: NAp #7 #15
+               10: NInd #16
+                9: NInd #14
+               14: NAp #13 #8
+               13: NAp #7 #8
+                2: NInd #12
+               11: NNum 3
+                8: NSupercomb twice
+                7: NSupercomb compose
+                6: NSupercomb S
+                5: NSupercomb K1
+                4: NSupercomb K
+                3: NSupercomb I
+                1: NSupercomb id ]
+      
+  27) Stack [  21: NAp    7    1 (NSupercomb id)
+               22: NAp   21    1 (NSupercomb id)
+               19: NAp   15   11 (NNum 3) ]
+      Heap  [  23: NInd #19
+               24: NInd #23
+               20: NInd #24
+               15: NInd #22
+               22: NAp #21 #1
+               21: NAp #7 #1
+               12: NInd #20
+               19: NAp #15 #11
+               16: NInd #18
+               18: NAp #17 #15
+               17: NAp #7 #15
+               10: NInd #16
+                9: NInd #14
+               14: NAp #13 #8
+               13: NAp #7 #8
+                2: NInd #12
+               11: NNum 3
+                8: NSupercomb twice
+                7: NSupercomb compose
+                6: NSupercomb S
+                5: NSupercomb K1
+                4: NSupercomb K
+                3: NSupercomb I
+                1: NSupercomb id ]
+      
+  28) Stack [   7: NSupercomb compose
+               21: NAp    7    1 (NSupercomb id)
+               22: NAp   21    1 (NSupercomb id)
+               19: NAp   15   11 (NNum 3) ]
+      Heap  [  23: NInd #19
+               24: NInd #23
+               20: NInd #24
+               15: NInd #22
+               22: NAp #21 #1
+               21: NAp #7 #1
+               12: NInd #20
+               19: NAp #15 #11
+               16: NInd #18
+               18: NAp #17 #15
+               17: NAp #7 #15
+               10: NInd #16
+                9: NInd #14
+               14: NAp #13 #8
+               13: NAp #7 #8
+                2: NInd #12
+               11: NNum 3
+                8: NSupercomb twice
+                7: NSupercomb compose
+                6: NSupercomb S
+                5: NSupercomb K1
+                4: NSupercomb K
+                3: NSupercomb I
+                1: NSupercomb id ]
+      
+  29) Stack [  26: NAp    1   25 (NAp #1 #11) ]
+      Heap  [  19: NInd #26
+               26: NAp #1 #25
+               25: NAp #1 #11
+               23: NInd #19
+               24: NInd #23
+               20: NInd #24
+               15: NInd #22
+               22: NAp #21 #1
+               21: NAp #7 #1
+               12: NInd #20
+               16: NInd #18
+               18: NAp #17 #15
+               17: NAp #7 #15
+               10: NInd #16
+                9: NInd #14
+               14: NAp #13 #8
+               13: NAp #7 #8
+                2: NInd #12
+               11: NNum 3
+                8: NSupercomb twice
+                7: NSupercomb compose
+                6: NSupercomb S
+                5: NSupercomb K1
+                4: NSupercomb K
+                3: NSupercomb I
+                1: NSupercomb id ]
+      
+  30) Stack [   1: NSupercomb id
+               26: NAp    1   25 (NAp #1 #11) ]
+      Heap  [  19: NInd #26
+               26: NAp #1 #25
+               25: NAp #1 #11
+               23: NInd #19
+               24: NInd #23
+               20: NInd #24
+               15: NInd #22
+               22: NAp #21 #1
+               21: NAp #7 #1
+               12: NInd #20
+               16: NInd #18
+               18: NAp #17 #15
+               17: NAp #7 #15
+               10: NInd #16
+                9: NInd #14
+               14: NAp #13 #8
+               13: NAp #7 #8
+                2: NInd #12
+               11: NNum 3
+                8: NSupercomb twice
+                7: NSupercomb compose
+                6: NSupercomb S
+                5: NSupercomb K1
+                4: NSupercomb K
+                3: NSupercomb I
+                1: NSupercomb id ]
+      
+  31) Stack [  25: NAp    1   11 (NNum 3) ]
+      Heap  [  26: NInd #25
+               19: NInd #26
+               25: NAp #1 #11
+               23: NInd #19
+               24: NInd #23
+               20: NInd #24
+               15: NInd #22
+               22: NAp #21 #1
+               21: NAp #7 #1
+               12: NInd #20
+               16: NInd #18
+               18: NAp #17 #15
+               17: NAp #7 #15
+               10: NInd #16
+                9: NInd #14
+               14: NAp #13 #8
+               13: NAp #7 #8
+                2: NInd #12
+               11: NNum 3
+                8: NSupercomb twice
+                7: NSupercomb compose
+                6: NSupercomb S
+                5: NSupercomb K1
+                4: NSupercomb K
+                3: NSupercomb I
+                1: NSupercomb id ]
+      
+  32) Stack [   1: NSupercomb id
+               25: NAp    1   11 (NNum 3) ]
+      Heap  [  26: NInd #25
+               19: NInd #26
+               25: NAp #1 #11
+               23: NInd #19
+               24: NInd #23
+               20: NInd #24
+               15: NInd #22
+               22: NAp #21 #1
+               21: NAp #7 #1
+               12: NInd #20
+               16: NInd #18
+               18: NAp #17 #15
+               17: NAp #7 #15
+               10: NInd #16
+                9: NInd #14
+               14: NAp #13 #8
+               13: NAp #7 #8
+                2: NInd #12
+               11: NNum 3
+                8: NSupercomb twice
+                7: NSupercomb compose
+                6: NSupercomb S
+                5: NSupercomb K1
+                4: NSupercomb K
+                3: NSupercomb I
+                1: NSupercomb id ]
+      
+  33) Stack [  11: NNum 3 ]
+      Heap  [  25: NInd #11
+               26: NInd #25
+               19: NInd #26
+               23: NInd #19
+               24: NInd #23
+               20: NInd #24
+               15: NInd #22
+               22: NAp #21 #1
+               21: NAp #7 #1
+               12: NInd #20
+               16: NInd #18
+               18: NAp #17 #15
+               17: NAp #7 #15
+               10: NInd #16
+                9: NInd #14
+               14: NAp #13 #8
+               13: NAp #7 #8
+                2: NInd #12
+               11: NNum 3
+                8: NSupercomb twice
+                7: NSupercomb compose
+                6: NSupercomb S
+                5: NSupercomb K1
+                4: NSupercomb K
+                3: NSupercomb I
+                1: NSupercomb id ]
+      
+
+
+Total number of steps = 32
+             Sc steps = 12
+           Prim steps = 0
+     Allocation count = 26
+   Max depth of stack = 5
+>>> 

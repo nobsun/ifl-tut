@@ -27,6 +27,9 @@ dependencies:
 - time
 - aeson
 
+ghc-options:
+- -interactive-print=Text.Show.Unicode.uprint
+
 library:
   source-dirs: src
 
