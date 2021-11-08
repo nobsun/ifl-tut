@@ -265,14 +265,14 @@ showStack heap stack
     ]
     where
       showStackItem addr
-        = iConcat [ showFWAddr addr, iStr ": "
+        = iConcat [ showAddr addr, iStr ": "
                   , showStkNode heap (hLookup heap addr)
                   ]
 
 showStkNode :: TiHeap -> Node -> IseqRep
 showStkNode heap (NAp funAddr argAddr)
-  = iConcat [ iStr "NAp ", showFWAddr funAddr
-            , iStr " ", showFWAddr argAddr, iStr " ("
+  = iConcat [ iStr "NAp ", showAddr funAddr
+            , iStr " ", showAddr argAddr, iStr " ("
             , showNode (hLookup heap argAddr), iStr ")"
             ]
 showStkNode heap node = showNode node

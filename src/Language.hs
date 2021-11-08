@@ -330,7 +330,7 @@ mkSc = (,,)
 
 {- コア式の構文解析器 -}
 pExpr :: Parser CoreExpr
-pExpr =  pELet `pAlt` pECase `pAlt` pELam `pAlt` pAexpr `pAlt` pExpr1
+pExpr =  pELet `pAlt` (pECase `pAlt` (pELam `pAlt` (pAexpr `pAlt` pExpr1)))
 
 pELet :: Parser CoreExpr
 pELet = ELet <$$> pIsRec  <**> pDefns <** pLit "in" <**> pExpr

@@ -882,3 +882,174 @@ instantiateAndUpdate (EAp e1 e2) updAddr heap env
 - `scStep`でおこなっていた更新のコードは取り除け。
 
 簡約段数とヒープアロケーション数を計測し、効果を確かめよ。
+
+---
+## 2.6 Mark 4: 算術演算の追加
+
+---
+### 2.6.1 算術に対する遷移規則
+
+符号反転の遷移規則(2.5) 引数が評価済みの場合
+$$
+\begin{array}{rrrcll}
+& a : a_1 : [] & d && h\left[ \begin{array}{lcl}
+                          a&:&\texttt{NPrim Neg}\\
+                          a_1&:&\texttt{NAp}\;a\;b\\
+                          b&:&\texttt{NNum}\; n
+                       \end{array}
+                \right] & f \\
+\Longrightarrow & a_1 : [] & d && h \left[a_1 : \texttt{NNum}\;(-n) \right] & f \\
+\end{array}
+$$
+
+---
+符号反転の遷移規則(2.6) 引数未評価の場合
+$$
+\begin{array}{rrrcll}
+& a : a_1 : [] & d && h\left[ \begin{array}{lcl}
+                          a&:&\texttt{NPrim Neg}\\
+                          a_1&:&\texttt{NAp}\;a\;b
+                       \end{array}
+                \right] & f \\
+\Longrightarrow & b : [] & (a : a_1 : []) : d && h & f \\
+\end{array}
+$$
+スタックをダンプに積んでから、引数の評価にはいる。評価が済んだら、ダンプに積んだスタックを復帰する(2.7)
+$$
+\begin{array}{rrrcll}
+& a : [] & s : d && h\left[ a : \texttt{NNum}\; n  \right] & f \\
+\Longrightarrow & s &  d && h & f \\
+\end{array}
+$$
+
+---
+引数のルートノードが間接参照になっている場合がある。
+(2.1)の特殊な場合として、(2.8)を導入する
+
+(2.8)
+$$
+\begin{array}{rrrcll}
+& a : s & d && h\left[ \begin{array}{lcl}
+                          a&:&\texttt{NAp}\;a_1\;a_2\\
+                          a_2&:&\texttt{NInd}\;a_3
+                       \end{array}
+                \right] & f \\
+\Longrightarrow & a : s & d && h \left[a : \texttt{NAp}\;a_1\;a_3 \right]& f \\
+\end{array}
+$$
+
+(2.8)が機能するよう、(2.6)を変更して(2.9)にする必要がある
+
+(2.9)
+$$
+\begin{array}{rrrcll}
+& a : a_1 : [] & d && h\left[ \begin{array}{lcl}
+                          a&:&\texttt{NPrim Neg}\\
+                          a_1&:&\texttt{NAp}\;a\;b
+                       \end{array}
+                \right] & f \\
+\Longrightarrow & b : [] & (a_1 : []) : d && h & f \\
+\end{array}
+$$
+
+---
+#### 練習問題
+加算に対する遷移規則を書け。（ほかの二項算術演算子も実質同じである。）
+
+---
+### 2.6.2 算術演算式の実装
+
+1. `TiDump` をスタックのスタックとして再定義
+2. 名前 `n` 値 `p` のプリミティブを表すヒープノード `NPrim Name Primitive` を追加
+3. `showNode` を拡張
+4. `Primitive` を定義
+5. `NPrim` ノードを初期ヒープにわりあてるよう `buildInitialHeap` を拡張
+6. プリミティブの名前と値の連想リスト `primitives`
+7. `allocatePrim` を `allocateSc` を参考に実装
+8. `step` の `dispatch` を `NPrim` に対応して、`primStep` を呼ぶものとして拡張
+
+---
+9. `primStep` を実装
+    - `primNeg` を実装
+10. 遷移規則(2.7)を実装するために `numStep` を変更
+11. 同様に遷移規則(2.8)を実装するために `apStep` を変更する
+12. `tiFinal` を変更する
+
+---
+#### 練習問題 2.16
+
+符号反転演算を実装し以下のプログラムでテストせよ。
+
+---
+算術演算の実装には 2項算術演算汎用の `primArith :: TiState -> (Int -> Int -> Int) -> TiState` を用意して、これを使う
+
+---
+#### 練習問題 2.17
+
+`primArith` を実装し、テストせよ
+
+---
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
