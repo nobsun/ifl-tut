@@ -24,7 +24,7 @@ data Expr a
   | ENum Int                  -- ^ 数
   | EConstr                   -- ^ 構成子
       Tag                       -- ^ タグ
-      Arity                       -- ^ アリティ
+      Arity                     -- ^ アリティ
   | EAp (Expr a) (Expr a)     -- ^ 適用
   | ELet                      -- ^ let(rec)式
       IsRec                     -- ^ 再帰的か
@@ -61,8 +61,7 @@ bindersOf :: [Binder a b] -> [a]
 bindersOf defns = [ name | (name, rhs) <- defns ]
 
 rhssOf :: [(a, b)] -> [b]
-rhssOf defns = [ rhs | (name, rhs) <- defns ]{-# LANGUAGE BangPatterns #-}
-
+rhssOf defns = [ rhs | (name, rhs) <- defns ]
 
 {- | 選択肢 -}
 type Alter a 
@@ -309,15 +308,15 @@ keywords = ["let", "letrec", "case", "in", "of", "Pack"]
 
 {- コア言語の構文解析 -}
 
-takeFirstParse :: [(a, [Token])] -> a
+takeFirstParse :: Show a => [(a, [Token])] -> a
 takeFirstParse = \ case
   (x, []) : _ 
     -> x
-  (_, (i,_) : _): ps 
+  r@((_, (i,_) : _): ps)
     -> case ps of
       _ : _ -> takeFirstParse ps
       []    -> error $ "syntax error at line " ++ show i
-  _ -> error  "syntax error at line 1"
+  _ -> error  $ "syntax error at line 1: "
 
 pProgram :: Parser CoreProgram
 pProgram = pOneOrMoreWithSep pSc (pLit ";")
