@@ -11,8 +11,16 @@ data Stack a
 emptyStack :: Stack a
 emptyStack = Stack 0 0 []
 
+singletonStack :: a -> Stack a
+singletonStack a = push a emptyStack
+
 isEmptyStack :: Stack a -> Bool
 isEmptyStack stk = null (stack_ stk)
+
+isSingletonStack :: Stack a -> Bool
+isSingletonStack stk
+    | isEmptyStack stk = False
+    | otherwise        = isEmptyStack (snd (pop stk))
 
 push :: a -> Stack a -> Stack a
 push x stk = case stk of

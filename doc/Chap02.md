@@ -1076,4 +1076,3 @@ main = fst (snd (fst (MkPair (MkPair 1 (MkPair 2 3)) 4)))
 
 コア言語で `Cons`、`Nil`、`head`、`tail` の定義を与えよ。
 空リストに対して `head` や `tail` を適用したときに返るものとして、新たなプリミティブ `abort` を導入し、Haskell の `error` を呼び出して、プログラムを停止するようにせよ。
-

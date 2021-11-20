@@ -8,9 +8,10 @@ import Stack
 import Iseq
 import Language
 
--- Mark 3 : Adding updating
-
 --- Structure of the implementation
+
+test :: String -> IO ()
+test = putStrLn . run
 
 run :: String -> String
 run = showResults . eval . compile . parse
@@ -116,8 +117,8 @@ extraPreludeDefs =
                               (EVar "K"))
   , ("snd",       ["p"],  EAp (EAp  (EVar "casePair") (EVar "p"))
                               (EVar "K1"))
-  , ("LCons",     [], EConstr 2 2)
   , ("Nil",       [], EConstr 1 0)
+  , ("Cons",      [], EConstr 2 2)
   , ("head",      ["xs"], EAp (EAp (EAp (EVar "caseList") (EVar "xs"))
                                    (EVar "abort"))
                               (EVar "K"))
@@ -327,10 +328,11 @@ primCasePair state = case state of
     | not (isDataNode arg1Node) -> (push arg1Addr emptyStack, push stack' dump, heap, globals, stats)
     | otherwise -> (stack', dump, heap', globals, stats)
     where
-      args@(arg1Addr:arg2Addr:_) = getargs heap stack
+      args = getargs heap stack
+      arg1Addr : arg2Addr : _ = args
       arg1Node = hLookup heap arg1Addr
       stack' = discard 2 stack
-      (rootOfRedex, _) = pop stack'
+      (rootOfRedex,_) = pop stack'
       heap' = case arg1Node of
         NData tag [ft,sd] -> hUpdate heap'' rootOfRedex (NAp addr sd)
           where
@@ -386,12 +388,12 @@ instantiate expr heap env = case expr of
   EVar v               -> (heap, aLookup env v (error ("Undefined name " ++ show v)))
   EConstr tag arity    -> instantiateConstr tag arity heap env
   ELet isrec defs body -> instantiateLet isrec defs body heap env
-  ECase e alts         -> error "Can't instantiate case exprs"
+  ECase e alts         -> error "Can't instantiate case expressions"
   ELam vs e            -> error "Can't instantiate lambda abstractions"
 
 instantiateConstr :: Tag -> Arity -> TiHeap -> Assoc Name Addr -> (TiHeap, Addr)
 instantiateConstr tag arity heap env
-  = hAlloc heap (NPrim "Cons" (PrimConstr tag arity))
+  = hAlloc heap (NPrim "Constructor" (PrimConstr tag arity))
   
 instantiateLet :: IsRec -> Assoc Name CoreExpr -> CoreExpr -> TiHeap -> Assoc Name Addr -> (TiHeap, Addr)
 instantiateLet isrec defs body heap env
@@ -558,8 +560,7 @@ testProg4 :: String
 testProg4 = "main = letrec f = f x in f"
 
 testProg5 :: String
-testProg5
-  = unlines
+testProg5 = unlines
   [ "id x = x ;"
   , "main = twice twice id 3"
   ]
@@ -580,6 +581,7 @@ testProg08
   = unlines
   [ "main = twice negate 3"
   ]
+
 testProg09
   = unlines
   [ "main = negate (I 3)"
@@ -600,7 +602,3 @@ testProg11 = unlines
 testProg12 :: String -- Ex.2.22
 testProg12 = unlines
   [ "main = fst (snd (fst (MkPair (MkPair 1 (MkPair 2 3)) 4)))"]
-
-test :: String -> IO ()
-test = putStrLn . showResults . eval . compile . parse
-
