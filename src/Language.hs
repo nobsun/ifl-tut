@@ -1,12 +1,3 @@
-{- |
-module:       Language
-copyright:    (c) Nobuo Yamashita 2021
-license:      BSD-3
-maintainer:   nobsun@sampou.org
-stability:    experimental
--}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 module Language where
 
 import Data.Bool ( bool )
@@ -175,7 +166,16 @@ pprProgram prog = iInterleave (iAppend (iStr " ;") iNewline) (map pprSc prog)
 pprSc :: CoreScDefn -> IseqRep
 pprSc (name, args, body)
   = iConcat [ iStr name, if null args then iNil else iAppend iSpace (pprArgs args),
-              iStr " = ", iIndent (pprExpr 0 body) ]
+              iStr " = ", iIndent (pprExpr 0{- |
+module:       Language
+copyright:    (c) Nobuo Yamashita 2021
+license:      BSD-3
+maintainer:   nobsun@sampou.org
+stability:    experimental
+-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+ body) ]
 
 pprArgs :: [Name] -> IseqRep
 pprArgs args = iConcat (map (iAppend iSpace . iStr) args)

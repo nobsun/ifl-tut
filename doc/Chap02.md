@@ -997,8 +997,8 @@ $$
 ---
 ## 2.7 Mark 5: 構造をもつデータ
 
-`case` 式が実装できるといいのだが、雛形具体化機械の枠組みでは難しい
-代りに `if`、`casePair`、`caseList` などの組み込み関数を使い特定の構造をもつデータ型を扱えるようにする
+`case` 式が実装できるといいのだが、雛形具体化機械の枠組みでは難しい。
+代りに `if`、`casePair`、`caseList` などの組み込み関数を使い特定の構造をもつデータ型を扱えるようにする。
 
 ---
 #### 練習問題 2.18
@@ -1076,3 +1076,87 @@ main = fst (snd (fst (MkPair (MkPair 1 (MkPair 2 3)) 4)))
 
 コア言語で `Cons`、`Nil`、`head`、`tail` の定義を与えよ。
 空リストに対して `head` や `tail` を適用したときに返るものとして、新たなプリミティブ `abort` を導入し、Haskell の `error` を呼び出して、プログラムを停止するようにせよ。
+
+---
+#### 練習問題 2.24
+
+`caseList` に対する遷移規則を書き、実装せよ。
+`abort` に対する遷移規則を書き、実装せよ。
+`preludeDefs` に `Nil`、`Cons`、`head`、`tail` の定義を追加せよ。
+
+---
+#### 練習問題 2.25
+`case` 式を実装するのに代えて、構造をもつデータ型ごとに `case` プリミティブを考えるとき、主たる利点と欠点はなにか。
+
+---
+### 2.7.6 リストの表示
+
+プログラムの結果が、数値のリストであった場合、
+- 空リストなら、印字は終了
+- 先頭が、未評価なら先に評価
+- 先頭が、評価済ならそれを印字してから、末尾部リストを再帰的に印字
+
+---
+状態遷移システムにおいて数値の出力をどうモデル化するか
+
+- `TiState` に「出力（数値のリスト）」という構成要素を追加、これに数値を追加することで、「数値の出力」をモデル化する
+- プリミティブ `Print` と `Stop` を追加
+
+---
+`Stop` に対応する遷移規則
+
+状態遷移規則(2.11)
+
+$$
+\begin{array}{rrrrcll}
+& o & a : [] & [] && h\left[ \begin{array}{lcl}
+                          a&:&\texttt{NPrim Stop}
+                     \end{array} \right] & f \\
+\Longrightarrow & o & [] & [] && h & f 
+\end{array}
+$$
+
+---
+`Print` に対応する遷移規則（リストの先頭が評価済みの場合）
+
+状態遷移規則(2.12)
+
+$$
+\begin{array}{rrrrcll}
+& o & a : a_1 : a_2 : [] & [] && h\left[ \begin{array}{lcl}
+                          a&:&\texttt{NPrim Print}\\
+                          a_1&:&\texttt{NAp}\;a\;b_1 \\
+                          a_2&:&\texttt{NAp}\;a_{1}\; b_2 \\
+                          b_1&:&\texttt{NNum}\;n
+                       \end{array}
+                \right] & f \\
+\Longrightarrow & o⧺[n] & b_2 : [] & [] && h & f 
+\end{array}
+$$
+
+---
+`Print` に対応する遷移規則（リストの先頭が未評価の場合）
+
+状態遷移規則(2.13)
+
+$$
+\begin{array}{rrrrcll}
+& o & a : a_1 : a_2 : [] & [] && h\left[ \begin{array}{lcl}
+                          a&:&\texttt{NPrim Print}\\
+                          a_1&:&\texttt{NAp}\;a\;b_1 \\
+                          a_2&:&\texttt{NAp}\;a_{1}\; b_2
+                       \end{array}
+                \right] & f \\
+\Longrightarrow & o & b_1 : [] & (b_2 : []) : [] && h & f 
+\end{array}
+$$
+
+---
+`extraPreludeDefs` に以下を追加
+
+```
+printList xs = caseList xs stop printCons
+printCons h t = print h (printList t)
+```
+
+ここで、`print` は `primitives` でプリミティブ `Print`に、`stop` は `Stop` に束縛される

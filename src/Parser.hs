@@ -1,12 +1,3 @@
-{- |
-module:       Parser
-copyright:    (c) Nobuo Yamashita 2021
-license:      BSD-3
-maintainer:   nobsun@sampou.org
-stability:    experimental
--}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 module Parser
   ( -- * パーザ
     Loc
@@ -150,3 +141,4 @@ takeFirstParse = \ case
       _ : _ -> takeFirstParse ps
       []    -> error $ "syntax error at line " ++ show i
   _ -> error  "syntax error at line 1"
+  

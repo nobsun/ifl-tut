@@ -99,12 +99,16 @@ applyToStats f state = case state of
 
 compile :: CoreProgram -> TiState
 compile prog
-  = ([], initialStack, initialTiDump, initialHeap, globals, tiStatInitial)
+--  = ([], initialStack, initialTiDump, initialHeap, globals, tiStatInitial)
+  = ([], initialStack, initialTiDump, initialHeap', globals, tiStatInitial)
     where
       scDefs = prog ++ preludeDefs ++ extraPreludeDefs
       (initialHeap, globals) = buildInitialHeap scDefs
-      initialStack = push addressOfMain emptyStack
+--      initialStack = push addressOfMain emptyStack
+      initialStack = push printAddr emptyStack
       addressOfMain = aLookup globals "main" (error "main is not defined")
+      addressOfPrint = aLookup globals "printList" (error "printList is not defined")
+      (initialHeap', printAddr) = hAlloc initialHeap (NAp addressOfPrint addressOfMain)
 
 extraPreludeDefs :: CoreProgram
 extraPreludeDefs = 
@@ -413,10 +417,10 @@ primPrint state = case state of
             NData _ _ -> error "primPrint: not a number"
             _         -> (output, singletonStack arg1Addr, push stack' dump, heap, globals, stats)
       where
-        args      = getargs heap stack
+        args       = getargs heap stack
         [arg1Addr, arg2Addr] = args
         arg1Node   = hLookup heap arg1Addr
-        stack'    = discard 2 stack 
+        stack'     = discard 2 stack 
 
 instantiate :: CoreExpr         -- Body of suprercombinator
             -> TiHeap           -- Heap before instatiation
@@ -520,8 +524,8 @@ showStack heap stack
 
 showStkNode :: TiHeap -> Node -> IseqRep
 showStkNode heap (NAp funAddr argAddr)
-  = iConcat [ iStr "NAp ", showFWAddr funAddr
-            , iStr " ", showFWAddr argAddr, iStr " ("
+  = iConcat [ iStr "NAp ", showAddr funAddr
+            , iStr " ", showAddr argAddr, iStr " ("
             , showNode (hLookup heap argAddr), iStr ")"
             ]
 showStkNode heap node = showNode node
@@ -651,8 +655,16 @@ testProg12 :: String -- Ex.2.22
 testProg12 = unlines
   [ "main = fst (snd (fst (MkPair (MkPair 1 (MkPair 2 3)) 4)))"]
 
-testProg13 :: String
+testProg13 :: String -- Ex.2.26
 testProg13 = unlines
+  [ "downfrom n = if (n == 0)"
+  , "                  Nil"
+  , "                  (Cons n (downfrom (n - 1))) ;"
+  , "main = downfrom 4"
+  ]
+
+testProg14 :: String
+testProg14 = unlines
   [ "downfrom n = if (n == 0)"
   , "                  Nil"
   , "                  (Cons n (downfrom (n - 1))) ;"
