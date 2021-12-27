@@ -1,4 +1,4 @@
-module Template.Mark5print where
+module Template.Mark5altprimitive where
 
 import Data.List
 import Data.Char
@@ -11,14 +11,11 @@ import Iseq
 import Language
 
 --- Structure of the implementation
-
-test, test' :: String -> IO ()
+test :: String -> IO ()
 test = putStrLn . run
-test' = putStrLn . run'
 
-run, run' :: String -> String
+run :: String -> String
 run = showResults . eval . compile . parse
-run' = showResults . eval . compile' . parse
 
 type TiState = (Output, TiStack, TiDump, TiHeap, TiGlobals, TiStats)
 
@@ -43,8 +40,11 @@ data Node = NAp Addr Addr                   -- ^ Application
           | NInd Addr                       -- ^ Indirection
           | NPrim Name Primitive            -- ^ Primitive
           | NData Int [Addr]                -- ^ Tag, list of components
+{- --
           deriving Show
-
+-- -}
+type Primitive = TiState -> TiState
+{- --
 data Primitive
     = Neg
     | Add | Sub
@@ -60,7 +60,7 @@ data Primitive
     | Stop
     | Abort
     deriving Show
-
+-- -}
 type TiGlobals = Assoc Name Addr
 
 data TiStats = TiStats
@@ -100,24 +100,18 @@ applyToStats f state = case state of
 
 -- compiler
 
-compile, compile' :: CoreProgram -> TiState
+compile :: CoreProgram -> TiState
 compile prog
+--  = ([], initialStack, initialTiDump, initialHeap, globals, tiStatInitial)
   = ([], initialStack, initialTiDump, initialHeap, globals, tiStatInitial)
     where
       scDefs = prog ++ preludeDefs ++ extraPreludeDefs
       (initialHeap, globals) = buildInitialHeap scDefs
       initialStack = push addressOfMain emptyStack
+--      initialStack = push printAddr emptyStack
       addressOfMain = aLookup globals "main" (error "main is not defined")
-
-compile' prog
-  = ([], initialStack, initialTiDump, initialHeap', globals, tiStatInitial)
-    where
-      scDefs = prog ++ preludeDefs ++ extraPreludeDefs
-      (initialHeap, globals) = buildInitialHeap scDefs
-      initialStack = push printAddr emptyStack
-      addressOfMain = aLookup globals "main" (error "main is not defined")
-      addressOfPrint = aLookup globals "printList" (error "printList is not defined")
-      (initialHeap', printAddr) = hAlloc initialHeap (NAp addressOfPrint addressOfMain)
+--      addressOfPrint = aLookup globals "printList" (error "printList is not defined")
+--      (initialHeap', printAddr) = hAlloc initialHeap (NAp addressOfPrint addressOfMain)
 
 extraPreludeDefs :: CoreProgram
 extraPreludeDefs = 
@@ -163,6 +157,13 @@ buildInitialHeap scDefs
       (heap'', primAddrs) = mapAccumL allocatePrim heap' primitives
 
 primitives :: Assoc Name Primitive
+primitives = [ ("nagate", primNeg)
+             , ("+", flip primArith (+))
+             , ("-", flip primArith (-))
+             , ("*", flip primArith (*))
+             , ("/", flip primArith div)
+             ]
+{- --
 primitives = [ ("negate", Neg)
              , ("+", Add), ("-", Sub)
              , ("*", Mul), ("/", Div)
@@ -176,7 +177,7 @@ primitives = [ ("negate", Neg)
              , ("stop", Stop)
              , ("abort", Abort)
              ]
-
+-- -}
 allocateSc :: TiHeap -> CoreScDefn -> (TiHeap, (Name, Addr))
 allocateSc heap scDefn = case scDefn of
   (name, args, body) -> (heap', (name, addr))
@@ -211,11 +212,10 @@ doAdminPrimSteps = applyToStats tiStatIncPrimSteps
 
 tiFinal :: TiState -> Bool
 tiFinal state = case state of
-    (_, stack, dump, heap, _, _)
-        | isEmptyStack stack -> True
-        | otherwise -> case pop stack of
-            (a,_) -> isNumNode (hLookup heap a)
+    (_, stack, _, heap, _, _) -> case pop stack of
+        (a, stack') -> isDataNode (hLookup heap a) && isEmptyStack stack'
     
+--  (_, stack, _, _, _, _) -> isEmptyStack stack
 
 isDataNode :: Node -> Bool
 isDataNode node = case node of
@@ -282,6 +282,8 @@ indStep state a = case state of
     -> (output, push a (discard 1 stack), dump, heap, globals, stats)
 
 primStep :: TiState -> Primitive -> TiState
+primStep state prim = prim state
+{- --
 primStep state prim = case prim of
   Neg -> primNeg state
   Add -> primArith state (+)
@@ -301,7 +303,7 @@ primStep state prim = case prim of
   Print -> primPrint state
   Stop  -> primStop state
   Abort        -> error "Program abort!"
-
+-- -}
 primNeg :: TiState -> TiState
 primNeg state = case state of
   (output, stack, dump, heap, globals, stats)
@@ -446,15 +448,15 @@ instantiate expr heap env = case expr of
       (heap1, a1) = instantiate e1 heap  env
       (heap2, a2) = instantiate e2 heap1 env 
   EVar v               -> (heap, aLookup env v (error ("Undefined name " ++ show v)))
-  EConstr tag arity    -> instantiateConstr tag arity heap env
+  EConstr tag arity    -> error "Not implemented" -- instantiateConstr tag arity heap env
   ELet isrec defs body -> instantiateLet isrec defs body heap env
   ECase e alts         -> error "Can't instantiate case exprs"
   ELam vs e            -> error "Can't instantiate lambda abstractions"
-
+{- --
 instantiateConstr :: Tag -> Arity -> TiHeap -> Assoc Name Addr -> (TiHeap, Addr)
 instantiateConstr tag arity heap env
   = hAlloc heap (NPrim "Constructor" (PrimConstr tag arity))
-  
+-- -}
 instantiateLet :: IsRec -> Assoc Name CoreExpr -> CoreExpr -> TiHeap -> Assoc Name Addr -> (TiHeap, Addr)
 instantiateLet isrec defs body heap env
   = instantiate body heap' env'
@@ -494,6 +496,7 @@ instantiateAndUpdate expr updAddr heap env = case expr of
         = (heap', (name, addr))
           where
             (heap', addr) = instantiate rhs heap rhsEnv
+{- --
   EConstr tag arity
             -> instantiateAndUpdateConstr tag arity updAddr heap env
   _         -> error "Not yet implemented"
@@ -502,7 +505,7 @@ instantiateAndUpdateConstr
   :: Tag -> Arity -> Addr -> TiHeap -> Assoc Name Addr -> TiHeap
 instantiateAndUpdateConstr tag arity updAddr heap env
   = hUpdate heap updAddr (NPrim "Cons" (PrimConstr tag arity))
-
+-- -}
 -- Formatting the results
 
 showResults :: [TiState] -> String
@@ -674,6 +677,14 @@ testProg13 = unlines
   , "                  Nil"
   , "                  (Cons n (downfrom (n - 1))) ;"
   , "main = downfrom 4"
+  ]
+
+testProg14 :: String
+testProg14 = unlines
+  [ "downfrom n = if (n == 0)"
+  , "                  Nil"
+  , "                  (Cons n (downfrom (n - 1))) ;"
+  , "main = printList (downfrom 4)"
   ]
 
 tracing state = trace (iDisplay (showState state)) state

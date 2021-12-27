@@ -1159,4 +1159,15 @@ printList xs = caseList xs stop printCons
 printCons h t = print h (printList t)
 ```
 
-ここで、`print` は `primitives` でプリミティブ `Print`に、`stop` は `Stop` に束縛される
+ここで、`print` は `primitives` でプリミティブ `Print`に、`stop` は `Stop` に束縛する
+
+---
+#### 練習問題 2.26
+
+ここまでの変更を実装し、数値のリストを返すプログラムを作成して実装をテストせよ。
+
+---
+## 2.8 別の実装
+
+### 2.8.1 プリミティブの別表現
+
