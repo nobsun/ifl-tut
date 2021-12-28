@@ -1,53 +1,63 @@
-{-# LANGUAGE FlexibleInstances #-}
-module Heap
+{-# LANGUAGE ImportQualifiedPost #-}
+{-# LANGUAGE ImplicitParams #-}
+{-# LANGUAGE NoFieldSelectors #-}
+{-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE OverloadedRecordDot #-}
+module Heap 
     where
 
 import Utils
 
-{- | Heap 
--}
-type Addr   = Int
-data Heap a = Heap
-  { allocs_   :: Int
-  , size_     :: Int
-  , frees_    :: [Addr]
-  , contents_ :: Assoc Addr a
-  }
+type Addr = Int
 
-hInitial   :: Heap a
+showAddr :: Addr -> String
+showAddr = ('#' :) . show
+
+{- | ヒープ
+-}
+data Heap a = Heap
+    { maxAllocs :: Int
+    , curAllocs :: Int
+    , frees     :: [Addr]
+    , assocs    :: Assoc Addr a
+    }
+
+hInitial   :: (?sz :: Int) => Heap a 
 hAlloc     :: Heap a -> a -> (Heap a, Addr)
 hUpdate    :: Heap a -> Addr -> a -> Heap a
 hFree      :: Heap a -> Addr -> Heap a
 hLookup    :: Heap a -> Addr -> a
 hAddresses :: Heap a -> [Addr]
-hSize      :: Heap a -> Int
-hAllocs    :: Heap a -> Int
 
-hNull      :: Addr
-hIsnull    :: Addr -> Bool
-showaddr   :: Addr -> String
+hInitial = Heap 
+    { maxAllocs = 0
+    , curAllocs = 0
+    , frees     = [1 .. ?sz]
+    , assocs    = []
+    }
 
-hInitial = Heap
-  { allocs_ = 0
-  , size_ = 0
-  , frees_  = [1..]
-  , contents_ = []
-  }
-hAlloc     (Heap allocs size (next : free) cts) n   = (Heap (succ allocs) (succ size) free ((next, n) : cts), next)
-hAlloc     _                                    _   = error "No space"
-hUpdate    (Heap allocs size free          cts) a n = Heap allocs        size         free ((a, n) : remove cts a)
-hFree      (Heap allocs size free          cts) a   = Heap allocs (pred size)   (a : free) (remove cts a)
-hLookup    (Heap allocs size free          cts) a   = aLookup cts a (error ("can't find node " ++ showaddr a ++ " in heap"))
-hAddresses (Heap allocs size free          cts)     = [ addr | (addr, node) <- cts ]
-hSize      (Heap allocs size free          cts)     = size
-hAllocs    (Heap allocs size free          cts)     = allocs
+hAlloc heap node = case heap.frees of
+    []   -> error "hAlloc: no space"
+    a:rs -> (heap { maxAllocs = heap.maxAllocs `max` succ heap.curAllocs
+                  , curAllocs = succ heap.curAllocs
+                  , frees     = rs
+                  , assocs    = (a, node) : heap.assocs
+                  }, a)
 
-hNull      = 0
-hIsnull a  = a == 0
-showaddr a = "#" ++ show a
+hUpdate heap addr node = heap
+    { assocs = case break ((addr ==) . fst) heap.assocs of
+          (as, _:bs) -> (addr, node) : (as ++ bs)
+          _          -> error "hUpdate: no entry"
+    }
 
-remove :: Assoc Addr a -> Int -> Assoc Addr a
-remove [] a = error ("Attempt to update or free noneexistent address #" ++ show a)
-remove ((a', n) : cts) a
-  | a' == a   = cts
-  | otherwise = (a', n) : remove cts a
+hFree heap addr = heap
+    { curAllocs = pred heap.curAllocs
+    , frees     = addr : heap.frees
+    , assocs    = case break ((addr ==) . fst) heap.assocs of
+        (as,_:bs) -> as ++ bs
+        _         -> heap.assocs
+    }
+
+hLookup heap addr = aLookup heap.assocs addr (error "hLookup: no entry")
+
+hAddresses heap = aDomain heap.assocs

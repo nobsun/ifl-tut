@@ -1,0 +1,64 @@
+cabal-version:      3.0
+name:               ifl-tut
+version:            0.1.5.7
+synopsis:           Implementing Fuctional Lanbuage -- a tutorial
+
+-- A longer description of the package.
+-- description:
+homepage:           https://github.com/nobsun/ifl-tut
+
+-- A URL where users can report bugs.
+-- bug-reports:
+license:            BSD-3-Clause
+license-file:       LICENSE
+author:             Nobuo Yamashita
+maintainer:         nobsun@gmail.com
+
+-- A copyright notice.
+-- copyright:
+category:           Language
+extra-source-files: CHANGELOG.md
+
+common ifl-common-stanza
+    build-depends:    containers
+                    , extra
+
+library
+    import:         ifl-common-stanza
+    exposed-modules:  MyLib
+                    , Heap
+                    , Iseq
+                    , Language
+                    , Parser
+                    , Utils
+
+    -- Modules included in this library but not exported.
+    -- other-modules:
+
+    -- LANGUAGE extensions used by modules in this package.
+    -- other-extensions:
+    build-depends:    base ^>=4.16.0.0
+    hs-source-dirs:   src
+    default-language: GHC2021
+
+executable ifl-tut
+    main-is:          Main.hs
+
+    -- Modules included in this executable, other than Main.
+    -- other-modules:
+
+    -- LANGUAGE extensions used by modules in this package.
+    -- other-extensions:
+    build-depends:
+        base ^>=4.16.0.0,
+        ifl-tut
+
+    hs-source-dirs:   app
+    default-language: GHC2021
+
+test-suite ifl-tut-test
+    default-language: GHC2021
+    type:             exitcode-stdio-1.0
+    hs-source-dirs:   test
+    main-is:          MyLibTest.hs
+    build-depends:    base ^>=4.16.0.0

@@ -65,7 +65,7 @@ type CoreAlter = Alter Name
 {- アトミック式の判別 -}
 
 isAtomicExpr :: Expr a -> Bool
-isAtomicExpr = \ case
+isAtomicExpr expr = case expr of
   EVar _ -> True
   ENum _ -> True
   _      -> False
@@ -166,16 +166,7 @@ pprProgram prog = iInterleave (iAppend (iStr " ;") iNewline) (map pprSc prog)
 pprSc :: CoreScDefn -> IseqRep
 pprSc (name, args, body)
   = iConcat [ iStr name, if null args then iNil else iAppend iSpace (pprArgs args),
-              iStr " = ", iIndent (pprExpr 0{- |
-module:       Language
-copyright:    (c) Nobuo Yamashita 2021
-license:      BSD-3
-maintainer:   nobsun@sampou.org
-stability:    experimental
--}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE ScopedTypeVariables #-}
- body) ]
+              iStr " = ", iIndent (pprExpr 0 body) ]
 
 pprArgs :: [Name] -> IseqRep
 pprArgs args = iConcat (map (iAppend iSpace . iStr) args)
@@ -226,7 +217,7 @@ data Associativity
 <BLANKLINE>
 -}
 pprExpr :: Precedence -> CoreExpr -> IseqRep
-pprExpr p = \ case
+pprExpr p expr = case expr of
   EVar v -> iStr v
   ENum n -> iNum n
   EConstr tag arity
@@ -309,7 +300,7 @@ keywords = ["let", "letrec", "case", "in", "of", "Pack"]
 {- コア言語の構文解析 -}
 
 takeFirstParse :: Show a => [(a, [Token])] -> a
-takeFirstParse = \ case
+takeFirstParse res = case res of
   (x, []) : _ 
     -> x
   r@((_, (i,_) : _): ps)
@@ -386,7 +377,7 @@ data PartialExpr
   | FoundOp Name CoreExpr
 
 assembleOp :: CoreExpr -> PartialExpr -> CoreExpr
-assembleOp e = \ case
+assembleOp e pe = case pe of
   NoOp          -> e
   FoundOp op e' -> EAp (EAp (EVar op) e) e'
 

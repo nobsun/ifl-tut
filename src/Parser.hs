@@ -1,3 +1,4 @@
+
 module Parser
   ( -- * パーザ
     Loc
@@ -39,7 +40,7 @@ pLit :: String -> Parser String
 pLit s = pSat (s ==)
 
 pSat :: (String -> Bool) -> Parser String
-pSat p = \ case
+pSat p str = case str of
   (_, s) : toks
     | p s       -> [(s,toks)]
   _             -> []
@@ -133,7 +134,7 @@ pOneOrMoreWithSep :: Parser a -> Parser b -> Parser [a]
 pOneOrMoreWithSep p sep = (:) <$$> p <**> pMunch (sep **> p)
 
 takeFirstParse :: [(a, [Token])] -> a
-takeFirstParse = \ case
+takeFirstParse res = case res of
   (x, []) : _ 
     -> x
   (_, (i,_) : _): ps 
