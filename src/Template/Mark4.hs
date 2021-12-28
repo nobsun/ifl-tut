@@ -159,7 +159,7 @@ step state = case state of
     dispatch (NPrim name prim)         = doAdminPrimSteps (primStep state prim)
 
 numStep :: TiState -> Int -> TiState
-numStep state n = case state of
+numStep state n = trace "(2.1)" $ case state of
   (stack, dump, heap, globals, stats)
     | isEmptyStack dump -> error "Number applied as a function"
     | otherwise         -> case pop dump of
@@ -174,9 +174,22 @@ apStep state a1 a2 = case state of
           heap' = hUpdate heap apNode (NAp a1 a3)
           (apNode, _) = pop stack
       apDispatch node = (push a1 stack, dump, heap, globals, stats)
-
+{-
 scStep :: TiState -> Name -> [Name] -> CoreExpr -> TiState
-scStep state scName argNames body = case state of
+scStep state scName argNames body = trace "(2.3)" case state of
+  (stack, dump, heap, globals, stats)
+    | depth_ stack < argsLen + 1 -> error "Too few argments given"
+    | otherwise                  -> (stack'', dump, heap'', globals, stats)
+    where
+      argsLen = length argNames
+      (an, stack') = pop (discard argsLen stack)
+      stack'' = push resultAddr stack'
+      (heap', resultAddr) = instantiate body heap env
+      heap'' = hUpdate heap' an (NInd resultAddr)
+      env = argBindings ++ globals
+      argBindings = zip argNames (getargs heap stack)
+-}
+scStep state scName argNames body = trace "(2.3)" $ case state of
   (stack, dump, heap, globals, stats)
     | depth_ stack < argsLen + 1 -> error "Too few argments ginven"
     | otherwise                  -> (stack', dump, heap', globals, stats)
@@ -196,7 +209,7 @@ getargs heap stack = case pop stack of
           NAp fun arg = hLookup heap addr
 
 indStep :: TiState -> Addr -> TiState
-indStep state a = case state of
+indStep state a = trace "(2.4)" $ case state of
   (stack, dump, heap, globals, stats)
     -> (push a (discard 1 stack), dump, heap, globals, stats)
 
@@ -212,8 +225,8 @@ primNeg :: TiState -> TiState
 primNeg state = case state of
   (stack, dump, heap, globals, stats)
     | length args /= 1         -> error "primNeg: wrong number of args"
-    | not (isDataNode argNode) -> (push argAddr emptyStack, push stack' dump, heap, globals, stats)
-    | otherwise                -> (stack', dump, heap', globals, stats)
+    | not (isDataNode argNode) -> trace "(2.6)" (push argAddr emptyStack, push stack' dump, heap, globals, stats)
+    | otherwise                -> trace "(2.5)" (stack', dump, heap', globals, stats)
     where
       args@[argAddr] = getargs heap stack
       argNode = hLookup heap argAddr

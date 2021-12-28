@@ -138,7 +138,7 @@ apStep :: TiState -> Addr -> Addr -> TiState
 apStep state a1 a2 = case state of
   (stack, dump, heap, globals, stats) -> (push a1 stack, dump, heap, globals, stats)
 
-
+{-
 scStep :: TiState -> Name -> [Name] -> CoreExpr -> TiState
 scStep state scName argNames body = case state of
   (stack, dump, heap, globals, stats)
@@ -150,8 +150,8 @@ scStep state scName argNames body = case state of
       (root, _) = pop stack'
       heap'     = instantiateAndUpdate body root heap (bindings ++ globals)
       bindings  = zip argNames (getargs heap stack)
-
-{- not optimized
+-}
+{- not optimized -}
 scStep state scName argNames body = case state of
   (stack, dump, heap, globals, stats)
     | depth_ stack < argsLen + 1 -> error "Too few argments given"
@@ -164,7 +164,7 @@ scStep state scName argNames body = case state of
       heap'' = hUpdate heap' an (NInd resultAddr)
       env = argBindings ++ globals
       argBindings = zip argNames (getargs heap stack)
--}
+-- -}
 
 getargs :: TiHeap -> TiStack -> [Addr]
 getargs heap stack = case pop stack of

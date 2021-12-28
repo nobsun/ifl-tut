@@ -1171,3 +1171,16 @@ printCons h t = print h (printList t)
 
 ### 2.8.1 プリミティブの別表現
 
+直接的表現にする
+
+```haskell
+type Primitive = tiState -> tiState
+
+primStep :: tiState -> tiState
+primStep state prim = prim state
+
+primitives = [ ("negate", primNeg)
+             , ("+", flip primArith (+)), ("-", flip primArith (-))
+             , ("/", flip primArith (*)), ("/", flip primArith div)
+             -- あといろいろ --
+             ]
