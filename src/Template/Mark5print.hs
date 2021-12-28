@@ -12,13 +12,11 @@ import Language
 
 --- Structure of the implementation
 
-test, test' :: String -> IO ()
+test :: String -> IO ()
 test = putStrLn . run
-test' = putStrLn . run'
 
-run, run' :: String -> String
+run :: String -> String
 run = showResults . eval . compile . parse
-run' = showResults . eval . compile' . parse
 
 type TiState = (Output, TiStack, TiDump, TiHeap, TiGlobals, TiStats)
 
@@ -100,7 +98,8 @@ applyToStats f state = case state of
 
 -- compiler
 
-compile, compile' :: CoreProgram -> TiState
+compile :: CoreProgram -> TiState
+{-
 compile prog
   = ([], initialStack, initialTiDump, initialHeap, globals, tiStatInitial)
     where
@@ -108,8 +107,8 @@ compile prog
       (initialHeap, globals) = buildInitialHeap scDefs
       initialStack = push addressOfMain emptyStack
       addressOfMain = aLookup globals "main" (error "main is not defined")
-
-compile' prog
+-}
+compile prog
   = ([], initialStack, initialTiDump, initialHeap', globals, tiStatInitial)
     where
       scDefs = prog ++ preludeDefs ++ extraPreludeDefs
@@ -208,15 +207,20 @@ doAdminScSteps = applyToStats tiStatIncScSteps
 doAdminPrimSteps :: TiState -> TiState
 doAdminPrimSteps = applyToStats tiStatIncPrimSteps
 
-
 tiFinal :: TiState -> Bool
 tiFinal state = case state of
-    (_, stack, dump, heap, _, _)
-        | isEmptyStack stack -> True
-        | otherwise -> case pop stack of
-            (a,_) -> isNumNode (hLookup heap a)
-    
+  (_, Stack _ _ [soleAddr], dump , heap, _, _) 
+    | isEmptyStack dump -> isDataNode (hLookup heap soleAddr)
+  (_, Stack _ _ [], _, _, _, _) -> True
+  _                             -> False
 
+{- --
+tiFinal state = case state of
+    (_,stack,dump,heap,_,_) -> isEmptyStack stack
+      || case pop stack of
+             (a, _) -> trace (iDisplay $ showNode n) isNumNode n && isEmptyStack dump
+                 where n = hLookup heap a
+-- -}
 isDataNode :: Node -> Bool
 isDataNode node = case node of
   NNum _    -> True
@@ -379,6 +383,7 @@ primCasePair state = case state of
 primCaseList :: TiState -> TiState
 primCaseList state = case state of
   (output, stack, dump, heap, globals, stats)
+    | trace (iDisplay (showStack heap stack)) False -> error "debug"
     | length args < 3 -> error "primCaseList: wrong number of args"
     | not (isDataNode arg1Node) -> (output, push arg1Addr emptyStack, push stack' dump, heap, globals, stats)
     | otherwise -> (output, stack', dump, heap', globals, stats)
@@ -422,9 +427,9 @@ primStop state = case state of
       | otherwise -> (output, emptyStack, emptyStack , heap, globals, stats)
         
 primPrint :: TiState -> TiState
-primPrint state = case state of
+primPrint state = trace "hoge" $ case state of
     (output, stack, dump, heap, globals, stats)
-        | {- trace (iDisplay (showStack heap stack)) -} length args /= 2  -> error "primPrint: wrong number of args"
+        | length args /= 2  -> error "primPrint: wrong number of args"
         | otherwise -> case arg1Node of
             NNum m    -> (output ++ [m], singletonStack arg2Addr, emptyStack, heap, globals, stats)
             NData _ _ -> error "primPrint: not a number"
@@ -508,6 +513,7 @@ instantiateAndUpdateConstr tag arity updAddr heap env
 showResults :: [TiState] -> String
 showResults states
   = iDisplay (iConcat [ iLayn (map showState states)
+                      --  showState (last states)
                       , showStats (last states)
                       ])
 

@@ -11,11 +11,13 @@ import Iseq
 import Language
 
 --- Structure of the implementation
-test :: String -> IO ()
+test, test' :: String -> IO ()
 test = putStrLn . run
+test' = putStrLn . run'
 
-run :: String -> String
+run, run' :: String -> String
 run = showResults . eval . compile . parse
+run' = showResults . eval . compile' . parse
 
 type TiState = (Output, TiStack, TiDump, TiHeap, TiGlobals, TiStats)
 
@@ -100,18 +102,23 @@ applyToStats f state = case state of
 
 -- compiler
 
-compile :: CoreProgram -> TiState
+compile, compile' :: CoreProgram -> TiState
 compile prog
---  = ([], initialStack, initialTiDump, initialHeap, globals, tiStatInitial)
   = ([], initialStack, initialTiDump, initialHeap, globals, tiStatInitial)
     where
       scDefs = prog ++ preludeDefs ++ extraPreludeDefs
       (initialHeap, globals) = buildInitialHeap scDefs
       initialStack = push addressOfMain emptyStack
---      initialStack = push printAddr emptyStack
       addressOfMain = aLookup globals "main" (error "main is not defined")
---      addressOfPrint = aLookup globals "printList" (error "printList is not defined")
---      (initialHeap', printAddr) = hAlloc initialHeap (NAp addressOfPrint addressOfMain)
+compile' prog
+  = ([], initialStack, initialTiDump, initialHeap', globals, tiStatInitial)
+    where
+      scDefs = prog ++ preludeDefs ++ extraPreludeDefs
+      (initialHeap, globals) = buildInitialHeap scDefs
+      initialStack = push printAddr emptyStack
+      addressOfMain = aLookup globals "main" (error "main is not defined")
+      addressOfPrint = aLookup globals "printList" (error "printList is not defined")
+      (initialHeap', printAddr) = hAlloc initialHeap (NAp addressOfPrint addressOfMain)
 
 extraPreludeDefs :: CoreProgram
 extraPreludeDefs = 
@@ -158,10 +165,17 @@ buildInitialHeap scDefs
 
 primitives :: Assoc Name Primitive
 primitives = [ ("nagate", primNeg)
-             , ("+", flip primArith (+))
-             , ("-", flip primArith (-))
-             , ("*", flip primArith (*))
-             , ("/", flip primArith div)
+             , ("+", flip primArith (+)), ("-", flip primArith (-))
+             , ("*", flip primArith (*)), ("/", flip primArith div)
+             , (">", flip primComp (>)), (">=", flip primComp (>=))
+             , ("<", flip primComp (<)), ("<=", flip primComp (<=))
+             , ("==", flip primComp (==)), ("/=", flip primComp (/=))
+             , ("if", primIf)
+             , ("casePair", primCasePair)
+             , ("caseList", primCaseList)
+             , ("print", primPrint)
+             , ("stop", primStop)
+             , ("abort", error "program abort!")
              ]
 {- --
 primitives = [ ("negate", Neg)
@@ -209,11 +223,16 @@ doAdminScSteps = applyToStats tiStatIncScSteps
 doAdminPrimSteps :: TiState -> TiState
 doAdminPrimSteps = applyToStats tiStatIncPrimSteps
 
-
 tiFinal :: TiState -> Bool
 tiFinal state = case state of
-    (_, stack, _, heap, _, _) -> case pop stack of
-        (a, stack') -> isDataNode (hLookup heap a) && isEmptyStack stack'
+  (_, Stack _ _ [soleAddr], dump , heap, _, _) 
+    | isEmptyStack dump -> isDataNode (hLookup heap soleAddr)
+  (_, Stack _ _ [], _, _, _, _) -> True
+  _                             -> False
+
+-- tiFinal state = case state of
+--     (_, stack, _, heap, _, _) -> case pop stack of
+--         (a, stack') -> isDataNode (hLookup heap a) && isEmptyStack stack'
     
 --  (_, stack, _, _, _, _) -> isEmptyStack stack
 
@@ -409,6 +428,9 @@ primConstr state tag arity = case state of
       (rootOfRedex, _) = pop stack'
       heap' = hUpdate heap rootOfRedex (NData tag args)
 
+primConstr' :: Tag -> Arity -> TiState -> TiState
+primConstr' tag arity state = primConstr state tag arity
+
 dataStep :: TiState -> Tag -> [Addr] -> TiState
 dataStep state tag compts = case state of
   (output, stack, dump, heap, globals, stats)
@@ -496,7 +518,7 @@ instantiateAndUpdate expr updAddr heap env = case expr of
         = (heap', (name, addr))
           where
             (heap', addr) = instantiate rhs heap rhsEnv
-{- --
+{- -}
   EConstr tag arity
             -> instantiateAndUpdateConstr tag arity updAddr heap env
   _         -> error "Not yet implemented"
@@ -504,7 +526,7 @@ instantiateAndUpdate expr updAddr heap env = case expr of
 instantiateAndUpdateConstr
   :: Tag -> Arity -> Addr -> TiHeap -> Assoc Name Addr -> TiHeap
 instantiateAndUpdateConstr tag arity updAddr heap env
-  = hUpdate heap updAddr (NPrim "Cons" (PrimConstr tag arity))
+  = hUpdate heap updAddr (NPrim "Cons" (primConstr' tag arity))
 -- -}
 -- Formatting the results
 
