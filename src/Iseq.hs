@@ -41,6 +41,12 @@ iLayn seqs
     where
       layItem n seq
         = iConcat [ iFWNum 4 n, iStr ") ", iIndent seq, iNewline ]
+  
+iLayn' :: Iseq iseq => [iseq] -> [iseq]
+iLayn' seqs = zipWith layItem [1..] seqs
+    where
+      layItem n seq
+        = iConcat [ iFWNum 4 n, iStr ") ", iIndent seq, iNewline ]
 
 {- | instance of Iseq
 -}

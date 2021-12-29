@@ -10,9 +10,6 @@ import Utils
 
 type Addr = Int
 
-showAddr :: Addr -> String
-showAddr = ('#' :) . show
-
 {- | ヒープ
 -}
 data Heap a = Heap

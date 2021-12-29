@@ -22,6 +22,10 @@ extra-source-files: CHANGELOG.md
 common ifl-common-stanza
     build-depends:    containers
                     , extra
+                    , unicode-show
+                    , bytestring
+                    , text
+                    , utf8-string
 
 library
     import:         ifl-common-stanza
@@ -30,7 +34,9 @@ library
                     , Iseq
                     , Language
                     , Parser
+                    , Stack
                     , Utils
+                    , Template.Mark1
 
     -- Modules included in this library but not exported.
     -- other-modules:
@@ -41,7 +47,7 @@ library
     hs-source-dirs:   src
     default-language: GHC2021
 
-executable ifl-tut
+executable mark1
     main-is:          Main.hs
 
     -- Modules included in this executable, other than Main.

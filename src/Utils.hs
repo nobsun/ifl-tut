@@ -1,5 +1,5 @@
 module Utils
-    ( space, layn
+    ( space, layn, rjustify
     , Assoc, aLookup, aDomain, aRange, aEmpty )
     where
 
@@ -10,7 +10,9 @@ layn :: [String] -> String
 layn = unlines . zipWith phi [1 :: Int ..]
     where
         phi i line = rjustify 4 (show i) ++ ')' : (space 3 ++ line)
-        rjustify w s = reverse $ take w $ reverse s ++ repeat ' '
+
+rjustify :: Int -> String -> String        
+rjustify w s = reverse $ take w $ reverse s ++ repeat ' '
 
 {- | 連想リスト
 -}

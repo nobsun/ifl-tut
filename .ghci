@@ -1,0 +1,7 @@
+:set prompt ">>> "
+:set -interactive-print=Text.Show.Unicode.uprint
+-- :set -pgmL markdown-unlit
+-- :set +s
+-- :set +t
+:set -XLambdaCase -XMultiWayIf -XOverloadedStrings -XBangPatterns -XScopedTypeVariables
+:set editor catn

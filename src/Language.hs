@@ -6,7 +6,7 @@ import Data.Maybe ( fromJust, isJust )
 
 import Iseq
 import Parser
-import Utils ( space )
+import Utils
 
 {- ** コア式の抽象構文木 -}
 {- | 式 -}
@@ -31,6 +31,23 @@ data Expr a
 
 {- | コア式 -}
 type CoreExpr = Expr Name
+
+dispatchCoreExpr :: (Name -> a)
+         -> (Int -> a)
+         -> (Tag -> Arity -> a)
+         -> (CoreExpr -> CoreExpr -> a)
+         -> (IsRec -> Assoc Name CoreExpr -> CoreExpr -> a)
+         -> (CoreExpr -> [CoreAlter] -> a)
+         -> ([Name] -> CoreExpr -> a)
+         -> CoreExpr -> a
+dispatchCoreExpr contEVar contENum contEConstr contEAp contELet contECase contELam expr = case expr of
+    EVar v -> contEVar v
+    ENum n -> contENum n
+    EConstr tag arity -> contEConstr tag arity
+    EAp a b -> contEAp a b
+    ELet isrec bindings body -> contELet isrec bindings body
+    ECase expr alters -> contECase expr alters
+    ELam vars expr -> contELam vars expr
 
 {- | 名前 -}
 type Name = String

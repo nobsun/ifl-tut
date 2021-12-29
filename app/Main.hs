@@ -1,8 +1,8 @@
 module Main where
 
-import qualified MyLib (someFunc)
+import System.Environment
+import Template.Mark1
 
 main :: IO ()
-main = do
-  putStrLn "Hello, Haskell!"
-  MyLib.someFunc
+main = putStrLn . run =<< readFile . head =<< getArgs
+
