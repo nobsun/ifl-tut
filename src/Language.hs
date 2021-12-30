@@ -33,14 +33,15 @@ data Expr a
 type CoreExpr = Expr Name
 
 dispatchCoreExpr :: (Name -> a)
-         -> (Int -> a)
-         -> (Tag -> Arity -> a)
-         -> (CoreExpr -> CoreExpr -> a)
-         -> (IsRec -> Assoc Name CoreExpr -> CoreExpr -> a)
-         -> (CoreExpr -> [CoreAlter] -> a)
-         -> ([Name] -> CoreExpr -> a)
-         -> CoreExpr -> a
-dispatchCoreExpr contEVar contENum contEConstr contEAp contELet contECase contELam expr = case expr of
+                 -> (Int -> a)
+                 -> (Tag -> Arity -> a)
+                 -> (CoreExpr -> CoreExpr -> a)
+                 -> (IsRec -> Assoc Name CoreExpr -> CoreExpr -> a)
+                 -> (CoreExpr -> [CoreAlter] -> a)
+                 -> ([Name] -> CoreExpr -> a)
+                 -> CoreExpr -> a
+dispatchCoreExpr contEVar contENum contEConstr contEAp contELet contECase contELam expr
+  = case expr of
     EVar v -> contEVar v
     ENum n -> contENum n
     EConstr tag arity -> contEConstr tag arity

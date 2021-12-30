@@ -1,0 +1,2 @@
+main = twice twice id 3 ;
+id x = x
