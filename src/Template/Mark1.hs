@@ -72,14 +72,18 @@ data TiStats
     { totalSteps :: Int
     , scSteps    :: Int
     , primSteps  :: Int
+    , deltaSteps :: Int
     }
+    deriving Show
+
 initialStats :: TiStats
-initialStats = TiStats { totalSteps = 0, scSteps = 0, primSteps = 0 }
+initialStats = TiStats { totalSteps = 0, scSteps = 0, primSteps = 0, deltaSteps = 0 }
 
 incTotalSteps, incScSteps, incPrimSteps :: TiStats -> TiStats
 incTotalSteps stats = stats { totalSteps = succ stats.totalSteps }
 incScSteps    stats = stats { scSteps    = succ stats.scSteps }
 incPrimSteps  stats = stats { primSteps  = succ stats.primSteps }
+incDeltaSteps stats = stats { deltaSteps = succ stats.deltaSteps }
 
 applyToStats :: (TiStats -> TiStats) -> TiState -> TiState
 applyToStats f state = state { stats = f state.stats }
@@ -151,36 +155,34 @@ isDataNode node = case node of
 doAdminTotalSteps :: TiState -> TiState
 doAdminTotalSteps = applyToStats incTotalSteps
 
+doAdminScSteps :: TiState -> TiState
+doAdminScSteps = applyToStats incScSteps
+
+doAdminPrimSteps :: TiState -> TiState
+doAdminPrimSteps = applyToStats incPrimSteps
+
 step :: TiState -> TiState
-step state = dispatchNode apStep' scStep' numStep' (hLookup state.heap (fst (pop state.stack))) state
+step state = dispatchNode apStep scStep numStep (hLookup state.heap (fst (pop state.stack)))
+           $ state
 
-numStep' :: Int -> TiState -> TiState
-numStep' n = flip numStep n
+numStep :: Int -> TiState -> TiState
+numStep n = error "numStep: Number applied as a function"
 
-numStep :: TiState -> Int -> TiState
-numStep state n = error "numStep: Number applied as a function"
+apStep :: Addr -> Addr -> TiState -> TiState
+apStep a b state = setRuleId 1 $ state { stack = push a (state.stack :: TiStack) }
 
-apStep' :: Addr -> Addr -> TiState -> TiState
-apStep' a b state = apStep state a b
-
-apStep :: TiState -> Addr -> Addr -> TiState
-apStep state a b = setRuleId 1 $ state { stack = push a (state.stack :: TiStack) }
-
-scStep' :: Name -> [Name] -> CoreExpr -> TiState -> TiState
-scStep' name args body state = scStep state name args body
-
-scStep :: TiState -> Name -> [Name] -> CoreExpr -> TiState
-scStep state scName argNames body 
+scStep :: Name -> [Name] -> CoreExpr -> TiState -> TiState
+scStep name args body state
     | state.stack.curDepth < n' 
         = error "scStep: too few arguments given"
     | otherwise
-        = setRuleId 2 $ state { stack = stack', heap = heap' }
+        = doAdminScSteps $ setRuleId 2 $ state { stack = stack', heap = heap' }
     where
         stack' = push resultAddr (discard n' state.stack)
         (heap', resultAddr) = instantiate body state.heap env
         env = argBindings ++ state.globals
-        argBindings = zip argNames (getargs state.heap state.stack)
-        n' = succ (length argNames)
+        argBindings = zip args (getargs state.heap state.stack)
+        n' = succ (length args)
 
 getargs :: TiHeap -> TiStack -> [Addr]
 getargs heap stack = case pop stack of
@@ -233,7 +235,12 @@ instantiateLam heap env vars body = error "Cannot instatiate lambda"
 {- | Formatting Results -}
 
 showResults :: [TiState] -> String
-showResults = iDisplay . iLayn . map showState  
+showResults = concatMap iDisplay . iLayn' 0 . mapoid (showState, showStats)
+
+mapoid :: (a -> b, a -> b) -> [a] -> [b]
+mapoid (f, g) (x:xs) = case xs of
+    [] -> f x : [g x]
+    _  -> f x : mapoid (f,g) xs
 
 showState :: TiState -> IseqRep
 showState state = iConcat
@@ -291,6 +298,22 @@ showStkNode heap node = dispatchNode
 
 showRuleId :: TiRuleId -> IseqRep
 showRuleId rid = iStr ("Rule " ++ show (2, rid)) 
+
+showStats :: TiState -> IseqRep
+showStats state = iConcat
+    [ iNewline, iStr "Total number of steps = "
+    , iNum state.stats.totalSteps
+    , iNewline, iStr "             Sc steps = "
+    , iNum state.stats.scSteps
+    , iNewline, iStr "           Prim steps = "
+    , iNum state.stats.primSteps
+    , iNewline, iStr "          Delta steps = "
+    , iNum state.stats.deltaSteps
+    , iNewline, iStr "     Allocation count = "
+    , iNum state.heap.maxAllocs
+    , iNewline, iStr "   Max depth of stack = "
+    , iNum state.stack.maxDepth
+    ]
 
 {- | Testing -}
 

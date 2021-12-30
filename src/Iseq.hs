@@ -20,7 +20,7 @@ iInterleave :: Iseq iseq => iseq -> [iseq] -> iseq
 iInterleave sep iseqs = case iseqs of 
     []      -> iNil
     [iseq]  -> iseq
-    iseq:rs -> iseq `iAppend` sep `iAppend` iInterleave iseq rs
+    iseq:rs -> iseq `iAppend` sep `iAppend` iInterleave sep rs
 
 iParen :: Iseq iseq => iseq -> iseq
 iParen iseq = iConcat [ iStr "(", iseq, iStr ")" ]
@@ -37,16 +37,19 @@ iFWNum width n = iStr
 
 iLayn :: Iseq iseq => [iseq] -> iseq
 iLayn seqs
-  = iConcat (zipWith layItem [1..] seqs)
-    where
-      layItem n seq
-        = iConcat [ iFWNum 4 n, iStr ") ", iIndent seq, iNewline ]
+  = iConcat (iLayn' 1 seqs)
   
-iLayn' :: Iseq iseq => [iseq] -> [iseq]
-iLayn' seqs = zipWith layItem [1..] seqs
+iLayn' :: Iseq iseq => Int -> [iseq] -> [iseq]
+iLayn' i seqs = zipoidWith layItem [i ..] seqs
     where
       layItem n seq
         = iConcat [ iFWNum 4 n, iStr ") ", iIndent seq, iNewline ]
+
+zipoidWith :: (a -> b -> b) -> [a] -> [b] -> [b]
+zipoidWith f (x:xs) yys = case yys of
+    y:ys -> case ys of
+        [] -> [y]
+        _  -> f x y : zipoidWith f xs ys
 
 {- | instance of Iseq
 -}
