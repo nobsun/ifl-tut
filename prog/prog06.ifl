@@ -1,0 +1,1 @@
+main = twice negate 3

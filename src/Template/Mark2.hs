@@ -27,7 +27,7 @@ traceShow :: Show a => a -> b -> b
 traceShow | debug     = Deb.traceShow
           | otherwise = const id
 
-{- * Mark 1 : A minimal template instantiation graph reducer -}
+{- * Mark 2 : let(rec) expressions -}
 
 {- | Types -}
 

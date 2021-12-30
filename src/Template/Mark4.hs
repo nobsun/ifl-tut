@@ -3,7 +3,7 @@
 {-# LANGUAGE NoFieldSelectors #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedRecordDot #-}
-module Template.Mark3
+module Template.Mark4
     where
 
 import Data.List
@@ -27,7 +27,7 @@ traceShow :: Show a => a -> b -> b
 traceShow | debug     = Deb.traceShow
           | otherwise = const id
 
-{- * Mark 3 : Adding updateing -}
+{- * Mark 4 : Adding arithmetic -}
 
 {- | Types -}
 
@@ -43,10 +43,9 @@ data TiState
 
 type TiStack   = Stack Addr
 
-type TiDump    = DummyTiDump
-data DummyTiDump = DummyTiDump deriving Show
+type TiDump    = Stack TiStack
 initialDump :: TiDump
-initialDump = DummyTiDump
+initialDump = emptyStack
 
 type TiHeap    = Heap Node
 
@@ -55,18 +54,35 @@ data Node
     | NSupercomb Name [Name] CoreExpr
     | NNum Int
     | NInd Addr
+    | NPrim Name Primitive
     deriving Show
 
 dispatchNode :: (Addr -> Addr -> a)               -- ^ NAp
              -> (Name -> [Name] -> CoreExpr -> a) -- ^ NSupercomb
              -> (Int -> a)                        -- ^ NInt
              -> (Addr -> a)                       -- ^ NInd
+             -> (Name -> Primitive -> a)          -- ^ NPrim
              -> Node -> a
-dispatchNode nap nsupercomb nnum nind node = case node of
+dispatchNode nap nsupercomb nnum nind nprim node = case node of
     NAp a b                -> nap a b
     NSupercomb f args body -> nsupercomb f args body
     NNum n                 -> nnum n
     NInd a                 -> nind a
+    NPrim name prim        -> nprim name prim
+
+data Primitive
+    = Neg
+    | Add
+    | Sub
+    | Mul
+    | Div
+    deriving Show
+
+primitives :: Assoc Name Primitive
+primitives = [ ("negate", Neg)
+             , ("+", Add), ("-", Sub)
+             , ("*", Mul), ("/", Div)
+             ]
 
 type TiGlobals = Assoc Name Addr
 
@@ -75,18 +91,16 @@ data TiStats
     { totalSteps :: Int
     , scSteps    :: Int
     , primSteps  :: Int
-    , deltaSteps :: Int
     }
     deriving Show
 
 initialStats :: TiStats
-initialStats = TiStats { totalSteps = 0, scSteps = 0, primSteps = 0, deltaSteps = 0 }
+initialStats = TiStats { totalSteps = 0, scSteps = 0, primSteps = 0 }
 
 incTotalSteps, incScSteps, incPrimSteps :: TiStats -> TiStats
 incTotalSteps stats = stats { totalSteps = succ stats.totalSteps }
 incScSteps    stats = stats { scSteps    = succ stats.scSteps }
 incPrimSteps  stats = stats { primSteps  = succ stats.primSteps }
-incDeltaSteps stats = stats { deltaSteps = succ stats.deltaSteps }
 
 applyToStats :: (TiStats -> TiStats) -> TiState -> TiState
 applyToStats f state = state { stats = f state.stats }
@@ -125,14 +139,22 @@ defaultHeapSize :: Int
 defaultHeapSize = 1024
 
 buildInitialHeap :: [CoreScDefn] -> (TiHeap, TiGlobals)
-buildInitialHeap = let ?sz = defaultHeapSize in
-    mapAccumL allocateSc hInitial
+buildInitialHeap scDefs = (heap2, scAddrs ++ primAddrs)
+    where
+        (heap1, scAddrs)   = let ?sz = defaultHeapSize
+                             in mapAccumL allocateSc hInitial scDefs
+        (heap2, primAddrs) = mapAccumL allocatePrim heap1 primitives
 
 allocateSc :: TiHeap -> CoreScDefn -> (TiHeap, (Name, Addr))
 allocateSc heap scDefn = case scDefn of
     (name, args, body) -> (heap', (name, addr))
         where
             (heap', addr) = hAlloc heap (NSupercomb name args body)
+
+allocatePrim :: TiHeap -> (Name, Primitive) -> (TiHeap, (Name, Addr))
+allocatePrim heap (name, prim) = (heap1, (name, addr))
+    where
+        (heap1, addr) = hAlloc heap (NPrim name prim)
 
 {- | Evaluator -}
 
@@ -146,6 +168,7 @@ tiFinal :: TiState -> Bool
 tiFinal state
     | isEmptyStack state.stack     = error "tiFinal: empty stack"
     | isSingletonStack state.stack = isDataNode (hLookup state.heap soleAddr)
+                                  && isEmptyStack state.dump
     | otherwise                    = False
     where
         (soleAddr, _) = pop state.stack
@@ -165,14 +188,27 @@ doAdminPrimSteps :: TiState -> TiState
 doAdminPrimSteps = applyToStats incPrimSteps
 
 step :: TiState -> TiState
-step state = dispatchNode apStep scStep numStep indStep (hLookup state.heap (fst (pop state.stack)))
+step state = dispatchNode 
+             apStep
+             scStep
+             numStep
+             indStep
+             primStep
+             (hLookup state.heap (fst (pop state.stack)))
            $ state
 
 numStep :: Int -> TiState -> TiState
-numStep n = error "numStep: Number applied as a function"
+numStep n state 
+    | isEmptyStack state.dump = error "numStep: Number applied as a function"
+    | otherwise = case pop state.dump of
+        (stack1, dump1) -> setRuleId 7 $ state { stack = stack1, dump = dump1 }
 
 apStep :: Addr -> Addr -> TiState -> TiState
-apStep a b state = setRuleId 1 $ state { stack = push a (state.stack :: TiStack) }
+apStep a1 a2 state = case hLookup state.heap a2 of
+    NInd a3 -> setRuleId 8 $ state { heap = hUpdate state.heap a (NAp a1 a3) }
+    _       -> setRuleId 1 $ state { stack = push a1 state.stack }
+    where
+        (a,_) = pop state.stack
 
 scStep :: Name -> [Name] -> CoreExpr -> TiState -> TiState
 scStep name args body state
@@ -198,6 +234,53 @@ getargs heap stack = case pop stack of
 indStep :: Addr -> TiState -> TiState
 indStep addr state = setRuleId 4 $ state { stack = push addr (discard 1 state.stack) }
 
+primStep :: Name -> Primitive -> TiState -> TiState
+primStep name prim = case prim of
+    Neg -> primNeg
+    Add -> primArith (+)
+    Sub -> primArith (-)
+    Mul -> primArith (*)
+    Div -> primArith div
+
+primNeg :: TiState -> TiState
+primNeg state
+    | length args /= 1         = error "primNeg: wrong number of args"
+    | not (isDataNode argNode) = setRuleId 9
+                               $ state { stack = singletonStack argAddr
+                                       , dump  = push stack1 state.dump 
+                                       }
+    | otherwise                = doAdminPrimSteps $ setRuleId 5 
+                               $ state { stack = stack1, heap = heap1 }
+    where
+        args      = getargs state.heap state.stack
+        [argAddr] = args
+        argNode   = hLookup state.heap argAddr
+        NNum argValue = argNode
+        (_, stack1) = pop state.stack
+        (root, _)   = pop stack1
+        heap1 = hUpdate state.heap root (NNum (negate argValue))
+
+primArith :: (Int -> Int -> Int) -> TiState -> TiState
+primArith op state
+    | length args /= 2 = error "primArith: wrong number of args"
+    | not (isDataNode argNode1) = state { stack = singletonStack argAddr1
+                                        , dump  = push stack1 state.dump 
+                                        }
+    | not (isDataNode argNode2) = state { stack = singletonStack argAddr2
+                                        , dump  = push stack1 state.dump
+                                        }
+    | otherwise                 = doAdminPrimSteps $ setRuleId 17
+                                $ state { stack = stack1, heap = heap1 }
+    where
+        args = getargs state.heap state.stack
+        [argAddr1, argAddr2] = args
+        [argNode1, argNode2] = map (hLookup state.heap) args
+        NNum argVal1 = argNode1
+        NNum argVal2 = argNode2
+        stack1 = discard 2 state.stack
+        (root, _) = pop stack1
+        heap1 = hUpdate state.heap root (NNum (op argVal1 argVal2))
+        
 {- | Instantiation -}
 
 instantiate :: CoreExpr
@@ -372,6 +455,7 @@ showNode node = dispatchNode
     (\ name args body -> iStr ("NSupercomb " ++ name))
     (\ n -> iStr "NNum " `iAppend` iNum n)
     (\ a -> iStr "NInd " `iAppend` showAddr a)
+    (\ name _ -> iStr ("NPrim " ++ name))
     node
 
 showStack :: TiHeap -> TiStack -> IseqRep
@@ -394,6 +478,7 @@ showStkNode heap node = dispatchNode
     (\ _ _ _ -> showNode node)
     (\ _ -> showNode node)
     (\ _ -> showNode node)
+    (\ _ _ -> showNode node)
     node
 
 showRuleId :: TiRuleId -> IseqRep
@@ -407,8 +492,6 @@ showStats state = iConcat
     , iNum state.stats.scSteps
     , iNewline, iStr "           Prim steps = "
     , iNum state.stats.primSteps
-    , iNewline, iStr "          Delta steps = "
-    , iNum state.stats.deltaSteps
     , iNewline, iStr "     Allocation count = "
     , iNum state.heap.maxAllocs
     , iNewline, iStr "   Max depth of stack = "
