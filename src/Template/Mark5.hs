@@ -320,8 +320,6 @@ primDyadic op state
         args = getargs state.heap state.stack
         [arg1Addr, arg2Addr] = args
         [arg1Node, arg2Node] = map (hLookup state.heap) args
-        -- NNum arg1Val = arg1Node
-        -- NNum arg2Val = arg2Node
         stack1 = discard 2 state.stack
         (root, _) = pop stack1
         heap1 = hUpdate state.heap root (op arg1Node arg2Node)
@@ -375,13 +373,14 @@ instantiate expr heap env = dispatchCoreExpr
     expr
 
 instantiateVar :: TiHeap -> Assoc Name Addr -> Name -> (TiHeap, Addr)
-instantiateVar heap env name = (heap, aLookup env name (error ("instantiateVar: Undefined name " ++ show name)))
+instantiateVar heap env name
+    = (heap, aLookup env name (error ("instantiateVar: Undefined name " ++ show name)))
 
 instantiateNum :: TiHeap -> Assoc Name Addr -> Int -> (TiHeap, Addr)
 instantiateNum heap env num = hAlloc heap (NNum num)
 
 instantiateConstr :: TiHeap -> Assoc Name Addr -> Tag -> Arity -> (TiHeap, Addr)
-instantiateConstr heap env tag arity = error "Cannot instantiate constructor yet"
+instantiateConstr heap env tag arity = hAlloc heap (NPrim "Constr" (PrimConstr tag arity))
 
 instantiateAp :: TiHeap -> Assoc Name Addr -> CoreExpr -> CoreExpr -> (TiHeap, Addr)
 instantiateAp heap env a b = hAlloc heap2 (NAp a1 a2)
