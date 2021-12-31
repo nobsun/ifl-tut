@@ -1,6 +1,7 @@
 module Utils
     ( space, layn, rjustify
-    , Assoc, aLookup, aDomain, aRange, aEmpty )
+    , Assoc, aLookup, aDomain, aRange, aEmpty 
+    )
     where
 
 space :: Int -> String
@@ -17,6 +18,7 @@ rjustify w s = reverse $ take w $ reverse s ++ repeat ' '
 {- | 連想リスト
 -}
 type Assoc a b = [(a, b)]
+
 aLookup :: Eq a => Assoc a b -> a -> b -> b
 aLookup []             k'  def = def
 aLookup ((k, v) : kvs) k' def

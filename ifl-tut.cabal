@@ -41,6 +41,11 @@ library
                     , Template.Mark3
                     , Template.Mark4
                     , Template.Mark5
+                    , Template.Mark5.Machine
+                    , Template.Mark5.Node
+                    , Template.Mark5.Primitive
+                    , Template.Mark5.State
+                    , Template.Mark5.PPrint
 
     -- Modules included in this library but not exported.
     -- other-modules:
