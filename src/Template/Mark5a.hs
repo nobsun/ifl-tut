@@ -3,7 +3,7 @@
 {-# LANGUAGE NoFieldSelectors #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedRecordDot #-}
-module Template.Mark5
+module Template.Mark5a
     where
 
 import Data.List
@@ -75,9 +75,10 @@ dispatchNode nap nsupercomb nnum nind nprim ndata node = case node of
 
 data Primitive
     = Neg
-    | Add | Sub | Mul | Div
-    | Less | LessEq | Greater | GreaterEq
-    | Eq | NotEq
+    | Add
+    | Sub
+    | Mul
+    | Div
     | PrimConstr Tag Arity
     | If
     deriving Show
@@ -86,9 +87,6 @@ primitives :: Assoc Name Primitive
 primitives = [ ("negate", Neg)
              , ("+", Add), ("-", Sub)
              , ("*", Mul), ("/", Div)
-             , ("<", Less), ("<=", LessEq)
-             , (">", Greater), (">=", GreaterEq)
-             , ("==", Eq), ("/=", NotEq)
              , ("if", If)
              ]
 
@@ -266,12 +264,6 @@ primStep name prim = case prim of
     Sub -> primArith (-)
     Mul -> primArith (*)
     Div -> primArith div
-    Less -> primComp (<)
-    LessEq -> primComp (<=)
-    Greater -> primComp (>)
-    GreaterEq -> primComp (>=)
-    Eq -> primComp (==)
-    NotEq -> primComp (/=)
     PrimConstr tag arity -> primConstr tag arity
     If  -> primIf
 
@@ -294,37 +286,25 @@ primNeg state
         heap1 = hUpdate state.heap root (NNum (negate argValue))
 
 primArith :: (Int -> Int -> Int) -> TiState -> TiState
-primArith op = primDyadic op'
-    where
-        op' (NNum m) (NNum n) = NNum (m `op` n)
-
-primComp :: (Int -> Int -> Bool) -> TiState -> TiState
-primComp op = primDyadic op'
-    where
-        op' (NNum m) (NNum n)
-            | m `op` n  = NData 1 []
-            | otherwise = NData 0 []
-
-primDyadic :: (Node -> Node -> Node) -> TiState -> TiState
-primDyadic op state 
-    | length args /= 2 = error "primDyadic: wrong number of args"
-    | not (isDataNode arg1Node) = state { stack = singletonStack arg1Addr
+primArith op state
+    | length args /= 2 = error "primArith: wrong number of args"
+    | not (isDataNode argNode1) = state { stack = singletonStack argAddr1
                                         , dump  = push stack1 state.dump 
                                         }
-    | not (isDataNode arg2Node) = state { stack = singletonStack arg2Addr
+    | not (isDataNode argNode2) = state { stack = singletonStack argAddr2
                                         , dump  = push stack1 state.dump
                                         }
     | otherwise                 = doAdminPrimSteps $ setRuleId 17
                                 $ state { stack = stack1, heap = heap1 }
     where
         args = getargs state.heap state.stack
-        [arg1Addr, arg2Addr] = args
-        [arg1Node, arg2Node] = map (hLookup state.heap) args
-        -- NNum arg1Val = arg1Node
-        -- NNum arg2Val = arg2Node
+        [argAddr1, argAddr2] = args
+        [argNode1, argNode2] = map (hLookup state.heap) args
+        NNum argVal1 = argNode1
+        NNum argVal2 = argNode2
         stack1 = discard 2 state.stack
         (root, _) = pop stack1
-        heap1 = hUpdate state.heap root (op arg1Node arg2Node)
+        heap1 = hUpdate state.heap root (NNum (op argVal1 argVal2))
 
 primConstr :: Tag -> Arity -> TiState -> TiState
 primConstr tag arity state
