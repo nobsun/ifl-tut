@@ -12,6 +12,8 @@ data Primitive
     | PrimConstr Tag Arity
     | If
     | PrimCasePair
+    | PrimCaseList
+    | Abort
     deriving Show
 
 primitives :: Assoc Name Primitive
@@ -23,4 +25,6 @@ primitives = [ ("negate", Neg)
              , ("==", Eq), ("/=", NotEq)
              , ("if", If)
              , ("casePair", PrimCasePair)
+             , ("caseList", PrimCaseList)
+             , ("abort", Abort)
              ]

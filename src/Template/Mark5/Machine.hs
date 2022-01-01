@@ -75,6 +75,14 @@ extraPreludeDefs =
                          (EVar "K"))
     , ("snd", ["p"], EAp (EAp (EVar "casePair") (EVar "p"))
                          (EVar "K1"))
+    , ("Nil", [], EConstr 0 0)
+    , ("Cons", [], EConstr 1 2)
+    , ("head", ["xs"], EAp (EAp (EAp (EVar "caseList") (EVar "xs"))
+                                (EVar "abort"))
+                           (EVar "K"))
+    , ("tail", ["xs"], EAp (EAp (EAp (EVar "caseList") (EVar "xs"))
+                                (EVar "abort"))
+                           (EVar "K1"))
     ]
 
 defaultHeapSize :: Int
@@ -194,6 +202,8 @@ primStep name prim = case prim of
     PrimConstr tag arity -> primConstr tag arity
     If  -> primIf
     PrimCasePair -> primCasePair
+    PrimCaseList -> primCaseList
+    Abort -> primAbort
 
 primNeg :: TiState -> TiState
 primNeg state
@@ -287,6 +297,29 @@ primCasePair state
             NData tag [ft,sd] -> hUpdate heap2 root (NAp addr sd)
                 where
                     (heap2 ,addr) = hAlloc state.heap (NAp arg2Addr ft)
+
+primCaseList :: TiState -> TiState
+primCaseList state
+    | length args < 3 = error "primCaseList: wrong number of args"
+    | not (isDataNode arg1Node) = state { stack = singletonStack arg1Addr
+                                        , dump = push stack1 state.dump }
+    | otherwise = doAdminPrimSteps $ state { stack = stack1, heap = heap1 }
+    where
+        args = getargs state.heap state.stack
+        [arg1Addr, arg2Addr, arg3Addr] = take 3 args
+        arg1Node = hLookup state.heap arg1Addr
+        stack1 = discard 3 state.stack
+        (root, _) = pop stack1
+        heap1 = case arg1Node of
+            NData tag cmpnts
+                | tag == 0 {- [] -} -> hUpdate state.heap root (NInd arg2Addr)
+                | otherwise -> case cmpnts of
+                    [hd, tl]  -> hUpdate heap2 root (NAp addr tl)
+                        where
+                            (heap2, addr) = hAlloc state.heap (NAp arg3Addr hd)
+
+primAbort :: TiState -> TiSate
+primAbort = error "Program abort!"
 
 dataStep :: Tag -> [Addr] -> TiState -> TiState
 dataStep tag contents state = state { stack = stack1, dump = dump1 }
