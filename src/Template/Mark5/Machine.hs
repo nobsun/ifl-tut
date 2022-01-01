@@ -70,6 +70,11 @@ extraPreludeDefs =
     , ("xor", ["x", "y"], EAp (EAp (EAp (EVar "if") (EVar "x"))
                                    (EAp (EVar "not") (EVar "y")))
                               (EVar "y"))
+    , ("MkPair", [], EConstr 0 2)
+    , ("fst", ["p"], EAp (EAp (EVar "casePair") (EVar "p"))
+                         (EVar "K"))
+    , ("snd", ["p"], EAp (EAp (EVar "casePair") (EVar "p"))
+                         (EVar "K1"))
     ]
 
 defaultHeapSize :: Int
@@ -188,6 +193,7 @@ primStep name prim = case prim of
     NotEq -> primComp (/=)
     PrimConstr tag arity -> primConstr tag arity
     If  -> primIf
+    PrimCasePair -> primCasePair
 
 primNeg :: TiState -> TiState
 primNeg state
@@ -264,6 +270,23 @@ primIf state
             NData 0 [] -> arg3Addr
             _          -> arg2Addr
         heap1 = hUpdate state.heap root (NInd result)
+
+primCasePair :: TiState -> TiState
+primCasePair state
+    | length args /= 2 = error "primCasePair: wrong number of args"
+    | not (isDataNode arg1Node) = state { stack = singletonStack arg1Addr
+                                        , dump = push stack1 state.dump }
+    | otherwise = doAdminPrimSteps $ state { stack = stack1, heap = heap1 }
+    where
+        args = getargs state.heap state.stack
+        [arg1Addr, arg2Addr] = args
+        arg1Node = hLookup state.heap arg1Addr
+        stack1 = discard 2 state.stack
+        (root, _) = pop stack1
+        heap1 = case arg1Node of
+            NData tag [ft,sd] -> hUpdate heap2 root (NAp addr sd)
+                where
+                    (heap2 ,addr) = hAlloc state.heap (NAp arg2Addr ft)
 
 dataStep :: Tag -> [Addr] -> TiState -> TiState
 dataStep tag contents state = state { stack = stack1, dump = dump1 }

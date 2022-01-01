@@ -11,6 +11,7 @@ data Primitive
     | Eq | NotEq
     | PrimConstr Tag Arity
     | If
+    | PrimCasePair
     deriving Show
 
 primitives :: Assoc Name Primitive
@@ -21,4 +22,5 @@ primitives = [ ("negate", Neg)
              , (">", Greater), (">=", GreaterEq)
              , ("==", Eq), ("/=", NotEq)
              , ("if", If)
+             , ("casePair", PrimCasePair)
              ]
