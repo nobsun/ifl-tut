@@ -14,6 +14,8 @@ data Primitive
     | PrimCasePair
     | PrimCaseList
     | Abort
+    | Stop
+    | Print
     deriving Show
 
 primitives :: Assoc Name Primitive
@@ -27,4 +29,6 @@ primitives = [ ("negate", Neg)
              , ("casePair", PrimCasePair)
              , ("caseList", PrimCaseList)
              , ("abort", Abort)
+             , ("stop", Stop)
+             , ("print", Print)
              ]

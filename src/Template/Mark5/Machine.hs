@@ -42,9 +42,9 @@ run = showResults . eval . compile . parse
 compile :: CoreProgram -> TiState
 compile prog = TiState
     { output  = []
-    , stack   = initialStack
+    , stack   = initialStack1
     , dump    = initialDump
-    , heap    = initialHeap
+    , heap    = initialHeap1
     , globals = initialGlobals
     , stats   = initialStats
     , ruleid  = 0
@@ -53,7 +53,10 @@ compile prog = TiState
         scDefs = prog ++ preludeDefs ++ extraPreludeDefs
         (initialHeap, initialGlobals) = buildInitialHeap scDefs
         initialStack = singletonStack addressOfMain
+        initialStack1 = singletonStack addr
         addressOfMain = aLookup initialGlobals "main" (error "main is not defined")
+        addressOfPrint = aLookup initialGlobals "printList" (error "printList is not defined")
+        (initialHeap1, addr) = hAlloc initialHeap (NAp addressOfPrint addressOfMain)
 
 extraPreludeDefs :: CoreProgram
 extraPreludeDefs = 
@@ -84,6 +87,11 @@ extraPreludeDefs =
     , ("tail", ["xs"], EAp (EAp (EAp (EVar "caseList") (EVar "xs"))
                                 (EVar "abort"))
                            (EVar "K1"))
+    , ("printList", ["xs"], EAp (EAp (EAp (EVar "caseList") (EVar "xs"))
+                                     (EVar "stop"))
+                                (EVar "printCons"))
+    , ("printCons", ["h", "t"], EAp (EAp (EVar "print") (EVar "h"))
+                                    (EAp (EVar "printList") (EVar "t")))
     ]
 
 defaultHeapSize :: Int
@@ -117,7 +125,7 @@ eval state = state : rests
 
 tiFinal :: TiState -> Bool
 tiFinal state
-    | isEmptyStack state.stack     = error "tiFinal: empty stack"
+    | isEmptyStack state.stack     = True
     | isSingletonStack state.stack = isDataNode (hLookup state.heap soleAddr)
                                   && isEmptyStack state.dump
     | otherwise                    = False
@@ -205,6 +213,8 @@ primStep name prim = case prim of
     PrimCasePair -> primCasePair
     PrimCaseList -> primCaseList
     Abort -> primAbort
+    Stop -> primStop
+    Print -> primPrint
 
 primNeg :: TiState -> TiState
 primNeg state
@@ -322,6 +332,30 @@ primCaseList state
 primAbort :: TiState -> TiState
 primAbort = error "Program abort!"
 
+primStop :: TiState -> TiState
+primStop state
+    | not (isEmptyStack state.dump) = error "primStop: dump is not empty"
+    | otherwise = setRuleId 11
+                $ state { stack = discard state.stack.curDepth state.stack }
+
+primPrint :: TiState -> TiState
+primPrint state
+    | argsLen /= 2 = error "primPrint: wrong number of args"
+    | not (isEmptyStack state.dump) = error "primPrint: dump is not empty"
+    | otherwise = case arg1Node of
+        NNum m    -> setRuleId 12 $ state { output = state.output ++ [m]
+                                          , stack = singletonStack arg2Addr }
+        NData _ _ -> error "primPrint: not a number"
+        _         -> setRuleId 13 $ state { stack = singletonStack arg1Addr
+                                          , dump = push stack1 state.dump }
+    where
+        args = getargs state.heap state.stack
+        argsLen = length args
+        [arg1Addr, arg2Addr] = args
+        arg1Node = hLookup state.heap arg1Addr
+        NNum arg1Value = arg1Node
+        stack1 = discard argsLen state.stack
+
 dataStep :: Tag -> [Addr] -> TiState -> TiState
 dataStep tag contents state = state { stack = stack1, dump = dump1 }
     where
@@ -414,7 +448,8 @@ instUpdEConstr :: Addr
                -> Tag
                -> Arity
                -> TiHeap
-instUpdEConstr updAddr heap env tag arity = hUpdate heap updAddr (NPrim "Constr" (PrimConstr tag arity))
+instUpdEConstr updAddr heap env tag arity
+    = hUpdate heap updAddr (NPrim "Constr" (PrimConstr tag arity))
 
 instUpdEAp :: Addr
            -> TiHeap

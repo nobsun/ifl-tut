@@ -26,6 +26,7 @@ showState :: TiState -> IseqRep
 showState state = iConcat
     [ showHeap state.heap, iNewline
     , showStack state.heap state.stack, iNewline
+    , showOutput state.output, iNewline
     , showRuleId state.ruleid, iNewline
     ]
 
@@ -62,7 +63,8 @@ showStack :: TiHeap -> TiStack -> IseqRep
 showStack heap stack = iConcat
     [ iStr "Stack ["
     , iIndent (iInterleave iNewline (map showStackItem stack.stkItems))
-    , iStr " ]"
+    , iStr " ]", iNewline
+    , iStr "Depth ", iNum stack.curDepth
     ]
     where
         showStackItem addr = iConcat
@@ -81,6 +83,9 @@ showStkNode heap node = dispatchNode
     (\ _ _ -> showNode node)
     (\ _ _ -> showNode node)
     node
+
+showOutput :: TiOutput -> IseqRep
+showOutput output = iStr ("Output " ++ show output)
 
 showRuleId :: TiRuleId -> IseqRep
 showRuleId rid = iStr ("Rule " ++ show (2, rid)) 
