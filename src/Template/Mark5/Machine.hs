@@ -41,7 +41,8 @@ run = showResults . eval . compile . parse
 
 compile :: CoreProgram -> TiState
 compile prog = TiState
-    { stack   = initialStack
+    { output  = []
+    , stack   = initialStack
     , dump    = initialDump
     , heap    = initialHeap
     , globals = initialGlobals

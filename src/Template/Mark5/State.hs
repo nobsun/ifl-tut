@@ -14,13 +14,16 @@ import Template.Mark5.Node
 
 data TiState
     = TiState
-    { stack   :: TiStack
+    { output  :: TiOutput
+    , stack   :: TiStack
     , dump    :: TiDump
     , heap    :: TiHeap
     , globals :: TiGlobals
     , stats   :: TiStats
     , ruleid  :: TiRuleId
     }
+
+type TiOutput  = [Int]
 
 type TiStack   = Stack Addr
 
