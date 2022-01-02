@@ -318,7 +318,7 @@ primCaseList state
                         where
                             (heap2, addr) = hAlloc state.heap (NAp arg3Addr hd)
 
-primAbort :: TiState -> TiSate
+primAbort :: TiState -> TiState
 primAbort = error "Program abort!"
 
 dataStep :: Tag -> [Addr] -> TiState -> TiState
