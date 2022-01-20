@@ -47,10 +47,11 @@ library
                     , Template.Mark5.State
                     , Template.Mark5.PPrint
                     , Template.Mark5a.Machine
-                    -- , Template.Mark5a.Node
-                    --, Template.Mark5a.Primitive
                     , Template.Mark5a.State
                     , Template.Mark5a.PPrint
+                    , Template.Mark5b.Machine
+                    , Template.Mark5b.State
+                    , Template.Mark5b.PPrint
 
     -- Modules included in this library but not exported.
     -- other-modules:
@@ -119,6 +120,15 @@ executable ti5a
         ifl-tut
 
     hs-source-dirs:   app/ti5a
+    default-language: GHC2021
+
+executable ti5b
+    main-is:          Main.hs
+    build-depends:
+        base ^>=4.16.0.0,
+        ifl-tut
+
+    hs-source-dirs:   app/ti5b
     default-language: GHC2021
 
 test-suite ifl-tut-test
