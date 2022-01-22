@@ -8504,3 +8504,844 @@ Infinity
 1000000000000000000000000000001
 >>> :q
 Leaving GHCi.
+Build profile: -w ghc-9.2.1 -O1
+In order, the following will be built (use -v for more details):
+ - ifl-tut-0.2.8.1 (lib) (ephemeral targets)
+Preprocessing library for ifl-tut-0.2.8.1..
+GHCi, version 9.2.1: https://www.haskell.org/ghc/  :? for help
+Loaded GHCi configuration from /home/nobsun/develop/ifl-tut/.ghci
+[ 1 of 23] Compiling MyLib            ( src/MyLib.hs, interpreted )
+[ 2 of 23] Compiling Parser           ( src/Parser.hs, interpreted )
+[ 3 of 23] Compiling Stack            ( src/Stack.hs, interpreted )
+[ 4 of 23] Compiling Utils            ( src/Utils.hs, interpreted )
+[ 5 of 23] Compiling Iseq             ( src/Iseq.hs, interpreted )
+[ 6 of 23] Compiling Language         ( src/Language.hs, interpreted )
+[ 7 of 23] Compiling Template.Mark5.Primitive ( src/Template/Mark5/Primitive.hs, interpreted )
+[ 8 of 23] Compiling Heap             ( src/Heap.hs, interpreted )
+[ 9 of 23] Compiling Template.Mark5b.State ( src/Template/Mark5b/State.hs, interpreted )
+[10 of 23] Compiling Template.Mark5b.PPrint ( src/Template/Mark5b/PPrint.hs, interpreted )
+[11 of 23] Compiling Template.Mark5b.Machine ( src/Template/Mark5b/Machine.hs, interpreted )
+[12 of 23] Compiling Template.Mark5a.State ( src/Template/Mark5a/State.hs, interpreted )
+[13 of 23] Compiling Template.Mark5a.PPrint ( src/Template/Mark5a/PPrint.hs, interpreted )
+[14 of 23] Compiling Template.Mark5a.Machine ( src/Template/Mark5a/Machine.hs, interpreted )
+[15 of 23] Compiling Template.Mark5.Node ( src/Template/Mark5/Node.hs, interpreted )
+[16 of 23] Compiling Template.Mark5.State ( src/Template/Mark5/State.hs, interpreted )
+[17 of 23] Compiling Template.Mark5.PPrint ( src/Template/Mark5/PPrint.hs, interpreted )
+[18 of 23] Compiling Template.Mark5.Machine ( src/Template/Mark5/Machine.hs, interpreted )
+[19 of 23] Compiling Template.Mark5   ( src/Template/Mark5.hs, interpreted )
+[20 of 23] Compiling Template.Mark4   ( src/Template/Mark4.hs, interpreted )
+[21 of 23] Compiling Template.Mark3   ( src/Template/Mark3.hs, interpreted )
+[22 of 23] Compiling Template.Mark2   ( src/Template/Mark2.hs, interpreted )
+[23 of 23] Compiling Template.Mark1   ( src/Template/Mark1.hs, interpreted )
+Ok, 23 modules loaded.
+>>> import Template.Mark5b.State
+>>> import Template.Mark5b.Machine
+>>> :t testt
+
+<interactive>:1:1: error:
+    • Variable not in scope: testt
+    • Perhaps you meant ‘test’ (imported from Template.Mark5b.Machine)
+>>> :t test
+test :: String -> IO ()
+>>> test "main = Cons e Nil ; e = (1 + 2) * (3 + 5)"
+   0) Heap [  41: NAp #22 #1
+              40: NPrim print
+              39: NPrim stop
+              38: NPrim abort
+              37: NPrim caseList
+              36: NPrim casePair
+              35: NPrim if
+              34: NPrim /=
+              33: NPrim ==
+              32: NPrim >=
+              31: NPrim >
+              30: NPrim <=
+              29: NPrim <
+              28: NPrim /
+              27: NPrim *
+              26: NPrim -
+              25: NPrim +
+              24: NPrim negate
+              23: NSupercomb printCons
+              22: NSupercomb printList
+              21: NSupercomb tail
+              20: NSupercomb head
+              19: NSupercomb Cons
+              18: NSupercomb Nil
+              17: NSupercomb snd
+              16: NSupercomb fst
+              15: NSupercomb MkPair
+              14: NSupercomb xor
+              13: NSupercomb or
+              12: NSupercomb and
+              11: NSupercomb not
+              10: NSupercomb True
+               9: NSupercomb False
+               8: NSupercomb twice
+               7: NSupercomb compose
+               6: NSupercomb S
+               5: NSupercomb K1
+               4: NSupercomb K
+               3: NSupercomb I
+               2: NSupercomb e
+               1: NSupercomb main ]
+      Stack [  41: NAp   22    1 (NSupercomb main) ]
+      Depth 1
+      Output []
+      Rule (2,0)
+      
+   1) Heap [  41: NAp #22 #1
+              40: NPrim print
+              39: NPrim stop
+              38: NPrim abort
+              37: NPrim caseList
+              36: NPrim casePair
+              35: NPrim if
+              34: NPrim /=
+              33: NPrim ==
+              32: NPrim >=
+              31: NPrim >
+              30: NPrim <=
+              29: NPrim <
+              28: NPrim /
+              27: NPrim *
+              26: NPrim -
+              25: NPrim +
+              24: NPrim negate
+              23: NSupercomb printCons
+              22: NSupercomb printList
+              21: NSupercomb tail
+              20: NSupercomb head
+              19: NSupercomb Cons
+              18: NSupercomb Nil
+              17: NSupercomb snd
+              16: NSupercomb fst
+              15: NSupercomb MkPair
+              14: NSupercomb xor
+              13: NSupercomb or
+              12: NSupercomb and
+              11: NSupercomb not
+              10: NSupercomb True
+               9: NSupercomb False
+               8: NSupercomb twice
+               7: NSupercomb compose
+               6: NSupercomb S
+               5: NSupercomb K1
+               4: NSupercomb K
+               3: NSupercomb I
+               2: NSupercomb e
+               1: NSupercomb main ]
+      Stack [  22: NSupercomb printList
+               41: NAp   22    1 (NSupercomb main) ]
+      Depth 2
+      Output []
+      Rule (2,1)
+      
+   2) Heap [  41: NAp #43 #23
+              43: NAp #42 #39
+              42: NAp #37 #1
+              40: NPrim print
+              39: NPrim stop
+              38: NPrim abort
+              37: NPrim caseList
+              36: NPrim casePair
+              35: NPrim if
+              34: NPrim /=
+              33: NPrim ==
+              32: NPrim >=
+              31: NPrim >
+              30: NPrim <=
+              29: NPrim <
+              28: NPrim /
+              27: NPrim *
+              26: NPrim -
+              25: NPrim +
+              24: NPrim negate
+              23: NSupercomb printCons
+              22: NSupercomb printList
+              21: NSupercomb tail
+              20: NSupercomb head
+              19: NSupercomb Cons
+              18: NSupercomb Nil
+              17: NSupercomb snd
+              16: NSupercomb fst
+              15: NSupercomb MkPair
+              14: NSupercomb xor
+              13: NSupercomb or
+              12: NSupercomb and
+              11: NSupercomb not
+              10: NSupercomb True
+               9: NSupercomb False
+               8: NSupercomb twice
+               7: NSupercomb compose
+               6: NSupercomb S
+               5: NSupercomb K1
+               4: NSupercomb K
+               3: NSupercomb I
+               2: NSupercomb e
+               1: NSupercomb main ]
+      Stack [  41: NAp   43   23 (NSupercomb printCons) ]
+      Depth 1
+      Output []
+      Rule (2,3)
+      
+   3) Heap [  41: NAp #43 #23
+              43: NAp #42 #39
+              42: NAp #37 #1
+              40: NPrim print
+              39: NPrim stop
+              38: NPrim abort
+              37: NPrim caseList
+              36: NPrim casePair
+              35: NPrim if
+              34: NPrim /=
+              33: NPrim ==
+              32: NPrim >=
+              31: NPrim >
+              30: NPrim <=
+              29: NPrim <
+              28: NPrim /
+              27: NPrim *
+              26: NPrim -
+              25: NPrim +
+              24: NPrim negate
+              23: NSupercomb printCons
+              22: NSupercomb printList
+              21: NSupercomb tail
+              20: NSupercomb head
+              19: NSupercomb Cons
+              18: NSupercomb Nil
+              17: NSupercomb snd
+              16: NSupercomb fst
+              15: NSupercomb MkPair
+              14: NSupercomb xor
+              13: NSupercomb or
+              12: NSupercomb and
+              11: NSupercomb not
+              10: NSupercomb True
+               9: NSupercomb False
+               8: NSupercomb twice
+               7: NSupercomb compose
+               6: NSupercomb S
+               5: NSupercomb K1
+               4: NSupercomb K
+               3: NSupercomb I
+               2: NSupercomb e
+               1: NSupercomb main ]
+      Stack [  43: NAp   42   39 (NPrim stop)
+               41: NAp   43   23 (NSupercomb printCons) ]
+      Depth 2
+      Output []
+      Rule (2,1)
+      
+   4) Heap [  41: NAp #43 #23
+              43: NAp #42 #39
+              42: NAp #37 #1
+              40: NPrim print
+              39: NPrim stop
+              38: NPrim abort
+              37: NPrim caseList
+              36: NPrim casePair
+              35: NPrim if
+              34: NPrim /=
+              33: NPrim ==
+              32: NPrim >=
+              31: NPrim >
+              30: NPrim <=
+              29: NPrim <
+              28: NPrim /
+              27: NPrim *
+              26: NPrim -
+              25: NPrim +
+              24: NPrim negate
+              23: NSupercomb printCons
+              22: NSupercomb printList
+              21: NSupercomb tail
+              20: NSupercomb head
+              19: NSupercomb Cons
+              18: NSupercomb Nil
+              17: NSupercomb snd
+              16: NSupercomb fst
+              15: NSupercomb MkPair
+              14: NSupercomb xor
+              13: NSupercomb or
+              12: NSupercomb and
+              11: NSupercomb not
+              10: NSupercomb True
+               9: NSupercomb False
+               8: NSupercomb twice
+               7: NSupercomb compose
+               6: NSupercomb S
+               5: NSupercomb K1
+               4: NSupercomb K
+               3: NSupercomb I
+               2: NSupercomb e
+               1: NSupercomb main ]
+      Stack [  42: NAp   37    1 (NSupercomb main)
+               43: NAp   42   39 (NPrim stop)
+               41: NAp   43   23 (NSupercomb printCons) ]
+      Depth 3
+      Output []
+      Rule (2,1)
+      
+   5) Heap [  41: NAp #43 #23
+              43: NAp #42 #39
+              42: NAp #37 #1
+              40: NPrim print
+              39: NPrim stop
+              38: NPrim abort
+              37: NPrim caseList
+              36: NPrim casePair
+              35: NPrim if
+              34: NPrim /=
+              33: NPrim ==
+              32: NPrim >=
+              31: NPrim >
+              30: NPrim <=
+              29: NPrim <
+              28: NPrim /
+              27: NPrim *
+              26: NPrim -
+              25: NPrim +
+              24: NPrim negate
+              23: NSupercomb printCons
+              22: NSupercomb printList
+              21: NSupercomb tail
+              20: NSupercomb head
+              19: NSupercomb Cons
+              18: NSupercomb Nil
+              17: NSupercomb snd
+              16: NSupercomb fst
+              15: NSupercomb MkPair
+              14: NSupercomb xor
+              13: NSupercomb or
+              12: NSupercomb and
+              11: NSupercomb not
+              10: NSupercomb True
+               9: NSupercomb False
+               8: NSupercomb twice
+               7: NSupercomb compose
+               6: NSupercomb S
+               5: NSupercomb K1
+               4: NSupercomb K
+               3: NSupercomb I
+               2: NSupercomb e
+               1: NSupercomb main ]
+      Stack [  37: NPrim caseList
+               42: NAp   37    1 (NSupercomb main)
+               43: NAp   42   39 (NPrim stop)
+               41: NAp   43   23 (NSupercomb printCons) ]
+      Depth 4
+      Output []
+      Rule (2,1)
+      
+   6) Heap [  41: NAp #43 #23
+              43: NAp #42 #39
+              42: NAp #37 #1
+              40: NPrim print
+              39: NPrim stop
+              38: NPrim abort
+              37: NPrim caseList
+              36: NPrim casePair
+              35: NPrim if
+              34: NPrim /=
+              33: NPrim ==
+              32: NPrim >=
+              31: NPrim >
+              30: NPrim <=
+              29: NPrim <
+              28: NPrim /
+              27: NPrim *
+              26: NPrim -
+              25: NPrim +
+              24: NPrim negate
+              23: NSupercomb printCons
+              22: NSupercomb printList
+              21: NSupercomb tail
+              20: NSupercomb head
+              19: NSupercomb Cons
+              18: NSupercomb Nil
+              17: NSupercomb snd
+              16: NSupercomb fst
+              15: NSupercomb MkPair
+              14: NSupercomb xor
+              13: NSupercomb or
+              12: NSupercomb and
+              11: NSupercomb not
+              10: NSupercomb True
+               9: NSupercomb False
+               8: NSupercomb twice
+               7: NSupercomb compose
+               6: NSupercomb S
+               5: NSupercomb K1
+               4: NSupercomb K
+               3: NSupercomb I
+               2: NSupercomb e
+               1: NSupercomb main ]
+      Stack [   1: NSupercomb main
+               41: NAp   43   23 (NSupercomb printCons) ]
+      Depth 2
+      Output []
+      Rule (2,1)
+      
+   7) Heap [   1: NAp #44 #18
+              44: NAp #19 #2
+              41: NAp #43 #23
+              43: NAp #42 #39
+              42: NAp #37 #1
+              40: NPrim print
+              39: NPrim stop
+              38: NPrim abort
+              37: NPrim caseList
+              36: NPrim casePair
+              35: NPrim if
+              34: NPrim /=
+              33: NPrim ==
+              32: NPrim >=
+              31: NPrim >
+              30: NPrim <=
+              29: NPrim <
+              28: NPrim /
+              27: NPrim *
+              26: NPrim -
+              25: NPrim +
+              24: NPrim negate
+              23: NSupercomb printCons
+              22: NSupercomb printList
+              21: NSupercomb tail
+              20: NSupercomb head
+              19: NSupercomb Cons
+              18: NSupercomb Nil
+              17: NSupercomb snd
+              16: NSupercomb fst
+              15: NSupercomb MkPair
+              14: NSupercomb xor
+              13: NSupercomb or
+              12: NSupercomb and
+              11: NSupercomb not
+              10: NSupercomb True
+               9: NSupercomb False
+               8: NSupercomb twice
+               7: NSupercomb compose
+               6: NSupercomb S
+               5: NSupercomb K1
+               4: NSupercomb K
+               3: NSupercomb I
+               2: NSupercomb e ]
+      Stack [   1: NAp   44   18 (NSupercomb Nil)
+               41: NAp   43   23 (NSupercomb printCons) ]
+      Depth 2
+      Output []
+      Rule (2,3)
+      
+   8) Heap [   1: NAp #44 #18
+              44: NAp #19 #2
+              41: NAp #43 #23
+              43: NAp #42 #39
+              42: NAp #37 #1
+              40: NPrim print
+              39: NPrim stop
+              38: NPrim abort
+              37: NPrim caseList
+              36: NPrim casePair
+              35: NPrim if
+              34: NPrim /=
+              33: NPrim ==
+              32: NPrim >=
+              31: NPrim >
+              30: NPrim <=
+              29: NPrim <
+              28: NPrim /
+              27: NPrim *
+              26: NPrim -
+              25: NPrim +
+              24: NPrim negate
+              23: NSupercomb printCons
+              22: NSupercomb printList
+              21: NSupercomb tail
+              20: NSupercomb head
+              19: NSupercomb Cons
+              18: NSupercomb Nil
+              17: NSupercomb snd
+              16: NSupercomb fst
+              15: NSupercomb MkPair
+              14: NSupercomb xor
+              13: NSupercomb or
+              12: NSupercomb and
+              11: NSupercomb not
+              10: NSupercomb True
+               9: NSupercomb False
+               8: NSupercomb twice
+               7: NSupercomb compose
+               6: NSupercomb S
+               5: NSupercomb K1
+               4: NSupercomb K
+               3: NSupercomb I
+               2: NSupercomb e ]
+      Stack [  44: NAp   19    2 (NSupercomb e)
+                1: NAp   44   18 (NSupercomb Nil)
+               41: NAp   43   23 (NSupercomb printCons) ]
+      Depth 3
+      Output []
+      Rule (2,1)
+      
+   9) Heap [   1: NAp #44 #18
+              44: NAp #19 #2
+              41: NAp #43 #23
+              43: NAp #42 #39
+              42: NAp #37 #1
+              40: NPrim print
+              39: NPrim stop
+              38: NPrim abort
+              37: NPrim caseList
+              36: NPrim casePair
+              35: NPrim if
+              34: NPrim /=
+              33: NPrim ==
+              32: NPrim >=
+              31: NPrim >
+              30: NPrim <=
+              29: NPrim <
+              28: NPrim /
+              27: NPrim *
+              26: NPrim -
+              25: NPrim +
+              24: NPrim negate
+              23: NSupercomb printCons
+              22: NSupercomb printList
+              21: NSupercomb tail
+              20: NSupercomb head
+              19: NSupercomb Cons
+              18: NSupercomb Nil
+              17: NSupercomb snd
+              16: NSupercomb fst
+              15: NSupercomb MkPair
+              14: NSupercomb xor
+              13: NSupercomb or
+              12: NSupercomb and
+              11: NSupercomb not
+              10: NSupercomb True
+               9: NSupercomb False
+               8: NSupercomb twice
+               7: NSupercomb compose
+               6: NSupercomb S
+               5: NSupercomb K1
+               4: NSupercomb K
+               3: NSupercomb I
+               2: NSupercomb e ]
+      Stack [  19: NSupercomb Cons
+               44: NAp   19    2 (NSupercomb e)
+                1: NAp   44   18 (NSupercomb Nil)
+               41: NAp   43   23 (NSupercomb printCons) ]
+      Depth 4
+      Output []
+      Rule (2,1)
+      
+  10) Heap [  19: NPrim Constr
+               1: NAp #44 #18
+              44: NAp #19 #2
+              41: NAp #43 #23
+              43: NAp #42 #39
+              42: NAp #37 #1
+              40: NPrim print
+              39: NPrim stop
+              38: NPrim abort
+              37: NPrim caseList
+              36: NPrim casePair
+              35: NPrim if
+              34: NPrim /=
+              33: NPrim ==
+              32: NPrim >=
+              31: NPrim >
+              30: NPrim <=
+              29: NPrim <
+              28: NPrim /
+              27: NPrim *
+              26: NPrim -
+              25: NPrim +
+              24: NPrim negate
+              23: NSupercomb printCons
+              22: NSupercomb printList
+              21: NSupercomb tail
+              20: NSupercomb head
+              18: NSupercomb Nil
+              17: NSupercomb snd
+              16: NSupercomb fst
+              15: NSupercomb MkPair
+              14: NSupercomb xor
+              13: NSupercomb or
+              12: NSupercomb and
+              11: NSupercomb not
+              10: NSupercomb True
+               9: NSupercomb False
+               8: NSupercomb twice
+               7: NSupercomb compose
+               6: NSupercomb S
+               5: NSupercomb K1
+               4: NSupercomb K
+               3: NSupercomb I
+               2: NSupercomb e ]
+      Stack [  19: NPrim Constr
+               44: NAp   19    2 (NSupercomb e)
+                1: NAp   44   18 (NSupercomb Nil)
+               41: NAp   43   23 (NSupercomb printCons) ]
+      Depth 4
+      Output []
+      Rule (2,3)
+      
+  11) Heap [   1: NData 1 #2 #18 #23
+              19: NPrim Constr
+              44: NAp #19 #2
+              41: NAp #43 #23
+              43: NAp #42 #39
+              42: NAp #37 #1
+              40: NPrim print
+              39: NPrim stop
+              38: NPrim abort
+              37: NPrim caseList
+              36: NPrim casePair
+              35: NPrim if
+              34: NPrim /=
+              33: NPrim ==
+              32: NPrim >=
+              31: NPrim >
+              30: NPrim <=
+              29: NPrim <
+              28: NPrim /
+              27: NPrim *
+              26: NPrim -
+              25: NPrim +
+              24: NPrim negate
+              23: NSupercomb printCons
+              22: NSupercomb printList
+              21: NSupercomb tail
+              20: NSupercomb head
+              18: NSupercomb Nil
+              17: NSupercomb snd
+              16: NSupercomb fst
+              15: NSupercomb MkPair
+              14: NSupercomb xor
+              13: NSupercomb or
+              12: NSupercomb and
+              11: NSupercomb not
+              10: NSupercomb True
+               9: NSupercomb False
+               8: NSupercomb twice
+               7: NSupercomb compose
+               6: NSupercomb S
+               5: NSupercomb K1
+               4: NSupercomb K
+               3: NSupercomb I
+               2: NSupercomb e ]
+      Stack [   1: NData 1 #2 #18 #23
+               41: NAp   43   23 (NSupercomb printCons) ]
+      Depth 2
+      Output []
+      Rule (2,10)
+      
+  12) Heap [   1: NData 1 #2 #18 #23
+              19: NPrim Constr
+              44: NAp #19 #2
+              41: NAp #43 #23
+              43: NAp #42 #39
+              42: NAp #37 #1
+              40: NPrim print
+              39: NPrim stop
+              38: NPrim abort
+              37: NPrim caseList
+              36: NPrim casePair
+              35: NPrim if
+              34: NPrim /=
+              33: NPrim ==
+              32: NPrim >=
+              31: NPrim >
+              30: NPrim <=
+              29: NPrim <
+              28: NPrim /
+              27: NPrim *
+              26: NPrim -
+              25: NPrim +
+              24: NPrim negate
+              23: NSupercomb printCons
+              22: NSupercomb printList
+              21: NSupercomb tail
+              20: NSupercomb head
+              18: NSupercomb Nil
+              17: NSupercomb snd
+              16: NSupercomb fst
+              15: NSupercomb MkPair
+              14: NSupercomb xor
+              13: NSupercomb or
+              12: NSupercomb and
+              11: NSupercomb not
+              10: NSupercomb True
+               9: NSupercomb False
+               8: NSupercomb twice
+               7: NSupercomb compose
+               6: NSupercomb S
+               5: NSupercomb K1
+               4: NSupercomb K
+               3: NSupercomb I
+               2: NSupercomb e ]
+      Stack [  41: NAp   43   23 (NSupercomb printCons) ]
+      Depth 1
+      Output []
+      Rule (2,10)
+      
+  13) Heap [   1: NData 1 #2 #18 #23
+              19: NPrim Constr
+              44: NAp #19 #2
+              41: NAp #43 #23
+              43: NAp #42 #39
+              42: NAp #37 #1
+              40: NPrim print
+              39: NPrim stop
+              38: NPrim abort
+              37: NPrim caseList
+              36: NPrim casePair
+              35: NPrim if
+              34: NPrim /=
+              33: NPrim ==
+              32: NPrim >=
+              31: NPrim >
+              30: NPrim <=
+              29: NPrim <
+              28: NPrim /
+              27: NPrim *
+              26: NPrim -
+              25: NPrim +
+              24: NPrim negate
+              23: NSupercomb printCons
+              22: NSupercomb printList
+              21: NSupercomb tail
+              20: NSupercomb head
+              18: NSupercomb Nil
+              17: NSupercomb snd
+              16: NSupercomb fst
+              15: NSupercomb MkPair
+              14: NSupercomb xor
+              13: NSupercomb or
+              12: NSupercomb and
+              11: NSupercomb not
+              10: NSupercomb True
+               9: NSupercomb False
+               8: NSupercomb twice
+               7: NSupercomb compose
+               6: NSupercomb S
+               5: NSupercomb K1
+               4: NSupercomb K
+               3: NSupercomb I
+               2: NSupercomb e ]
+      Stack [  43: NAp   42   39 (NPrim stop)
+               41: NAp   43   23 (NSupercomb printCons) ]
+      Depth 2
+      Output []
+      Rule (2,1)
+      
+  14) Heap [   1: NData 1 #2 #18 #23
+              19: NPrim Constr
+              44: NAp #19 #2
+              41: NAp #43 #23
+              43: NAp #42 #39
+              42: NAp #37 #1
+              40: NPrim print
+              39: NPrim stop
+              38: NPrim abort
+              37: NPrim caseList
+              36: NPrim casePair
+              35: NPrim if
+              34: NPrim /=
+              33: NPrim ==
+              32: NPrim >=
+              31: NPrim >
+              30: NPrim <=
+              29: NPrim <
+              28: NPrim /
+              27: NPrim *
+              26: NPrim -
+              25: NPrim +
+              24: NPrim negate
+              23: NSupercomb printCons
+              22: NSupercomb printList
+              21: NSupercomb tail
+              20: NSupercomb head
+              18: NSupercomb Nil
+              17: NSupercomb snd
+              16: NSupercomb fst
+              15: NSupercomb MkPair
+              14: NSupercomb xor
+              13: NSupercomb or
+              12: NSupercomb and
+              11: NSupercomb not
+              10: NSupercomb True
+               9: NSupercomb False
+               8: NSupercomb twice
+               7: NSupercomb compose
+               6: NSupercomb S
+               5: NSupercomb K1
+               4: NSupercomb K
+               3: NSupercomb I
+               2: NSupercomb e ]
+      Stack [  42: NAp   37    1 (NData 1 #2 #18 #23)
+               43: NAp   42   39 (NPrim stop)
+               41: NAp   43   23 (NSupercomb printCons) ]
+      Depth 3
+      Output []
+      Rule (2,1)
+      
+  15) Heap [   1: NData 1 #2 #18 #23
+              19: NPrim Constr
+              44: NAp #19 #2
+              41: NAp #43 #23
+              43: NAp #42 #39
+              42: NAp #37 #1
+              40: NPrim print
+              39: NPrim stop
+              38: NPrim abort
+              37: NPrim caseList
+              36: NPrim casePair
+              35: NPrim if
+              34: NPrim /=
+              33: NPrim ==
+              32: NPrim >=
+              31: NPrim >
+              30: NPrim <=
+              29: NPrim <
+              28: NPrim /
+              27: NPrim *
+              26: NPrim -
+              25: NPrim +
+              24: NPrim negate
+              23: NSupercomb printCons
+              22: NSupercomb printList
+              21: NSupercomb tail
+              20: NSupercomb head
+              18: NSupercomb Nil
+              17: NSupercomb snd
+              16: NSupercomb fst
+              15: NSupercomb MkPair
+              14: NSupercomb xor
+              13: NSupercomb or
+              12: NSupercomb and
+              11: NSupercomb not
+              10: NSupercomb True
+               9: NSupercomb False
+               8: NSupercomb twice
+               7: NSupercomb compose
+               6: NSupercomb S
+               5: NSupercomb K1
+               4: NSupercomb K
+               3: NSupercomb I
+               2: NSupercomb e ]
+      Stack [  37: NPrim caseList
+               42: NAp   37    1 (NData 1 #2 #18 #23)
+               43: NAp   42   39 (NPrim stop)
+               41: NAp   43   23 (NSupercomb printCons) ]
+      Depth 4
+      Output []
+      Rule (2,1)
+      
+*** Exception: src/Template/Mark5b/State.hs:(188,32)-(191,79): Non-exhaustive patterns in case
+
+>>> :q
+Leaving GHCi.

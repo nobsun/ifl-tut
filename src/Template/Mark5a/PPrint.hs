@@ -24,6 +24,7 @@ showState :: TiState -> IseqRep
 showState state = iConcat
     [ showHeap state.heap, iNewline
     , showStack state.heap state.stack, iNewline
+    , showDump state.dump, iNewline
     , showOutput state.output, iNewline
     , showRuleId state.ruleid, iNewline
     ]
@@ -69,6 +70,10 @@ showStack heap stack = iConcat
             [ showFWAddr addr, iStr ": "
             , showStkNode heap (hLookup heap addr)
             ]
+
+showDump :: TiDump -> IseqRep
+showDump dump = iConcat
+    [ iStr ("Dump depth " ++ show dump.curDepth) ] 
 
 showStkNode :: TiHeap -> Node -> IseqRep
 showStkNode heap node = dispatchNode

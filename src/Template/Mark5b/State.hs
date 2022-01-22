@@ -25,9 +25,9 @@ type TiOutput  = [Int]
 
 type TiStack   = Stack Addr
 
-type TiDump    = Stack TiStack
+type TiDump    = Stack Int
 initialDump :: TiDump
-initialDump = emptyStack
+initialDump = push 0 emptyStack
 
 type TiHeap    = Heap Node
 
@@ -58,11 +58,7 @@ setRuleId :: TiRuleId -> TiState -> TiState
 setRuleId r state = state { ruleid = r }
 
 tiFinal :: TiState -> Bool
-tiFinal state
-    | isEmptyStack state.stack     = True
-    -- | isSingletonStack state.stack = isDataNode (hLookup state.heap soleAddr)
-    --                               && isEmptyStack state.dump
-    | otherwise                    = False
+tiFinal state = isEmptyStack state.stack
 
 -- | Primitive
 
@@ -85,14 +81,14 @@ primitives = [ ("negate", primNeg)
 
 primNeg :: TiState -> TiState
 primNeg state
-    | length args /= 1         = error "primNeg: wrong number of args"
+    | length args < 1         = error "primNeg: wrong number of args"
     | not (isDataNode argNode) = case saveAndPush argAddr stack1 state.dump of
         (stack2, dump2) -> setRuleId 9
                          $ state { stack = stack2, dump = dump2 }
     | otherwise                = doAdminPrimSteps $ setRuleId 5 
                                $ state { stack = stack1, heap = heap1 }
     where
-        args      = getargs state.heap state.stack
+        args      = take 1 $ getargs state.heap state.stack
         [argAddr] = args
         argNode   = hLookup state.heap argAddr
         NNum argValue = argNode
@@ -114,7 +110,7 @@ primComp op = primDyadic op'
 
 primDyadic :: (Node -> Node -> Node) -> TiState -> TiState
 primDyadic op state 
-    | length args /= 2 = error "primDyadic: wrong number of args"
+    | length args < 2 = error "primDyadic: wrong number of args"
     | not (isDataNode arg1Node) = case saveAndPush arg1Addr stack1 state.dump of
         (stack2, dump2) -> state { stack = stack2, dump = dump2 }
     | not (isDataNode arg2Node) = case saveAndPush arg2Addr stack1 state.dump of
@@ -122,7 +118,7 @@ primDyadic op state
     | otherwise                 = doAdminPrimSteps $ setRuleId 17
                                 $ state { stack = stack1, heap = heap1 }
     where
-        args = getargs state.heap state.stack
+        args = take 2 $ getargs state.heap state.stack
         [arg1Addr, arg2Addr] = args
         [arg1Node, arg2Node] = map (hLookup state.heap) args
         stack1 = discard 2 state.stack
@@ -134,7 +130,7 @@ primConstr tag arity state
     | length args < arity = error "primConstr: wrong number of args"
     | otherwise           = setRuleId 10 $ state { stack = stack1, heap = heap1 }
     where
-        args = getargs state.heap state.stack
+        args = take arity $ getargs state.heap state.stack
         stack1 = discard arity state.stack
         (root,_) = pop stack1
         heap1 = hUpdate state.heap root (NData tag args)
@@ -147,8 +143,8 @@ primIf state
                          $ state { stack = stack2, dump = dump2 }
     | otherwise = doAdminPrimSteps $ setRuleId 19 $ state { stack = stack1, heap = heap1}
     where
-        args = getargs state.heap state.stack
-        [arg1Addr, arg2Addr, arg3Addr] = take 3 args
+        args = take 3 $ getargs state.heap state.stack
+        [arg1Addr, arg2Addr, arg3Addr] = args
         arg1Node = hLookup state.heap arg1Addr
         stack1 = discard 3 state.stack 
         (root, _) = pop stack1
@@ -159,12 +155,12 @@ primIf state
 
 primCasePair :: TiState -> TiState
 primCasePair state
-    | length args /= 2 = error "primCasePair: wrong number of args"
+    | length args < 2 = error "primCasePair: wrong number of args"
     | not (isDataNode arg1Node) = case saveAndPush arg1Addr stack1 state.dump of
         (stack2, dump2) -> state { stack = stack2, dump = dump2 }
     | otherwise = doAdminPrimSteps $ state { stack = stack1, heap = heap1 }
     where
-        args = getargs state.heap state.stack
+        args = take 2 $ getargs state.heap state.stack
         [arg1Addr, arg2Addr] = args
         arg1Node = hLookup state.heap arg1Addr
         stack1 = discard 2 state.stack
@@ -181,8 +177,8 @@ primCaseList state
         (stack2, dump2) -> state { stack = stack2, dump = dump2 }
     | otherwise = doAdminPrimSteps $ state { stack = stack1, heap = heap1 }
     where
-        args = getargs state.heap state.stack
-        [arg1Addr, arg2Addr, arg3Addr] = take 3 args
+        args = take 3 $ getargs state.heap state.stack
+        [arg1Addr, arg2Addr, arg3Addr] = args
         arg1Node = hLookup state.heap arg1Addr
         stack1 = discard 3 state.stack
         (root, _) = pop stack1
@@ -193,28 +189,34 @@ primCaseList state
                     [hd, tl]  -> hUpdate heap2 root (NAp addr tl)
                         where
                             (heap2, addr) = hAlloc state.heap (NAp arg3Addr hd)
+                    _         -> error ("primCaseList: not a cons " ++ show cmpnts)
+            _ -> error "not NData node"
 
 primAbort :: TiState -> TiState
 primAbort = error "Program abort!"
 
 primStop :: TiState -> TiState
-primStop state
-    | not (isEmptyStack state.dump) = error "primStop: dump is not empty"
-    | otherwise = setRuleId 11
-                $ state { stack = emptyStack' state.stack }
+primStop state = case pop state.dump of
+    (sp, dump1) 
+        | sp /= 0 || not (isEmptyStack dump1)
+            -> error "primStop: dump is not initial"
+        | otherwise
+            -> setRuleId 11
+             $ state { stack = emptyStack' state.stack }
 
 primPrint :: TiState -> TiState
 primPrint state
-    | argsLen /= 2 = error "primPrint: wrong number of args"
-    | not (isEmptyStack state.dump) = error "primPrint: dump is not empty"
+    | argsLen < 2 = error "primPrint: wrong number of args"
+    | not (isSingletonStack state.dump) = error "primPrint: dump is not initial"
     | otherwise = case arg1Node of
         NNum m    -> setRuleId 12 $ state { output = state.output ++ [m]
-                                          , stack = push arg2Addr (emptyStack' state.stack) }
+                                          , stack = push arg2Addr (emptyStack' state.stack)
+                                          }
         NData _ _ -> error "primPrint: not a number"
         _         -> case saveAndPush arg1Addr stack1 state.dump of
             (stack2, dump2) -> setRuleId 13 $ state { stack = stack2, dump = dump2 }
     where
-        args = getargs state.heap state.stack
+        args = take 2 $ getargs state.heap state.stack
         argsLen = length args
         [arg1Addr, arg2Addr] = args
         arg1Node = hLookup state.heap arg1Addr
@@ -263,11 +265,11 @@ doAdminPrimSteps = applyToStats incPrimSteps
 
 getargs :: TiHeap -> TiStack -> [Addr]
 getargs heap stack = case pop stack of
-    (sc, stack') -> map getarg stack'.stkItems
+    (sc, stack1) -> map getarg stack1.stkItems
         where
-            getarg addr = arg
-                where
-                    NAp fun arg = hLookup heap addr
+            getarg addr = case hLookup heap addr of
+                NAp _ arg -> arg
+                _         -> error "getarg: not application node"
 
 --
 emptyStack' :: TiStack -> TiStack
@@ -275,11 +277,11 @@ emptyStack' stack = stack { curDepth = 0, stkItems = [] }
 
 saveAndPush :: Addr -> TiStack -> TiDump -> (TiStack, TiDump)
 saveAndPush addr stack dump
-    = (push addr (emptyStack' stack), push stack dump)
+    = (push addr stack, push stack.curDepth dump)
 
 restore :: TiStack -> TiDump -> (TiStack, TiDump)
 restore stack dump
     = case pop dump of
-        (stack', dump') 
-            -> ( stack' { maxDepth = stack.maxDepth `max` stack'.maxDepth }
+        (sp, dump') 
+            -> ( discard (stack.curDepth - sp) stack
                , dump' )

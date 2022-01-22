@@ -9,6 +9,7 @@ import Language
 import Heap
 import Stack
 import Utils
+import Debug.Trace
 
 data TiState
     = TiState
@@ -189,7 +190,7 @@ primCaseList state
         heap1 = case arg1Node of
             NData tag cmpnts
                 | tag == 0 {- [] -} -> hUpdate state.heap root (NInd arg2Addr)
-                | otherwise -> case cmpnts of
+                | otherwise -> case traceShow cmpnts cmpnts of
                     [hd, tl]  -> hUpdate heap2 root (NAp addr tl)
                         where
                             (heap2, addr) = hAlloc state.heap (NAp arg3Addr hd)
