@@ -102,4 +102,5 @@ showStats state = iConcat
     , iNum state.heap.maxAllocs
     , iNewline, iStr "   Max depth of stack = "
     , iNum state.stack.maxDepth
+    , iNewline
     ]
