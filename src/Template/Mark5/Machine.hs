@@ -500,3 +500,17 @@ instUpdELam updAddr heap env vars body = error "not implemented"
 test :: String -> IO ()
 test = putStr . run
 
+--
+emptyStack' :: TiStack -> TiStack
+emptyStack' stack = stack { curDepth = 0, stkItems = [] }
+
+saveAndPush :: Addr -> TiStack -> TiDump -> (TiStack, TiDump)
+saveAndPush addr stack dump
+    = (push addr (emptyStack' stack), push stack dump)
+
+restore :: TiStack -> TiDump -> (TiStack, TiDump)
+restore stack dump
+    = case pop dump of
+        (stack', dump') 
+            -> ( stack' { maxDepth = stack.maxDepth `max` stack'.maxDepth }
+               , dump' )
