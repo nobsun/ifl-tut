@@ -1,0 +1,4 @@
+main = length xs ;
+xs = Cons 1 (Cons 2 (Cons 3 Nil)) ;
+length xs = caseList xs 0 lengthc ;
+lengthc x xs = 1 + length xs

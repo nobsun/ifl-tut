@@ -1,0 +1,1 @@
+main = if (or False True) (xor True False) (and True False)

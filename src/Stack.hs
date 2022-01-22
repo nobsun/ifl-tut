@@ -1,40 +1,48 @@
-module Stack where
-import GHC.Show (Show)
+{-# LANGUAGE NoFieldSelectors #-}
+{-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE OverloadedRecordDot #-}
+module Stack
+    where
 
-data Stack a 
+import Data.Bool
+import Data.List.Extra
+
+data Stack a
     = Stack
-    { maxDepth_ :: Int
-    , depth_    :: Int
-    , stack_    :: [a]
-    } deriving (Show)
+    { maxDepth :: Int
+    , curDepth :: Int
+    , stkItems :: [a]
+    } deriving Show
 
 emptyStack :: Stack a
 emptyStack = Stack 0 0 []
 
 singletonStack :: a -> Stack a
-singletonStack a = push a emptyStack
+singletonStack x = push x emptyStack
 
 isEmptyStack :: Stack a -> Bool
-isEmptyStack stk = null (stack_ stk)
+isEmptyStack stk = null stk.stkItems
 
 isSingletonStack :: Stack a -> Bool
-isSingletonStack stk
-    | isEmptyStack stk = False
-    | otherwise        = isEmptyStack (snd (pop stk))
+isSingletonStack stk = not (isEmptyStack stk) 
+                    && isEmptyStack (snd (pop stk))
 
 push :: a -> Stack a -> Stack a
-push x stk = case stk of
-    Stack maxDepth depth stack -> Stack (maxDepth `max` depth') depth' (x : stack)
-        where
-            depth' = succ depth
+push x stk = stk
+    { maxDepth = stk.maxDepth `max` succ stk.curDepth
+    , curDepth = succ stk.curDepth
+    , stkItems = x : stk.stkItems
+    }
 
 pop :: Stack a -> (a, Stack a)
-pop stk = case stk of
-    Stack maxDepth depth (x:stack) -> (x, Stack maxDepth (pred depth) stack)
-    _                              -> error "Empty stack"
+pop stk = bool (list undefined phi stk.stkItems)
+               (error "pop: empty stack")
+               (isEmptyStack stk)
+    where
+        phi x xs = (x, stk { curDepth = pred stk.curDepth, stkItems = xs })
 
 discard :: Int -> Stack a -> Stack a
 discard 0 stk = stk
-discard n stk = case stk of
-    Stack maxDepth depth stack
-        -> Stack maxDepth (subtract n depth `max` 0) (drop n stack)
+discard n stk = stk { curDepth = subtract n stk.curDepth `max` 0
+                    , stkItems = drop n stk.stkItems
+                    }
