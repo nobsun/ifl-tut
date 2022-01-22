@@ -1147,7 +1147,7 @@ $$
                           a_2&:&\texttt{NAp}\;a_{1}\; b_2
                        \end{array}
                 \right] & f \\
-\Longrightarrow & o & b_1 : [] & (b_2 : []) : [] && h & f 
+\Longrightarrow & o & b_1 : [] & (a_2 : []) : [] && h & f 
 \end{array}
 $$
 
