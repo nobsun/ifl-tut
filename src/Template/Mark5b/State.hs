@@ -27,7 +27,7 @@ type TiStack   = Stack Addr
 
 type TiDump    = Stack Int
 initialDump :: TiDump
-initialDump = push 0 emptyStack
+initialDump = emptyStack
 
 type TiHeap    = Heap Node
 
@@ -196,18 +196,16 @@ primAbort :: TiState -> TiState
 primAbort = error "Program abort!"
 
 primStop :: TiState -> TiState
-primStop state = case pop state.dump of
-    (sp, dump1) 
-        | sp /= 0 || not (isEmptyStack dump1)
-            -> error "primStop: dump is not initial"
-        | otherwise
-            -> setRuleId 11
-             $ state { stack = emptyStack' state.stack }
+primStop state 
+    | not (isEmptyStack state.dump) 
+        = error "primStop: dump is not empty"
+    | otherwise
+        = setRuleId 11 $ state { stack = emptyStack' state.stack }
 
 primPrint :: TiState -> TiState
 primPrint state
     | argsLen < 2 = error "primPrint: wrong number of args"
-    | not (isSingletonStack state.dump) = error "primPrint: dump is not initial"
+    | not (isEmptyStack state.dump) = error "primPrint: dump is not empty"
     | otherwise = case arg1Node of
         NNum m    -> setRuleId 12 $ state { output = state.output ++ [m]
                                           , stack = push arg2Addr (emptyStack' state.stack)
@@ -281,7 +279,7 @@ saveAndPush addr stack dump
 
 restore :: TiStack -> TiDump -> (TiStack, TiDump)
 restore stack dump
-    = case pop dump of
+    | isEmptyStack dump = error "restore: dump is empty"
+    | otherwise         = case pop dump of
         (sp, dump') 
-            -> ( discard (stack.curDepth - sp) stack
-               , dump' )
+            -> ( discard (stack.curDepth - sp) stack, dump' )

@@ -40,7 +40,6 @@ library
                     , Template.Mark2
                     , Template.Mark3
                     , Template.Mark4
-                    , Template.Mark5
                     , Template.Mark5.Machine
                     , Template.Mark5.Node
                     , Template.Mark5.Primitive
