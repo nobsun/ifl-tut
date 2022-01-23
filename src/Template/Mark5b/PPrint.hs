@@ -55,7 +55,8 @@ showNode node = dispatchNode
     (\ n -> iStr "NNum " `iAppend` iNum n)
     (\ a -> iStr "NInd " `iAppend` showAddr a)
     (\ name _ -> iStr ("NPrim " ++ name))
-    (\ tag args -> iConcat [iStr ("NData "), iNum tag, iSpace, iInterleave iSpace (map showAddr args)])
+    (\ tag args -> iConcat [ iStr ("NData "), iNum tag, iSpace
+                           , iInterleave iSpace (map showAddr args)])
     node
 
 showStack :: TiHeap -> TiStack -> IseqRep
@@ -92,7 +93,9 @@ showOutput :: TiOutput -> IseqRep
 showOutput output = iStr ("Output " ++ show output)
 
 showRuleId :: TiRuleId -> IseqRep
-showRuleId rid = iStr ("Rule " ++ show (2, rid)) 
+showRuleId rid = iStr desc
+    where
+        desc = maybe "no description" id $ lookup rid ruleTable
 
 showStats :: TiState -> IseqRep
 showStats state = iConcat
