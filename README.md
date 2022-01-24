@@ -30,7 +30,7 @@ Simon L. Payton Jones, David R. Lester *Implementing Functional Languages: a tut
 
 ## 起動
 
-プロジェクトルートで、`cabal run ti5b prog/prog17.ifl` で起動すると
+プロジェクトルートにおいて、コマンド `cabal run ti5b prog/prog17.ifl` で雛形具体化機械 `ti5b` にサンプルプログラム `prog17.ifl` ロードして起動すると、
 
 ```
 % cabal run ti5b prog/prog17.ifl
