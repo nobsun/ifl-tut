@@ -27,3 +27,30 @@ Simon L. Payton Jones, David R. Lester *Implementing Functional Languages: a tut
 ## コードについて
 
 この main ブランチのコードは ghc-9.2.1 で導入された言語拡張 'OverloadedDotSyntax' を使用しています。
+
+## 起動
+
+プロジェクトルートで、`cabal run ti5b prog/prog17.ifl` で起動すると
+
+```
+% cabal run ti5b prog/prog17.ifl
+   0) Heap [  40: NAP #21 #1
+              39: NPrim print
+              ...
+              ヒープのダンプ
+              ...
+      Stack [  40: NAp   21    1 (NSupercomb main) ]
+      Depth 1
+      Dump []
+      Output []
+      no description
+
+
+|
+```
+のように初期状態（の一部）が表示された状態で停止する。
+
+- Enterキー（空文字列の入力）で、次の状態に遷移
+- Cキー、Enterキーの順で押下（文字列`C`の入力）で、最後の状態まで遷移
+- 数字入力で、指定したかずぶんだけ状態が遷移
+

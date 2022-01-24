@@ -140,7 +140,7 @@ step :: TiState -> TiState
 step state = case map toLower $ head state.control of
     ""                -> state' { control = tail state.control }
     "c"               -> state' { control = repeat "" }
-    s | all isDigit s -> state' { control = replicate (read s) "" ++ tail state.control }
+    s | all isDigit s -> state' { control = replicate (pred $ read s) "" ++ tail state.control }
       | otherwise     -> state' { control = tail state.control }
   where
         state' = dispatchNode 
