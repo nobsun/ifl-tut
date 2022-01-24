@@ -8,11 +8,14 @@ module Template.Mark5b.State
 import Language
 import Heap
 import Stack
-import Utils
+import Utils hiding (rjustify)
+import Data.Function
+import Control.Monad
 
 data TiState
     = TiState
-    { output  :: TiOutput
+    { control :: TiControl
+    , output  :: TiOutput
     , stack   :: TiStack
     , dump    :: TiDump
     , heap    :: TiHeap
@@ -20,6 +23,8 @@ data TiState
     , stats   :: TiStats
     , ruleid  :: TiRuleId
     }
+
+type TiControl = [String]
 
 type TiOutput  = [Int]
 

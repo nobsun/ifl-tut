@@ -5,7 +5,10 @@
 module Template.Mark5b.Machine
     where
 
+import Data.Bool
+import Data.Char
 import Data.List
+import Data.List.Extra
 
 import Language
 import Heap
@@ -32,14 +35,26 @@ traceShow | debug     = Deb.traceShow
 {- * Mark 5 : Structured data -}
 {- | Structure of the implementations -}
 
-run :: String -> String
-run = showResults . eval . compile . parse
+drive :: ([String] -> [String]) -> (String -> String)
+drive f = unlines . f . ("" :) . lines
+
+run :: String -> ([String] -> [String])
+run prog inputs
+    = showResults 
+    $ eval
+    $ setControl inputs
+    $ compile 
+    $ parse prog
+
+setControl :: [String] -> TiState -> TiState
+setControl ctrl state = state { control = ctrl }
 
 {- | Compiler -}
 
 compile :: CoreProgram -> TiState
 compile prog = TiState
-    { output  = []
+    { control = []
+    , output  = []
     , stack   = initialStack1
     , dump    = initialDump
     , heap    = initialHeap1
@@ -122,15 +137,21 @@ eval state = state : rests
               | otherwise      = eval $ doAdminTotalSteps $ step state
 
 step :: TiState -> TiState
-step state = dispatchNode 
-             apStep
-             scStep
-             numStep
-             indStep
-             primStep
-             dataStep
-             (hLookup state.heap (fst (pop state.stack)))
-           $ state
+step state = case map toLower $ head state.control of
+    ""                -> state' { control = tail state.control }
+    "c"               -> state' { control = repeat "" }
+    s | all isDigit s -> state' { control = replicate (read s) "" ++ tail state.control }
+      | otherwise     -> state' { control = tail state.control }
+  where
+        state' = dispatchNode 
+                    apStep
+                    scStep
+                    numStep
+                    indStep
+                    primStep
+                    dataStep
+                    (hLookup state.heap (fst (pop state.stack)))
+               $ state
 
 numStep :: Int -> TiState -> TiState
 numStep n state 
@@ -303,8 +324,5 @@ instUpdELam :: Addr
             -> TiHeap
 instUpdELam updAddr heap env vars body = error "not implemented"
 
-{- | Testing -}
-
 test :: String -> IO ()
-test = putStr . run
-
+test = interact . drive . run 

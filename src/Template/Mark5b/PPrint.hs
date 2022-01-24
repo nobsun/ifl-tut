@@ -12,8 +12,8 @@ import Utils
 
 import Template.Mark5b.State
 
-showResults :: [TiState] -> String
-showResults = concatMap iDisplay . iLayn' 0 . mapoid (showState, showStats)
+showResults :: [TiState] -> [String]
+showResults = map iDisplay . iLayn' 0 . mapoid (showState, showStats)
 
 mapoid :: (a -> b, a -> b) -> [a] -> [b]
 mapoid (f, g) (x:xs) = case xs of
