@@ -1,6 +1,6 @@
 # 『関数型言語を実装する：チュートリアル』を読む
 
-Simon L. Payton Jones, David R. Lester *Implementing Functional Languages: a tutorial*, 1991
+[Simon L. Payton Jones, David R. Lester *Implementing Functional Languages: a tutorial*, 1991](https://www.microsoft.com/en-us/research/publication/implementing-functional-languages-a-tutorial/)
 
 > 本書は、遅延グラフ簡約を用いた非正格な関数型言語の実装を理解するための実践的なアプローチを提供します。
 この本は、読者が自明ではないコンパイラを開発、修正、実験することで、関数型言語の実装を「生き生きと」させるための実践的な実験材料を提供することを目的としています。
@@ -14,6 +14,8 @@ Simon L. Payton Jones, David R. Lester *Implementing Functional Languages: a tut
 [^1]: Miranda は Research Software Ltd. の登録商標です。
 
 [^2]: 地の文の説明は、Miranda を前提としています。
+
+
 
 ## この本の構成
 
