@@ -15,11 +15,12 @@ type Addr = Int
 data Heap a = Heap
     { maxAllocs :: Int
     , curAllocs :: Int
+    , threshold :: Int
     , frees     :: [Addr]
     , assocs    :: Assoc Addr a
     }
 
-hInitial   :: (?sz :: Int) => Heap a 
+hInitial   :: (?sz :: Int, ?th :: Int) => Heap a 
 hAlloc     :: Heap a -> a -> (Heap a, Addr)
 hUpdate    :: Heap a -> Addr -> a -> Heap a
 hFree      :: Heap a -> Addr -> Heap a
@@ -29,6 +30,7 @@ hAddresses :: Heap a -> [Addr]
 hInitial = Heap 
     { maxAllocs = 0
     , curAllocs = 0
+    , threshold = ?th
     , frees     = [1 .. ?sz]
     , assocs    = []
     }

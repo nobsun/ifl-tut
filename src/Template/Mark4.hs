@@ -138,10 +138,13 @@ extraPreludeDefs = []
 defaultHeapSize :: Int
 defaultHeapSize = 1024
 
+defaultThreshold :: Int
+defaultThreshold = 50
+
 buildInitialHeap :: [CoreScDefn] -> (TiHeap, TiGlobals)
 buildInitialHeap scDefs = (heap2, scAddrs ++ primAddrs)
     where
-        (heap1, scAddrs)   = let ?sz = defaultHeapSize
+        (heap1, scAddrs)   = let { ?sz = defaultHeapSize; ?th = defaultThreshold }
                              in mapAccumL allocateSc hInitial scDefs
         (heap2, primAddrs) = mapAccumL allocatePrim heap1 primitives
 

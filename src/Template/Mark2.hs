@@ -121,8 +121,11 @@ extraPreludeDefs = []
 defaultHeapSize :: Int
 defaultHeapSize = 1024
 
+defaultThreshold :: Int
+defaultThreshold = 50
+
 buildInitialHeap :: [CoreScDefn] -> (TiHeap, TiGlobals)
-buildInitialHeap = let ?sz = defaultHeapSize in
+buildInitialHeap = let { ?sz = defaultHeapSize; ?th = defaultThreshold } in
     mapAccumL allocateSc hInitial
 
 allocateSc :: TiHeap -> CoreScDefn -> (TiHeap, (Name, Addr))

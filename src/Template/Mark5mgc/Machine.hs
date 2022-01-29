@@ -2,7 +2,7 @@
 {-# LANGUAGE NoFieldSelectors #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedRecordDot #-}
-module Template.Mark5b.Machine
+module Template.Mark5mgc.Machine
     where
 
 import Data.Bool
@@ -16,8 +16,8 @@ import Stack
 import Iseq
 import Utils
 
-import Template.Mark5b.State
-import Template.Mark5b.PPrint
+import Template.Mark5mgc.State
+import Template.Mark5mgc.PPrint
 
 import Debug.Trace qualified as Deb
 
@@ -111,7 +111,7 @@ defaultHeapSize :: Int
 defaultHeapSize = 1024
 
 defaultThreshold :: Int
-defaultThreshold = 50
+defaultThreshold = 64
 
 buildInitialHeap :: [CoreScDefn] -> (TiHeap, TiGlobals)
 buildInitialHeap scDefs = (heap2, scAddrs ++ primAddrs)
@@ -137,7 +137,10 @@ eval :: TiState -> [TiState]
 eval state = state : rests
     where
         rests | tiFinal state = []
-              | otherwise      = eval $ doAdminTotalSteps $ step state
+              | otherwise      = eval $ doAdmin $ doAdminTotalSteps $ step state
+
+doAdmin :: TiState -> TiState
+doAdmin state = bool id gc (state.heap.curAllocs > state.heap.threshold) state
 
 step :: TiState -> TiState
 step state = case map toLower $ head state.control of
@@ -153,8 +156,9 @@ step state = case map toLower $ head state.control of
                     indStep
                     primStep
                     dataStep
+                    (error "step: NMarked node")
                     (hLookup state.heap (fst (pop state.stack)))
-               $ state
+                  $ state
 
 numStep :: Int -> TiState -> TiState
 numStep n state 
@@ -329,3 +333,49 @@ instUpdELam updAddr heap env vars body = error "not implemented"
 
 test :: String -> IO ()
 test = interact . drive . run 
+
+-- Gabage Collector (Mark-scan)
+
+gc :: TiState -> TiState
+gc state = state { heap = scanHeap 
+                        $ foldl markFrom state.heap
+                        $ findRoots state 
+                 , stats = incGcCount state.stats
+                 }
+
+findStackRoots :: TiStack -> [Addr]
+findStackRoots stack = stack.stkItems
+
+findDumpRoots :: TiDump -> [Addr]
+findDumpRoots dump = []
+
+findGlobalRoots :: TiGlobals -> [Addr]
+findGlobalRoots globals = aRange globals
+
+findRoots :: TiState -> [Addr]
+findRoots state = concat
+    [ findStackRoots state.stack
+    , findDumpRoots state.dump
+    , findGlobalRoots state.globals
+    ]
+
+markFrom :: TiHeap -> Addr -> TiHeap
+markFrom heap addr = case hLookup heap addr of
+    node -> dispatchNode 
+            (\ addr1 addr2 -> hUpdate (markFrom (markFrom heap addr1) addr2) 
+                                      addr (NMarked node))      -- NAp
+            (\ _ _ _       -> hUpdate heap addr (NMarked node)) -- NSupercomb
+            (\ _           -> hUpdate heap addr (NMarked node)) -- NNum
+            (\ addr1       -> hUpdate (markFrom heap addr1) 
+                                      addr (NMarked node))      -- NInd
+            (\ _ _         -> hUpdate heap addr (NMarked node)) -- NPrim
+            (\ _ as        -> foldl markFrom heap as)           -- NData
+            (\ _           -> heap)                             -- NMarked
+            node
+
+scanHeap :: TiHeap -> TiHeap
+scanHeap heap =foldl phi heap heap.assocs
+    where
+        phi h (a, node) = case node of
+            NMarked node1 -> hUpdate h a node1
+            _             -> hFree h a
