@@ -37,7 +37,7 @@ hInitial = Heap
 
 hAlloc heap node = case heap.frees of
     []   -> error "hAlloc: no space"
-    a:rs -> (heap { maxAllocs = heap.maxAllocs `max` succ heap.curAllocs
+    a:rs -> (heap { maxAllocs = succ heap.maxAllocs
                   , curAllocs = succ heap.curAllocs
                   , frees     = rs
                   , assocs    = (a, node) : heap.assocs
