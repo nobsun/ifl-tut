@@ -109,6 +109,8 @@ showStats state = iConcat
     , iNum state.stats.primSteps
     , iNewline, iStr "     Allocation count = "
     , iNum state.heap.maxAllocs
+    , iNewline, iStr "            Heap size = "
+    , iNum state.heap.curAllocs
     , iNewline, iStr "             GC count = "
     , iNum state.stats.gcCount
     , iNewline, iStr "   Max depth of stack = "

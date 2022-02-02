@@ -38,7 +38,7 @@ traceShow | debug     = Deb.traceShow
 drive :: ([String] -> [String]) -> (String -> String)
 drive f = unlines . f . ("" :) . lines
 
-run :: String -> ([String] -> [String])
+run :: (?sz :: Int, ?th :: Int) => String -> ([String] -> [String])
 run prog inputs
     = showResults 
     $ eval
@@ -51,7 +51,7 @@ setControl ctrl state = state { control = ctrl }
 
 {- | Compiler -}
 
-compile :: CoreProgram -> TiState
+compile :: (?sz :: Int, ?th :: Int) => CoreProgram -> TiState
 compile prog = TiState
     { control = []
     , output  = []
@@ -107,17 +107,10 @@ extraPreludeDefs =
                                     (EAp (EVar "printList") (EVar "t")))
     ]
 
-defaultHeapSize :: Int
-defaultHeapSize = 1024
-
-defaultThreshold :: Int
-defaultThreshold = 64
-
-buildInitialHeap :: [CoreScDefn] -> (TiHeap, TiGlobals)
+buildInitialHeap :: ( ?sz :: Int, ?th :: Int ) => [CoreScDefn] -> (TiHeap, TiGlobals)
 buildInitialHeap scDefs = (heap2, scAddrs ++ primAddrs)
     where
-        (heap1, scAddrs)   = let { ?sz = defaultHeapSize; ?th = defaultThreshold }
-                             in mapAccumL allocateSc hInitial scDefs
+        (heap1, scAddrs)   = mapAccumL allocateSc hInitial scDefs
         (heap2, primAddrs) = mapAccumL allocatePrim heap1 primitives
 
 allocateSc :: TiHeap -> CoreScDefn -> (TiHeap, (Name, Addr))
@@ -331,14 +324,14 @@ instUpdELam :: Addr
             -> TiHeap
 instUpdELam updAddr heap env vars body = error "not implemented"
 
-test :: String -> IO ()
+test :: (?sz :: Int, ?th :: Int) => String -> IO ()
 test = interact . drive . run 
 
 -- Gabage Collector (Mark-scan)
 
 gc :: TiState -> TiState
-gc state = state { heap = scanHeap 
-                        $ foldl markFrom state.heap
+gc state = state { heap = scanHeap $ fst
+                        $ mapAccumL markFrom state.heap
                         $ findRoots state 
                  , stats = incGcCount state.stats
                  }
@@ -359,18 +352,20 @@ findRoots state = concat
     , findGlobalRoots state.globals
     ]
 
-markFrom :: TiHeap -> Addr -> TiHeap
+markFrom :: TiHeap -> Addr -> (TiHeap, Addr)
 markFrom heap addr = case hLookup heap addr of
     node -> dispatchNode 
-            (\ addr1 addr2 -> hUpdate (markFrom (markFrom heap addr1) addr2) 
-                                      addr (NMarked node))      -- NAp
-            (\ _ _ _       -> hUpdate heap addr (NMarked node)) -- NSupercomb
-            (\ _           -> hUpdate heap addr (NMarked node)) -- NNum
-            (\ addr1       -> hUpdate (markFrom heap addr1) 
-                                      addr (NMarked node))      -- NInd
-            (\ _ _         -> hUpdate heap addr (NMarked node)) -- NPrim
-            (\ _ as        -> foldl markFrom heap as)           -- NData
-            (\ _           -> heap)                             -- NMarked
+            (\ addr1 addr2 -> case markFrom heap addr1 of
+                (heap1, addr1') -> case markFrom heap1 addr2 of
+                    (heap2, addr2')  -> (hUpdate heap2 addr (NMarked (NAp addr1' addr2')), addr))
+            (\ _ _ _       -> (hUpdate heap addr (NMarked node), addr)) -- NSupercomb
+            (\ _           -> (hUpdate heap addr (NMarked node), addr)) -- NNum
+            (\ addr1       -> markFrom heap addr1)                      -- NInd
+            (\ _ _         -> (hUpdate heap addr (NMarked node), addr)) -- NPrim
+            (\ tag as      -> case mapAccumL markFrom heap as of
+                (heap', as')    -> (hUpdate heap' addr (NMarked (NData tag as')), addr))
+                                                                        -- NData
+            (\ _           -> (heap, addr))                             -- NMarked
             node
 
 scanHeap :: TiHeap -> TiHeap

@@ -16384,3 +16384,477 @@ Ok, 7 modules loaded.
   9 18 27 36 45 54 63 72 81
 >>> :q
 Leaving GHCi.
+Resolving dependencies...
+Build profile: -w ghc-9.2.1 -O1
+In order, the following will be built (use -v for more details):
+ - ifl-tut-0.2.9.1 (lib) (file src/Template/Mark5mgc/Machine.hs changed)
+Preprocessing library for ifl-tut-0.2.9.1..
+GHCi, version 9.2.1: https://www.haskell.org/ghc/  :? for help
+Loaded GHCi configuration from /home/nobsun/develop/ifl-tut/.ghci
+[ 1 of 28] Compiling MyLib            ( src/MyLib.hs, interpreted )
+[ 2 of 28] Compiling Parser           ( src/Parser.hs, interpreted )
+[ 3 of 28] Compiling Stack            ( src/Stack.hs, interpreted )
+[ 4 of 28] Compiling Utils            ( src/Utils.hs, interpreted )
+[ 5 of 28] Compiling Iseq             ( src/Iseq.hs, interpreted )
+[ 6 of 28] Compiling Language         ( src/Language.hs, interpreted )
+[ 7 of 28] Compiling Template.Mark5.Primitive ( src/Template/Mark5/Primitive.hs, interpreted )
+[ 8 of 28] Compiling Heap             ( src/Heap.hs, interpreted )
+[ 9 of 28] Compiling Template.Mark5mgc.State ( src/Template/Mark5mgc/State.hs, interpreted )
+[10 of 28] Compiling Template.Mark5mgc.PPrint ( src/Template/Mark5mgc/PPrint.hs, interpreted )
+[11 of 28] Compiling Template.Mark5c.State ( src/Template/Mark5c/State.hs, interpreted )
+[12 of 28] Compiling Template.Mark5c.PPrint ( src/Template/Mark5c/PPrint.hs, interpreted )
+[13 of 28] Compiling Template.Mark5c.Machine ( src/Template/Mark5c/Machine.hs, interpreted )
+[14 of 28] Compiling Template.Mark5b.State ( src/Template/Mark5b/State.hs, interpreted )
+[15 of 28] Compiling Template.Mark5b.PPrint ( src/Template/Mark5b/PPrint.hs, interpreted )
+[16 of 28] Compiling Template.Mark5b.Machine ( src/Template/Mark5b/Machine.hs, interpreted )
+[17 of 28] Compiling Template.Mark5a.State ( src/Template/Mark5a/State.hs, interpreted )
+[18 of 28] Compiling Template.Mark5a.PPrint ( src/Template/Mark5a/PPrint.hs, interpreted )
+[19 of 28] Compiling Template.Mark5a.Machine ( src/Template/Mark5a/Machine.hs, interpreted )
+[20 of 28] Compiling Template.Mark5.Node ( src/Template/Mark5/Node.hs, interpreted )
+[21 of 28] Compiling Template.Mark5.State ( src/Template/Mark5/State.hs, interpreted )
+[22 of 28] Compiling Template.Mark5.PPrint ( src/Template/Mark5/PPrint.hs, interpreted )
+[23 of 28] Compiling Template.Mark5.Machine ( src/Template/Mark5/Machine.hs, interpreted )
+[24 of 28] Compiling Template.Mark4   ( src/Template/Mark4.hs, interpreted )
+[25 of 28] Compiling Template.Mark3   ( src/Template/Mark3.hs, interpreted )
+[26 of 28] Compiling Template.Mark2   ( src/Template/Mark2.hs, interpreted )
+[27 of 28] Compiling Template.Mark1   ( src/Template/Mark1.hs, interpreted )
+[28 of 28] Compiling Template.Mark5mgc.Machine ( src/Template/Mark5mgc/Machine.hs, interpreted )
+
+src/Template/Mark5mgc/Machine.hs:378:1: error:
+    parse error (possibly incorrect indentation or mismatched brackets)
+    |
+378 | scanHeap :: TiHeap -> TiHeap
+    | ^
+Failed, 27 modules loaded.
+>>> :q
+Leaving GHCi.
+Build profile: -w ghc-9.2.1 -O1
+In order, the following will be built (use -v for more details):
+ - ifl-tut-0.2.9.1 (lib) (file src/Template/Mark5mgc/Machine.hs changed)
+Preprocessing library for ifl-tut-0.2.9.1..
+GHCi, version 9.2.1: https://www.haskell.org/ghc/  :? for help
+Loaded GHCi configuration from /home/nobsun/develop/ifl-tut/.ghci
+[ 1 of 28] Compiling MyLib            ( src/MyLib.hs, interpreted )
+[ 2 of 28] Compiling Parser           ( src/Parser.hs, interpreted )
+[ 3 of 28] Compiling Stack            ( src/Stack.hs, interpreted )
+[ 4 of 28] Compiling Utils            ( src/Utils.hs, interpreted )
+[ 5 of 28] Compiling Iseq             ( src/Iseq.hs, interpreted )
+[ 6 of 28] Compiling Language         ( src/Language.hs, interpreted )
+[ 7 of 28] Compiling Template.Mark5.Primitive ( src/Template/Mark5/Primitive.hs, interpreted )
+[ 8 of 28] Compiling Heap             ( src/Heap.hs, interpreted )
+[ 9 of 28] Compiling Template.Mark5mgc.State ( src/Template/Mark5mgc/State.hs, interpreted )
+[10 of 28] Compiling Template.Mark5mgc.PPrint ( src/Template/Mark5mgc/PPrint.hs, interpreted )
+[11 of 28] Compiling Template.Mark5c.State ( src/Template/Mark5c/State.hs, interpreted )
+[12 of 28] Compiling Template.Mark5c.PPrint ( src/Template/Mark5c/PPrint.hs, interpreted )
+[13 of 28] Compiling Template.Mark5c.Machine ( src/Template/Mark5c/Machine.hs, interpreted )
+[14 of 28] Compiling Template.Mark5b.State ( src/Template/Mark5b/State.hs, interpreted )
+[15 of 28] Compiling Template.Mark5b.PPrint ( src/Template/Mark5b/PPrint.hs, interpreted )
+[16 of 28] Compiling Template.Mark5b.Machine ( src/Template/Mark5b/Machine.hs, interpreted )
+[17 of 28] Compiling Template.Mark5a.State ( src/Template/Mark5a/State.hs, interpreted )
+[18 of 28] Compiling Template.Mark5a.PPrint ( src/Template/Mark5a/PPrint.hs, interpreted )
+[19 of 28] Compiling Template.Mark5a.Machine ( src/Template/Mark5a/Machine.hs, interpreted )
+[20 of 28] Compiling Template.Mark5.Node ( src/Template/Mark5/Node.hs, interpreted )
+[21 of 28] Compiling Template.Mark5.State ( src/Template/Mark5/State.hs, interpreted )
+[22 of 28] Compiling Template.Mark5.PPrint ( src/Template/Mark5/PPrint.hs, interpreted )
+[23 of 28] Compiling Template.Mark5.Machine ( src/Template/Mark5/Machine.hs, interpreted )
+[24 of 28] Compiling Template.Mark4   ( src/Template/Mark4.hs, interpreted )
+[25 of 28] Compiling Template.Mark3   ( src/Template/Mark3.hs, interpreted )
+[26 of 28] Compiling Template.Mark2   ( src/Template/Mark2.hs, interpreted )
+[27 of 28] Compiling Template.Mark1   ( src/Template/Mark1.hs, interpreted )
+[28 of 28] Compiling Template.Mark5mgc.Machine ( src/Template/Mark5mgc/Machine.hs, interpreted )
+
+src/Template/Mark5mgc/Machine.hs:373:57: error:
+    • Data constructor not in scope: Marked :: Node -> Node
+    • Perhaps you meant ‘NMarked’ (imported from Template.Mark5mgc.State)
+    |
+373 |                 (heap', as')    -> (hUpdate heap' addr (Marked (NData tag as')), addr))
+    |                                                         ^^^^^^
+Failed, 27 modules loaded.
+>>> :e
+   1  {-# LANGUAGE ImplicitParams #-}
+   2  {-# LANGUAGE NoFieldSelectors #-}
+   3  {-# LANGUAGE DuplicateRecordFields #-}
+   4  {-# LANGUAGE OverloadedRecordDot #-}
+   5  module Template.Mark5mgc.Machine
+   6      where
+   7  
+   8  import Data.Bool
+   9  import Data.Char
+  10  import Data.List
+  11  import Data.List.Extra
+  12  
+  13  import Language
+  14  import Heap
+  15  import Stack
+  16  import Iseq
+  17  import Utils
+  18  
+  19  import Template.Mark5mgc.State
+  20  import Template.Mark5mgc.PPrint
+  21  
+  22  import Debug.Trace qualified as Deb
+  23  
+  24  debug :: Bool
+  25  debug = True
+  26  
+  27  trace :: String -> a -> a
+  28  trace | debug     = Deb.trace
+  29        | otherwise = const id 
+  30  
+  31  traceShow :: Show a => a -> b -> b
+  32  traceShow | debug     = Deb.traceShow
+  33            | otherwise = const id
+  34  
+  35  {- * Mark 5 : Structured data -}
+  36  {- | Structure of the implementations -}
+  37  
+  38  drive :: ([String] -> [String]) -> (String -> String)
+  39  drive f = unlines . f . ("" :) . lines
+  40  
+  41  run :: String -> ([String] -> [String])
+  42  run prog inputs
+  43      = showResults 
+  44      $ eval
+  45      $ setControl inputs
+  46      $ compile 
+  47      $ parse prog
+  48  
+  49  setControl :: [String] -> TiState -> TiState
+  50  setControl ctrl state = state { control = ctrl }
+  51  
+  52  {- | Compiler -}
+  53  
+  54  compile :: CoreProgram -> TiState
+  55  compile prog = TiState
+  56      { control = []
+  57      , output  = []
+  58      , stack   = initialStack1
+  59      , dump    = initialDump
+  60      , heap    = initialHeap1
+  61      , globals = initialGlobals
+  62      , stats   = initialStats
+  63      , ruleid  = 0
+  64      }
+  65      where
+  66          scDefs = prog ++ preludeDefs ++ extraPreludeDefs
+  67          (initialHeap, initialGlobals) = buildInitialHeap scDefs
+  68          initialStack = singletonStack addressOfMain
+  69          initialStack1 = singletonStack addr
+  70          addressOfMain = aLookup initialGlobals "main" (error "main is not defined")
+  71          addressOfPrint = aLookup initialGlobals "printList" (error "printList is not defined")
+  72          (initialHeap1, addr) = hAlloc initialHeap (NAp addressOfPrint addressOfMain)
+  73  
+  74  extraPreludeDefs :: CoreProgram
+  75  extraPreludeDefs = 
+  76      [ ("False", [], EConstr 0 0)
+  77      , ("True" , [], EConstr 1 0)
+  78      , ("not", ["x"], EAp (EAp (EAp (EVar "if") (EVar "x"))
+  79                                (EVar "False"))
+  80                           (EVar "True"))
+  81      , ("and", ["x", "y"], EAp (EAp (EAp (EVar "if") (EVar "x"))
+  82                                     (EVar "y"))
+  83                                (EVar "False"))
+  84      , ("or",  ["x", "y"], EAp (EAp (EAp (EVar "if") (EVar "x"))
+  85                                     (EVar "True"))
+  86                                (EVar "y"))
+  87      , ("xor", ["x", "y"], EAp (EAp (EAp (EVar "if") (EVar "x"))
+  88                                     (EAp (EVar "not") (EVar "y")))
+  89                                (EVar "y"))
+  90      , ("MkPair", [], EConstr 0 2)
+  91      , ("fst", ["p"], EAp (EAp (EVar "casePair") (EVar "p"))
+  92                           (EVar "K"))
+  93      , ("snd", ["p"], EAp (EAp (EVar "casePair") (EVar "p"))
+  94                           (EVar "K1"))
+  95      , ("Nil", [], EConstr 0 0)
+  96      , ("Cons", [], EConstr 1 2)
+  97      , ("head", ["xs"], EAp (EAp (EAp (EVar "caseList") (EVar "xs"))
+  98                                  (EVar "abort"))
+  99                             (EVar "K"))
+ 100      , ("tail", ["xs"], EAp (EAp (EAp (EVar "caseList") (EVar "xs"))
+ 101                                  (EVar "abort"))
+ 102                             (EVar "K1"))
+ 103      , ("printList", ["xs"], EAp (EAp (EAp (EVar "caseList") (EVar "xs"))
+ 104                                       (EVar "stop"))
+ 105                                  (EVar "printCons"))
+ 106      , ("printCons", ["h", "t"], EAp (EAp (EVar "print") (EVar "h"))
+ 107                                      (EAp (EVar "printList") (EVar "t")))
+ 108      ]
+ 109  
+ 110  defaultHeapSize :: Int
+ 111  defaultHeapSize = 1024
+ 112  
+ 113  defaultThreshold :: Int
+ 114  defaultThreshold = 64
+ 115  
+ 116  buildInitialHeap :: [CoreScDefn] -> (TiHeap, TiGlobals)
+ 117  buildInitialHeap scDefs = (heap2, scAddrs ++ primAddrs)
+ 118      where
+ 119          (heap1, scAddrs)   = let { ?sz = defaultHeapSize; ?th = defaultThreshold }
+ 120                               in mapAccumL allocateSc hInitial scDefs
+ 121          (heap2, primAddrs) = mapAccumL allocatePrim heap1 primitives
+ 122  
+ 123  allocateSc :: TiHeap -> CoreScDefn -> (TiHeap, (Name, Addr))
+ 124  allocateSc heap scDefn = case scDefn of
+ 125      (name, args, body) -> (heap', (name, addr))
+ 126          where
+ 127              (heap', addr) = hAlloc heap (NSupercomb name args body)
+ 128  
+ 129  allocatePrim :: TiHeap -> (Name, Primitive) -> (TiHeap, (Name, Addr))
+ 130  allocatePrim heap (name, prim) = (heap1, (name, addr))
+ 131      where
+ 132          (heap1, addr) = hAlloc heap (NPrim name prim)
+ 133  
+ 134  {- | Evaluator -}
+ 135  
+ 136  eval :: TiState -> [TiState]
+ 137  eval state = state : rests
+ 138      where
+ 139          rests | tiFinal state = []
+ 140                | otherwise      = eval $ doAdmin $ doAdminTotalSteps $ step state
+ 141  
+ 142  doAdmin :: TiState -> TiState
+ 143  doAdmin state = bool id gc (state.heap.curAllocs > state.heap.threshold) state
+ 144  
+ 145  step :: TiState -> TiState
+ 146  step state = case map toLower $ head state.control of
+ 147      ""                -> state' { control = tail state.control }
+ 148      "c"               -> state' { control = repeat "" }
+ 149      s | all isDigit s -> state' { control = replicate (pred $ read s) "" ++ tail state.control }
+ 150        | otherwise     -> state' { control = tail state.control }
+ 151    where
+ 152          state' = dispatchNode 
+ 153                      apStep
+ 154                      scStep
+ 155                      numStep
+ 156                      indStep
+ 157                      primStep
+ 158                      dataStep
+ 159                      (error "step: NMarked node")
+ 160                      (hLookup state.heap (fst (pop state.stack)))
+ 161                    $ state
+ 162  
+ 163  numStep :: Int -> TiState -> TiState
+ 164  numStep n state 
+ 165      | isEmptyStack state.dump = error "numStep: Number applied as a function"
+ 166      | otherwise = case restore state.stack state.dump of
+ 167          (stack1, dump1) -> setRuleId 7 $ state { stack = stack1, dump = dump1 }
+ 168  
+ 169  apStep :: Addr -> Addr -> TiState -> TiState
+ 170  apStep a1 a2 state = case hLookup state.heap a2 of
+ 171      NInd a3 -> setRuleId 8 $ state { heap = hUpdate state.heap a (NAp a1 a3) }
+ 172      _       -> setRuleId 1 $ state { stack = push a1 state.stack }
+ 173      where
+ 174          (a,_) = pop state.stack
+ 175  
+ 176  scStep :: Name -> [Name] -> CoreExpr -> TiState -> TiState
+ 177  scStep name args body state
+ 178      | state.stack.curDepth < succ argsLen
+ 179          = error "scStep: too few arguments given"
+ 180      | otherwise
+ 181          = doAdminScSteps $ setRuleId 3 $ state { stack = stack1, heap = heap1 }
+ 182      where
+ 183          argsLen  = length args
+ 184          stack1   = discard argsLen state.stack
+ 185          (root,_) = pop stack1
+ 186          heap1    = instantiateAndUpdate body root state.heap (bindings ++ state.globals)
+ 187          bindings = zip args (getargs state.heap state.stack)
+ 188  
+ 189  indStep :: Addr -> TiState -> TiState
+ 190  indStep addr state = setRuleId 4 $ state { stack = push addr (discard 1 state.stack) }
+ 191  
+ 192  primStep :: Name -> Primitive -> TiState -> TiState
+ 193  primStep name prim = prim
+ 194  
+ 195  dataStep :: Tag -> [Addr] -> TiState -> TiState
+ 196  dataStep tag contents state = state { stack = stack1, dump = dump1 }
+ 197      where
+ 198          (stack1, dump1) = restore state.stack state.dump
+ 199  
+ 200  {- | Instantiation -}
+ 201  
+ 202  instantiate :: CoreExpr
+ 203              -> TiHeap
+ 204              -> Assoc Name Addr
+ 205              -> (TiHeap, Addr)
+ 206  instantiate expr heap env = dispatchCoreExpr
+ 207      (instantiateVar heap env)
+ 208      (instantiateNum heap env)
+ 209      (instantiateConstr heap env)
+ 210      (instantiateAp heap env)
+ 211      (instantiateLet heap env)
+ 212      (instantiateCase heap env)
+ 213      (instantiateLam heap env)
+ 214      expr
+ 215  
+ 216  instantiateVar :: TiHeap -> Assoc Name Addr -> Name -> (TiHeap, Addr)
+ 217  instantiateVar heap env name
+ 218      = (heap, aLookup env name (error ("instantiateVar: Undefined name " ++ show name)))
+ 219  
+ 220  instantiateNum :: TiHeap -> Assoc Name Addr -> Int -> (TiHeap, Addr)
+ 221  instantiateNum heap env num = hAlloc heap (NNum num)
+ 222  
+ 223  instantiateConstr :: TiHeap -> Assoc Name Addr -> Tag -> Arity -> (TiHeap, Addr)
+ 224  instantiateConstr heap env tag arity = hAlloc heap (NPrim "Constr" (primConstr tag arity))
+ 225  
+ 226  instantiateAp :: TiHeap -> Assoc Name Addr -> CoreExpr -> CoreExpr -> (TiHeap, Addr)
+ 227  instantiateAp heap env a b = hAlloc heap2 (NAp a1 a2)
+ 228      where
+ 229          (heap1, a1) = instantiate a heap  env
+ 230          (heap2, a2) = instantiate b heap1 env
+ 231  
+ 232  instantiateLet :: TiHeap -> Assoc Name Addr -> IsRec -> Assoc Name CoreExpr -> CoreExpr -> (TiHeap, Addr)
+ 233  instantiateLet heap env isrec defs body = instantiate body heap' env'
+ 234      where
+ 235          (heap', extraBindings) = mapAccumL instantiateRhs heap defs
+ 236          env' = extraBindings ++ env
+ 237          rhsEnv | isrec     = env'
+ 238                 | otherwise = env
+ 239          instantiateRhs heap (name, rhs)
+ 240              = (heap1, (name, addr))
+ 241              where
+ 242                  (heap1, addr) = instantiate rhs heap rhsEnv
+ 243  
+ 244  instantiateCase :: TiHeap -> Assoc Name Addr -> CoreExpr -> [CoreAlter] -> (TiHeap, Addr)
+ 245  instantiateCase heap env expr alters = error "Cannot instatiate case"
+ 246  
+ 247  instantiateLam :: TiHeap -> Assoc Name Addr -> [Name] -> CoreExpr -> (TiHeap, Addr)
+ 248  instantiateLam heap env vars body = error "Cannot instatiate lambda"
+ 249  
+ 250  instantiateAndUpdate :: CoreExpr
+ 251                       -> Addr
+ 252                       -> TiHeap
+ 253                       -> Assoc Name Addr
+ 254                       -> TiHeap
+ 255  instantiateAndUpdate expr updAddr heap env = dispatchCoreExpr
+ 256      (instUpdEVar updAddr heap env)
+ 257      (instUpdENum updAddr heap env)
+ 258      (instUpdEConstr updAddr heap env)
+ 259      (instUpdEAp updAddr heap env)
+ 260      (instUpdELet updAddr heap env)
+ 261      (instUpdECase updAddr heap env)
+ 262      (instUpdELam updAddr heap env)
+ 263      expr
+ 264  
+ 265  instUpdEVar :: Addr
+ 266              -> TiHeap
+ 267              -> Assoc Name Addr
+ 268              -> Name
+ 269              -> TiHeap
+ 270  instUpdEVar updAddr heap env v = hUpdate heap updAddr (NInd varAddr)
+ 271      where
+ 272          varAddr = aLookup env v (error ("undefined name " ++ show v))
+ 273  
+ 274  instUpdENum :: Addr
+ 275              -> TiHeap
+ 276              -> Assoc Name Addr
+ 277              -> Int
+ 278              -> TiHeap
+ 279  instUpdENum updAddr heap env n = hUpdate heap updAddr (NNum n)
+ 280  
+ 281  instUpdEConstr :: Addr
+ 282                 -> TiHeap
+ 283                 -> Assoc Name Addr
+ 284                 -> Tag
+ 285                 -> Arity
+ 286                 -> TiHeap
+ 287  instUpdEConstr updAddr heap env tag arity
+ 288      = hUpdate heap updAddr (NPrim "Constr" (primConstr tag arity))
+ 289  
+ 290  instUpdEAp :: Addr
+ 291             -> TiHeap
+ 292             -> Assoc Name Addr
+ 293             -> CoreExpr
+ 294             -> CoreExpr
+ 295             -> TiHeap
+ 296  instUpdEAp updAddr heap env e1 e2 = hUpdate heap2 updAddr (NAp a1 a2)
+ 297      where
+ 298          (heap1, a1) = instantiate e1 heap  env
+ 299          (heap2, a2) = instantiate e2 heap1 env
+ 300  
+ 301  instUpdELet :: Addr
+ 302              -> TiHeap
+ 303              -> Assoc Name Addr
+ 304              -> IsRec
+ 305              -> Assoc Name CoreExpr
+ 306              -> CoreExpr
+ 307              -> TiHeap
+ 308  instUpdELet updAddr heap env isrec defs body = instantiateAndUpdate body updAddr heap1 env1
+ 309      where
+ 310          (heap1, extraBindings) = mapAccumL instantiateRhs heap defs
+ 311          env1 = extraBindings ++ env
+ 312          rhsEnv | isrec     = env1
+ 313                 | otherwise = env
+ 314          instantiateRhs heap (name, rhs) = (heap1, (name, addr))
+ 315              where
+ 316                  (heap1, addr) = instantiate rhs heap rhsEnv
+ 317  
+ 318  instUpdECase :: Addr
+ 319               -> TiHeap
+ 320               -> Assoc Name Addr
+ 321               -> CoreExpr
+ 322               -> [CoreAlter]
+ 323               -> TiHeap
+ 324  instUpdECase updAddr heap env expr alts = error "not implemented"
+ 325  
+ 326  instUpdELam :: Addr
+ 327              -> TiHeap
+ 328              -> Assoc Name Addr
+ 329              -> [Name]
+ 330              -> CoreExpr
+ 331              -> TiHeap
+ 332  instUpdELam updAddr heap env vars body = error "not implemented"
+ 333  
+ 334  test :: String -> IO ()
+ 335  test = interact . drive . run 
+ 336  
+ 337  -- Gabage Collector (Mark-scan)
+ 338  
+ 339  gc :: TiState -> TiState
+ 340  gc state = state { heap = scanHeap $ fst
+ 341                          $ mapAccumL markFrom state.heap
+ 342                          $ findRoots state 
+ 343                   , stats = incGcCount state.stats
+ 344                   }
+ 345  
+ 346  findStackRoots :: TiStack -> [Addr]
+ 347  findStackRoots stack = stack.stkItems
+ 348  
+ 349  findDumpRoots :: TiDump -> [Addr]
+ 350  findDumpRoots dump = []
+ 351  
+ 352  findGlobalRoots :: TiGlobals -> [Addr]
+ 353  findGlobalRoots globals = aRange globals
+ 354  
+ 355  findRoots :: TiState -> [Addr]
+ 356  findRoots state = concat
+ 357      [ findStackRoots state.stack
+ 358      , findDumpRoots state.dump
+ 359      , findGlobalRoots state.globals
+ 360      ]
+ 361  
+ 362  markFrom :: TiHeap -> Addr -> (TiHeap, Addr)
+ 363  markFrom heap addr = case hLookup heap addr of
+ 364      node -> dispatchNode 
+ 365              (\ addr1 addr2 -> case markFrom heap addr1 of
+ 366                  (heap1, addr1') -> case markFrom heap1 addr2 of
+ 367                      (heap2, addr2')  -> (hUpdate heap2 addr (NMarked (NAp addr1' addr2')), addr))
+ 368              (\ _ _ _       -> (hUpdate heap addr (NMarked node), addr)) -- NSupercomb
+ 369              (\ _           -> (hUpdate heap addr (NMarked node), addr)) -- NNum
+ 370              (\ addr1       -> markFrom heap addr1)                      -- NInd
+ 371              (\ _ _         -> (hUpdate heap addr (NMarked node), addr)) -- NPrim
+ 372              (\ tag as      -> case mapAccumL markFrom heap as of
+ 373                  (heap', as')    -> (hUpdate heap' addr (NMarked (NData tag as')), addr))
+ 374                                                                          -- NData
+ 375              (\ _           -> (heap, addr))                             -- NMarked
+ 376              node
+ 377  
+ 378  scanHeap :: TiHeap -> TiHeap
+ 379  scanHeap heap =foldl phi heap heap.assocs
+ 380      where
+ 381          phi h (a, node) = case node of
+ 382              NMarked node1 -> hUpdate h a node1
+ 383              _             -> hFree h a
+[28 of 28] Compiling Template.Mark5mgc.Machine ( src/Template/Mark5mgc/Machine.hs, interpreted )
+Ok, 28 modules loaded.
+>>> :q
+Leaving GHCi.
