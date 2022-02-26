@@ -1168,11 +1168,45 @@ printCons h t = print h (printList t)
 
 ---
 ## 2.8 別の実装
+別実装の演習
 
 ---
 ### 2.8.1 プリミティブの別表現
+プリミティブに対してやることは、そのプリミティブを実行するだけなので、`Primitive`型は単に`TiState`から`TiState`への関数と表現できる
+
+```haskell
+type Primitive = TiState -> TiState
+```
+
+`Add`や`Sub`といったデータ構成子は消え、case分岐はなくなり、`primStep`は単なる関数適用になる
+
+```haskell
+primStep state prim = prim state
+primitive = [ ("negatate", primNeg)
+            , ("+", primArith (+))
+            , ("-", primArith (-))
+            , ("*", primArith (*)
+            , ("/", primArith div))
+            ]
+```
+
+---
+#### 練習問題 2.27
+
+この変更を実装しテストせよ。
 
 ---
 ### 2.8.2 ダンプの別表現
+
+新しいスタックを古いスタックの上にそのまま作っていくという実装が普通。
+ダンプはスパインスタックの底からのオフセットを積むスタックとして表現する
+
+```haskell
+type TiDump = Stack Int
+```
+
+---
+#### 練習問題 2.28
+この変更を実装しテストせよ。引数評価の始まりと終わりの部分の定義に変更が必要になる
 
 ---

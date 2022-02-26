@@ -1,6 +1,6 @@
 cabal-version:      3.0
 name:               ifl-tut
-version:            0.2.9.2.1
+version:            0.2.9.3
 synopsis:           Implementing Fuctional Lanbuage -- a tutorial
 
 -- A longer description of the package.
@@ -57,6 +57,9 @@ library
                     , Template.Mark5mgc.Machine
                     , Template.Mark5mgc.State
                     , Template.Mark5mgc.PPrint
+                    , Template.Mark5rvp.Machine
+                    , Template.Mark5rvp.State
+                    , Template.Mark5rvp.PPrint
 
     -- Modules included in this library but not exported.
     -- other-modules:
@@ -152,6 +155,15 @@ executable ti5mgc
         ifl-tut
 
     hs-source-dirs:   app/ti5mgc
+    default-language: GHC2021
+
+executable ti5rvp
+    main-is:          Main.hs
+    build-depends:
+        base ^>=4.16.0.0,
+        ifl-tut
+
+    hs-source-dirs:   app/ti5rvp
     default-language: GHC2021
 
 test-suite ifl-tut-test
