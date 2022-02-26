@@ -88,7 +88,7 @@ showStkNode heap node = dispatchNode
     (\ _ -> showNode node)
     (\ _ _ -> showNode node)
     (\ _ _ -> showNode node)
-    (\ _   -> showNode node)
+    (\ _ _ -> showNode node)
     node
 
 showOutput :: TiOutput -> IseqRep

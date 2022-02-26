@@ -357,20 +357,20 @@ markFrom heap addr = case hLookup heap addr of
     node -> dispatchNode 
             (\ addr1 addr2 -> case markFrom heap addr1 of
                 (heap1, addr1') -> case markFrom heap1 addr2 of
-                    (heap2, addr2')  -> (hUpdate heap2 addr (NMarked (NAp addr1' addr2')), addr))
-            (\ _ _ _       -> (hUpdate heap addr (NMarked node), addr)) -- NSupercomb
-            (\ _           -> (hUpdate heap addr (NMarked node), addr)) -- NNum
+                    (heap2, addr2')  -> (hUpdate heap2 addr (NMarked undefined (NAp addr1' addr2')), addr))
+            (\ _ _ _       -> (hUpdate heap addr (NMarked undefined node), addr)) -- NSupercomb
+            (\ _           -> (hUpdate heap addr (NMarked undefined node), addr)) -- NNum
             (\ addr1       -> markFrom heap addr1)                      -- NInd
-            (\ _ _         -> (hUpdate heap addr (NMarked node), addr)) -- NPrim
+            (\ _ _         -> (hUpdate heap addr (NMarked undefined node), addr)) -- NPrim
             (\ tag as      -> case mapAccumL markFrom heap as of
-                (heap', as')    -> (hUpdate heap' addr (NMarked (NData tag as')), addr))
+                (heap', as')    -> (hUpdate heap' addr (NMarked undefined (NData tag as')), addr))
                                                                         -- NData
-            (\ _           -> (heap, addr))                             -- NMarked
+            (\ _ _         -> (heap, addr))                             -- NMarked
             node
 
 scanHeap :: TiHeap -> TiHeap
 scanHeap heap =foldl phi heap heap.assocs
     where
         phi h (a, node) = case node of
-            NMarked node1 -> hUpdate h a node1
-            _             -> hFree h a
+            NMarked _ node1 -> hUpdate h a node1
+            _               -> hFree h a
