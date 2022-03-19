@@ -282,8 +282,8 @@ saveAndPush :: Addr -> TiStack -> TiDump -> (TiStack, TiDump)
 saveAndPush addr stack dump
     = (push addr stack, push stack.curDepth dump)
 
-restore :: TiStack -> TiDump -> (TiStack, TiDump)
-restore stack dump
+popAndRestore :: TiStack -> TiDump -> (TiStack, TiDump)
+popAndRestore stack dump
     | isEmptyStack dump = error "restore: dump is empty"
     | otherwise         = case pop dump of
         (sp, dump') 

@@ -168,7 +168,7 @@ step state = case map toLower $ head state.control of
 numStep :: Int -> TiState -> TiState
 numStep n state 
     | isEmptyStack state.dump = error "numStep: Number applied as a function"
-    | otherwise = case restore state.stack state.dump of
+    | otherwise = case popAndRestore state.stack state.dump of
         (stack1, dump1) -> setRuleId 7 $ state { stack = stack1, dump = dump1 }
 
 apStep :: Addr -> Addr -> TiState -> TiState
@@ -200,7 +200,7 @@ primStep name prim = prim
 dataStep :: Tag -> [Addr] -> TiState -> TiState
 dataStep tag contents state = state { stack = stack1, dump = dump1 }
     where
-        (stack1, dump1) = restore state.stack state.dump
+        (stack1, dump1) = popAndRestore state.stack state.dump
 
 {- | Instantiation -}
 
