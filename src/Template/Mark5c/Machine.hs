@@ -67,9 +67,15 @@ compile prog = TiState
         (initialHeap, initialGlobals) = buildInitialHeap scDefs
         initialStack = singletonStack addressOfMain
         initialStack1 = singletonStack addr
-        addressOfMain = aLookup initialGlobals "main" (error "main is not defined")
+        addressOfMain = aLookup initialGlobals "main" (negate 1)
+        (heap1, addr1)
+            | addressOfMain < 0 = (initialHeap, aLookup initialGlobals "pmain" (error "no main and no pmain"))
+            | otherwise         = case aLookup initialGlobals "Cons" (error "Cons is not defined") of
+                addressOfCons    -> case aLookup initialGlobals "Nil" (error "Nil is not defined") of
+                    addressOfNil   -> case hAlloc initialHeap (NAp addressOfCons addressOfMain) of
+                        (h, a)       -> hAlloc h (NAp a addressOfNil)
         addressOfPrint = aLookup initialGlobals "printList" (error "printList is not defined")
-        (initialHeap1, addr) = hAlloc initialHeap (NAp addressOfPrint addressOfMain)
+        (initialHeap1, addr) = hAlloc heap1 (NAp addressOfPrint addr1)
 
 extraPreludeDefs :: CoreProgram
 extraPreludeDefs = 

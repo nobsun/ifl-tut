@@ -1,0 +1,4 @@
+main = foo (val + val) (val - 5) (val / 2) (3 + 5) (1 + 0) ;
+foo v w x y z = z + (y + (x + (w + v))) ;
+val = double (double (S K K 3) + 4) ;
+double x = x + x

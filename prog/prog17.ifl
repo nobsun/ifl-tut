@@ -1,1 +1,1 @@
-main = Cons (1 / 2) (Cons (1 + 2) (Cons (2 * 3) Nil))
+pmain = Cons (1 / 2) (Cons (1 + 2) (Cons (2 * 3) Nil))
