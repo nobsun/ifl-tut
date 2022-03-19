@@ -16898,4 +16898,43 @@ Loaded GHCi configuration from /home/nobsun/develop/ifl-tut/.ghci
 [30 of 31] Compiling Template.Mark2   ( src/Template/Mark2.hs, interpreted )
 [31 of 31] Compiling Template.Mark1   ( src/Template/Mark1.hs, interpreted )
 Ok, 31 modules loaded.
->>> 
+>>> Build profile: -w ghc-9.2.2 -O1
+In order, the following will be built (use -v for more details):
+ - ifl-tut-0.2.9.3 (lib) (ephemeral targets)
+Preprocessing library for ifl-tut-0.2.9.3..
+GHCi, version 9.2.2: https://www.haskell.org/ghc/  :? for help
+Loaded GHCi configuration from /home/nobsun/devel/ifl-tut/.ghci
+[ 1 of 31] Compiling MyLib            ( src/MyLib.hs, interpreted )
+[ 2 of 31] Compiling Parser           ( src/Parser.hs, interpreted )
+[ 3 of 31] Compiling Stack            ( src/Stack.hs, interpreted )
+[ 4 of 31] Compiling Utils            ( src/Utils.hs, interpreted )
+[ 5 of 31] Compiling Iseq             ( src/Iseq.hs, interpreted )
+[ 6 of 31] Compiling Language         ( src/Language.hs, interpreted )
+[ 7 of 31] Compiling Template.Mark5.Primitive ( src/Template/Mark5/Primitive.hs, interpreted )
+[ 8 of 31] Compiling Heap             ( src/Heap.hs, interpreted )
+[ 9 of 31] Compiling Template.Mark5rvp.State ( src/Template/Mark5rvp/State.hs, interpreted )
+[10 of 31] Compiling Template.Mark5rvp.PPrint ( src/Template/Mark5rvp/PPrint.hs, interpreted )
+[11 of 31] Compiling Template.Mark5rvp.Machine ( src/Template/Mark5rvp/Machine.hs, interpreted )
+[12 of 31] Compiling Template.Mark5mgc.State ( src/Template/Mark5mgc/State.hs, interpreted )
+[13 of 31] Compiling Template.Mark5mgc.PPrint ( src/Template/Mark5mgc/PPrint.hs, interpreted )
+[14 of 31] Compiling Template.Mark5mgc.Machine ( src/Template/Mark5mgc/Machine.hs, interpreted )
+[15 of 31] Compiling Template.Mark5c.State ( src/Template/Mark5c/State.hs, interpreted )
+[16 of 31] Compiling Template.Mark5c.PPrint ( src/Template/Mark5c/PPrint.hs, interpreted )
+[17 of 31] Compiling Template.Mark5c.Machine ( src/Template/Mark5c/Machine.hs, interpreted )
+[18 of 31] Compiling Template.Mark5b.State ( src/Template/Mark5b/State.hs, interpreted )
+[19 of 31] Compiling Template.Mark5b.PPrint ( src/Template/Mark5b/PPrint.hs, interpreted )
+[20 of 31] Compiling Template.Mark5.Node ( src/Template/Mark5/Node.hs, interpreted )
+[21 of 31] Compiling Template.Mark5.State ( src/Template/Mark5/State.hs, interpreted )
+[22 of 31] Compiling Template.Mark5.PPrint ( src/Template/Mark5/PPrint.hs, interpreted )
+[23 of 31] Compiling Template.Mark5.Machine ( src/Template/Mark5/Machine.hs, interpreted )
+[24 of 31] Compiling Template.Mark4   ( src/Template/Mark4.hs, interpreted )
+[25 of 31] Compiling Template.Mark3   ( src/Template/Mark3.hs, interpreted )
+[26 of 31] Compiling Template.Mark2   ( src/Template/Mark2.hs, interpreted )
+[27 of 31] Compiling Template.Mark1   ( src/Template/Mark1.hs, interpreted )
+[28 of 31] Compiling Template.Mark5b.Machine ( src/Template/Mark5b/Machine.hs, interpreted )
+[29 of 31] Compiling Template.Mark5a.State ( src/Template/Mark5a/State.hs, interpreted )
+[30 of 31] Compiling Template.Mark5a.PPrint ( src/Template/Mark5a/PPrint.hs, interpreted )
+[31 of 31] Compiling Template.Mark5a.Machine ( src/Template/Mark5a/Machine.hs, interpreted )
+Ok, 31 modules loaded.
+>>> :q
+Leaving GHCi.

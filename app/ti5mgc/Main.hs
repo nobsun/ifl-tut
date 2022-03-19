@@ -16,4 +16,4 @@ defaultHeapSize :: Int
 defaultHeapSize = 1024
 
 defaultThreshold :: Int
-defaultThreshold = 100
+defaultThreshold = 72
