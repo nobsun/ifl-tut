@@ -1211,3 +1211,165 @@ type TiDump = Stack Int
 
 ---
 ### 2.8.3 データ値の別表現
+
+#### ブール値
+
+`if`式の簡約規則は、第2、第3、引数のどちらかを選択するだけなので、
+ブール値を構造を持つデータではなく、2つの引数の一方を選択するという関数として表現する。
+
+```
+True  t f = t
+False t f = f
+```
+こうすると、各ブール値演算の定義は以下のとおり
+```
+if = I
+and b1 b2 t f = b1 (b2 t f) f
+or b1 b2 t f = b1 t (b2 t f)
+not b t f = b f t
+```
+
+---
+#### ペア
+
+おなじ方法をペアに対しても使える
+
+```
+pair a b f = f a b
+casePair = I
+fst p = p K
+snd p = p K1
+```
+
+---
+#### リスト
+
+またリストにも使えるが、`Cons`用に追加の引数を使う
+
+```
+cons a b cn cc = cc a b
+nil cn cc      = cn
+caseList = I
+```
+
+---
+#### 練習問題 2.29
+
+ブール値、ペア、リストを前述の方法で実装し、性能を測定せよ。従来の方法と比べてどのような長所と短所があるか。
+
+---
+## 2.9 ガーベッジコレクション
+
+実行が進むにつれ、ヒープに割り当てられるノードが増え、そのうちヒープは満杯になるので、GCが必要になる。
+
+```
+gc :: TiState -> TiState
+```
+
+簡約1ステップごとに `doAdmin` でヒープサイズをチェックし、所定のサイズを超えていたら GC を呼ぶ。
+
+---
+### 2.9.1 マークスキャンGC
+
+1. ルートアドレスを特定する
+   ```haskell
+   findStackRoots ::  TiStack   -> [Addr]
+   findDumpRoots  ::  TiDump    -> [Addr]
+   findGlobalRoots :: TiGlobals -> [Addr]
+   ```
+2. マークフェーズでルートからたどれるすべてのノードに再帰的にマークする
+   ```
+   markFrom :: TiHeap -> Addr -> TiHeap
+   ```
+3. スキャンフェーズでマークされていないノードを解放したのち、マークされたノードのマークを外す
+   ```
+   scanHeap :: TiHeap -> TiHeap
+   ```
+
+---
+#### 練習問題 2.30
+`gc` の定義を `findRoots`、`markFrom`、`scanHeap` を使って書き、その上で、`doAdmin` から適切に呼び出すようにせよ。
+
+---
+#### 練習問題 2.31
+`findRoots`の定義を書け。
+
+---
+マークの方法は、本物の実装のときは、1ビットをマークビットとして使うなどがあるが、ここでは `Node` を拡張する
+```haskell
+data Node
+    = NAp Addr Addr
+    | NSupercomb Name [Name] CoreExpr
+    | NNum Int
+    | NInd Addr
+    | NPrim Name Primitive
+    | NData Tag [Addr]
+    | NMarked Node
+```
+
+---
+`markFrom :: TiHeap -> Addr -> TiHeap` はヒープ $h$ とアドレス $a$ を取り以下をおこなう
+
+1. $h$ 中で $a$ のノードを見る。マーク済みなら直ぐに返る。
+2. ノード $n$ をマークするには `hUpdate` をつかって $n$ を $\texttt{NMarked}\; n$ で置き換える
+3. ノート $n$ 中にあるすべてのアドレスを取り出して、それぞれに `markFrom` を適用する
+
+---
+`scanHeap :: TiHeap -> TiHeap`
+
+1. `hAddresses` でヒープ内で使われているアドレスとノードの連想リストを取り出す。
+2. 連想リストを走査して、ノードがマークされていなければ、`hFree` でそのアドレスを解放する
+3. ノードがマークされていれば、`NMarked` 構成しを外したものに更新する
+
+---
+#### 練習問題 2.32
+
+`markFrom` と `scanHeap` の定義を書け
+
+---
+### 2.9.2 間接参照の除去
+
+GCの最適化。図 2.2 にあるように間接参照を除いて、`NInd`ノードを回収する。そのために `markFrom` をすこし変更する。
+
+```haskell
+markFrom :: TiHeap -> Addr -> (TiHeap, Addr)
+```
+`markFrom` の返り値を新しいヒープと新しいアドレスの対とする。スタック、ダンプ、グローバル環境も変更されることになるので、以下を用意し、それぞれ `markFrom`を使うようにする
+
+```haskell
+markFromStack   :: TiHeap -> TiStack   -> (TiHeap, TiStack)
+markFromDump    :: TiHeap -> TiDump    -> (TiHeap, TiDump)
+markFromGlobals :: TiHeap -> TiGlobals -> (TiHeap, TiGlobals)
+```
+
+---
+#### 練習問題 2.33
+
+改定版 `markFrom` を実装せよ。改良前とのヒープサイズを比べて、どのくらい改良されたか計測せよ。
+
+---
+### 2.9.3 ポインタ反転法
+
+ヒープ中の$N$個のノードがすべて単一の長いリストで連結されことがあれば、`markFrom` は$N$回呼び出されることになる。こうなると、作業スタックはヒープと同じ大きさになりうる。毎回、ほとんどありえない状況のために、ヒープサイズと同じ作業スタックを用意するのは。。。
+
+そこで、`NMarked`構成子を少々変更して、ポインタ反転法を使う。
+
+---
+```haskell
+data Node
+    = NAp Addr Addr
+    | NSupercomb Name [Name] CoreExpr
+    | NNum Int
+    | NInd Addr
+    | NPrim Name Primitive
+    | NData Tag [Addr]
+    | NMarked MarkState Node
+
+data MarkState
+    = Done        -- ^ Marking on this node finished
+    | Visits Int  -- ^ Node visited n times so far
+```
+
+---
+ポインタ反転法は、別の状態遷移システムを利用して実現する
+

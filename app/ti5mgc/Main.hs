@@ -2,7 +2,7 @@
 module Main where
 
 import System.Environment
-import Template.Mark5mgc.Machine
+import Template.Mark5rvp.Machine
 
 main :: IO ()
 main = do

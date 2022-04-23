@@ -1,4 +1,3 @@
-{-# LANGUAGE ImportQualifiedPost #-}
 {-# LANGUAGE ImplicitParams #-}
 {-# LANGUAGE NoFieldSelectors #-}
 {-# LANGUAGE DuplicateRecordFields #-}
@@ -26,6 +25,7 @@ hUpdate    :: Heap a -> Addr -> a -> Heap a
 hFree      :: Heap a -> Addr -> Heap a
 hLookup    :: Heap a -> Addr -> a
 hAddresses :: Heap a -> [Addr]
+hNull      :: Addr -- Null pointer
 
 hInitial = Heap 
     { maxAllocs = 0
