@@ -364,11 +364,12 @@ mark gcstate
                                         , backward = gcstate.forward
                                         , tiheap = hUpdate gcstate.tiheap gcstate.forward (NMarked (Visits 1) (NAp gcstate.backward addr2))
                                         }))
-        (\ name args expr -> mark (gstate { tiheap = hUpdate gcstate.tiheap gcstate.forward (NMarked Done node)}))
-        (\ n -> mark (gstate { tiheap = hUpdate gcstate.tiheap gcstate.forward (NMarked Done node)}))
+        (\ name args expr -> mark (gcstate { tiheap = hUpdate gcstate.tiheap gcstate.forward (NMarked Done node)}))
+        (\ n -> mark (gcstate { tiheap = hUpdate gcstate.tiheap gcstate.forward (NMarked Done node)}))
         (\ addr -> mark (gcstate { forward = addr }))
         (\ name prim -> mark (gcstate { tiheap = hUpdate gcstate.tiheap gcstate.forward (NMarked Done node)}))
-        (\ tag addrs -> undefined)
+        (\ tag addrs -> case mapAccumL markFrom gcstate.tiheap addrs of
+            (h',_) -> mark (gcstate { tiheap = hUpdate h' gcstate.forward (NMarked Done node)}))
         (\ markstate node -> case markstate of
             Done -> if gcstate.backward == hNull
                     then (gcstate.tiheap, gcstate.forward)
@@ -378,7 +379,7 @@ mark gcstate
                                              , tiheap = hUpdate gcstate.tiheap b (NMarked (Visits 2) (NAp gcstate.forward b))
                                              })
                         NMarked (Visits 2) (NAp a b)
-                            -> mark (gcstate { forward = gcstate.backward
+                            -> mark (gcstate { forward  = gcstate.backward
                                              , backward = b
                                              , tiheap = hUpdate gcstate.tiheap gcstate.backward (NMarked Done (NAp a gcstate.forward))
                                              })

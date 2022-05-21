@@ -77,27 +77,6 @@ compile prog = TiState
         addressOfPrint = aLookup initialGlobals "printList" (error "printList is not defined")
         (initialHeap1, addr) = hAlloc heap1 (NAp addressOfPrint addr1)
 
-
--- compile :: (?sz :: Int, ?th :: Int) => CoreProgram -> TiState
--- compile prog = TiState
---     { control = []
---     , output  = []
---     , stack   = initialStack1
---     , dump    = initialDump
---     , heap    = initialHeap1
---     , globals = initialGlobals
---     , stats   = initialStats
---     , ruleid  = 0
---     }
---     where
---         scDefs = prog ++ preludeDefs ++ extraPreludeDefs
---         (initialHeap, initialGlobals) = buildInitialHeap scDefs
---         initialStack = singletonStack addressOfMain
---         initialStack1 = singletonStack addr
---         addressOfMain = aLookup initialGlobals "main" (error "main is not defined")
---         addressOfPrint = aLookup initialGlobals "printList" (error "printList is not defined")
---         (initialHeap1, addr) = hAlloc initialHeap (NAp addressOfPrint addressOfMain)
-
 extraPreludeDefs :: CoreProgram
 extraPreludeDefs = 
     [ ("False", [], EConstr 0 0)
@@ -357,11 +336,17 @@ test = interact . drive . run
 -- Gabage Collector (Mark-scan)
 
 gc :: TiState -> TiState
-gc state = state { heap = scanHeap $ fst
-                        $ mapAccumL markFrom state.heap
-                        $ findRoots state 
-                 , stats = incGcCount state.stats
-                 }
+gc state = case markFromStack state.heap state.stack of
+    (hp1, stack1) -> case markFromDump hp1 state.dump of
+        (hp2, dump1)  -> case markFromGlobals hp2 state.globals of
+            (hp3, globals1) -> state { stack = stack1, heap = scanHeap hp3, globals = globals1, stats = incGcCount state.stats }
+
+-- gc state = state { heap = scanHeap $ fst
+--                         $ mapAccumL markFrom state.heap
+--                         $ findRoots state 
+--                  , stats = incGcCount state.stats
+--                  }
+
 
 findStackRoots :: TiStack -> [Addr]
 findStackRoots stack = stack.stkItems
@@ -378,6 +363,19 @@ findRoots state = concat
     , findDumpRoots state.dump
     , findGlobalRoots state.globals
     ]
+
+markFromStack :: TiHeap -> TiStack -> (TiHeap, TiStack)
+markFromStack hp stk = case mapAccumL markFrom hp stk.stkItems of
+    (hp', stk') -> (hp', stk { stkItems = stk'})
+
+markFromDump :: TiHeap -> TiDump -> (TiHeap, TiDump)
+markFromDump hp dump = (hp, dump)
+
+markFromGlobals :: TiHeap -> TiGlobals -> (TiHeap, TiGlobals)
+markFromGlobals hp env = mapAccumL markFrom_ hp env
+    where
+        markFrom_ heap (name, addr) = case markFrom heap addr of
+            (heap', addr') -> (heap', (name, addr'))
 
 markFrom :: TiHeap -> Addr -> (TiHeap, Addr)
 markFrom heap addr = case hLookup heap addr of

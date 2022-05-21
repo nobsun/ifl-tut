@@ -320,3 +320,4 @@ ruleTable
       , (22, "Rule (2.22): Ex 2.24: For δ-reduction of caseList")
       , (23, "Rule (2.23): Ex 2.24: For evaluation of 1st arg of caseList")
       ]
+      
