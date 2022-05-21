@@ -1435,7 +1435,7 @@ data MarkState
                           f&:&\texttt{NMarked Done}\;n \\
                           b&:&\texttt{NMarked (Visits 2) (Nap}\;a_1\;b^{\prime} \texttt{)}
                        \end{array} \right]\\
-       \Longrightarrow & a_2 & f & h \left[ \begin{array}{lcl} b&:&\texttt{NMarked Done (Nap}\;a_1\; f\texttt{)} \end{array} \right]
+       \Longrightarrow & b & b^{\prime} & h \left[ \begin{array}{lcl} b&:&\texttt{NMarked Done (Nap}\;a_1\; f\texttt{)} \end{array} \right]
        \end{array}
        $$
 
