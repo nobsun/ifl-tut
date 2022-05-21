@@ -2,7 +2,7 @@
 module Main where
 
 import System.Environment
-import Template.Mark5rvp.Machine
+import Template.Mark5mgc.Machine
 
 main :: IO ()
 main = do
@@ -16,4 +16,4 @@ defaultHeapSize :: Int
 defaultHeapSize = 1024
 
 defaultThreshold :: Int
-defaultThreshold = 72
+defaultThreshold = 256

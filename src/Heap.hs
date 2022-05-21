@@ -1,6 +1,6 @@
 {-# LANGUAGE ImplicitParams #-}
-{-# LANGUAGE NoFieldSelectors #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE NoFieldSelectors #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 module Heap 
     where
@@ -60,3 +60,5 @@ hFree heap addr = heap
 hLookup heap addr = aLookup heap.assocs addr (error "hLookup: no entry")
 
 hAddresses heap = aDomain heap.assocs
+
+hNull = 0

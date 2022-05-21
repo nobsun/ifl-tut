@@ -320,15 +320,14 @@ ruleTable
       , (18, "Rule (2.18): Ex 2.21: For δ-reduction of conditional")
       , (19, "Rule (2.19): Ex 2.21: For evaluation condition of conditional")
       , (20, "Rule (2.20): Ex 2.22: For δ-reduction of casePair")
-      , (21, "Rule (2.21): Ex 2.22: For evaluation of 1st arg of casePair")
+      , (21, "Rule (2.21): Ex 2.22: For evaluation of 1st arg of casePairhttps://mandala.gr.jp/aoyama/contact/reserve/")
       , (22, "Rule (2.22): Ex 2.24: For δ-reduction of caseList")
       , (23, "Rule (2.23): Ex 2.24: For evaluation of 1st arg of caseList")
       ]
 
---
-data GCState 
-    = GCState
+data GcState 
+    = GcState
     { forward  :: Addr
     , backward :: Addr
-    , heap     :: TiHeap
+    , tiheap   :: TiHeap
     }

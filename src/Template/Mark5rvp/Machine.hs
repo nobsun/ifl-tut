@@ -160,7 +160,7 @@ numStep n state
         (stack1, dump1) -> setRuleId 7 $ state { stack = stack1, dump = dump1 }
 
 apStep :: Addr -> Addr -> TiState -> TiState
-apStep a1 a2 state = case hLookup state.heap a2 of
+apStep a1 a2 (state :: TiState) = case hLookup state.heap a2 of
     NInd a3 -> setRuleId 8 $ state { heap = hUpdate state.heap a (NAp a1 a3) }
     _       -> setRuleId 1 $ state { stack = push a1 state.stack }
     where
@@ -327,7 +327,8 @@ instUpdELam updAddr heap env vars body = error "not implemented"
 test :: (?sz :: Int, ?th :: Int) => String -> IO ()
 test = interact . drive . run 
 
--- Gabage Collector (Mark-scan)
+-- Gabage Collector (Pointer reversal)
+
 
 gc :: TiState -> TiState
 gc state = state { heap = scanHeap $ fst
@@ -352,6 +353,42 @@ findRoots state = concat
     , findGlobalRoots state.globals
     ]
 
+
+markFrom :: TiHeap -> Addr -> (TiHeap, Addr)
+markFrom heap addr = mark (GcState { forward = addr, backward = hNull, tiheap = heap })
+
+mark :: GcState -> (TiHeap, Addr)
+mark gcstate 
+    = dispatchNode
+        (\ addr1 addr2 -> mark (gcstate { forward = addr1
+                                        , backward = gcstate.forward
+                                        , tiheap = hUpdate gcstate.tiheap gcstate.forward (NMarked (Visits 1) (NAp gcstate.backward addr2))
+                                        }))
+        (\ name args expr -> mark (gstate { tiheap = hUpdate gcstate.tiheap gcstate.forward (NMarked Done node)}))
+        (\ n -> mark (gstate { tiheap = hUpdate gcstate.tiheap gcstate.forward (NMarked Done node)}))
+        (\ addr -> mark (gcstate { forward = addr }))
+        (\ name prim -> mark (gcstate { tiheap = hUpdate gcstate.tiheap gcstate.forward (NMarked Done node)}))
+        (\ tag addrs -> undefined)
+        (\ markstate node -> case markstate of
+            Done -> if gcstate.backward == hNull
+                    then (gcstate.tiheap, gcstate.forward)
+                    else case hLookup gcstate.tiheap gcstate.backward of
+                        NMarked (Visits 1) (NAp b a)
+                            -> mark (gcstate { forward = a
+                                             , tiheap = hUpdate gcstate.tiheap b (NMarked (Visits 2) (NAp gcstate.forward b))
+                                             })
+                        NMarked (Visits 2) (NAp a b)
+                            -> mark (gcstate { forward = gcstate.backward
+                                             , backward = b
+                                             , tiheap = hUpdate gcstate.tiheap gcstate.backward (NMarked Done (NAp a gcstate.forward))
+                                             })
+                        _   -> undefined
+            _    -> undefined)
+        node
+        where
+            node = hLookup gcstate.tiheap gcstate.forward
+        
+{-
 markFrom :: TiHeap -> Addr -> (TiHeap, Addr)
 markFrom heap addr = case hLookup heap addr of
     node -> dispatchNode 
@@ -367,7 +404,7 @@ markFrom heap addr = case hLookup heap addr of
                                                                         -- NData
             (\ _ _         -> (heap, addr))                             -- NMarked
             node
-
+-}
 scanHeap :: TiHeap -> TiHeap
 scanHeap heap =foldl phi heap heap.assocs
     where

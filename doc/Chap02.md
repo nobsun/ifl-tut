@@ -1371,5 +1371,93 @@ data MarkState
 ```
 
 ---
-ポインタ反転法は、別の状態遷移システムを利用して実現する
+ポインタ反転法は、マーク用状態遷移システムを別に用意して説明する。
 
+0. 状態は、フォワードポインタ、バックワードポインタ、ヒープの三つ組である
+   $$
+   (f, b, h)
+   $$
+1. `markFrom` がヒープ $h_{\mathit{init}}$、アドレス $a$ で呼ばれると、マークプロセスが以下の初期状態からスタートする。
+   $$
+   (a,\texttt{hNull},h_{\mathit{init}})
+   $$
+2. この状態遷移系は、以下の状態が終了状態である
+   $$
+   (f, \texttt{hNull},h\left[f \text{ : }\texttt{NMarked Done n}\right])
+   $$
+
+---
+
+3. フォワードポインタが未だマークされていないノードを指している場合
+   1. `NAp`場合
+   $$
+   \begin{array}{rrrl}
+   & f & b & h\left[f \text{ : }\texttt{NAp}\;a_1\;a_2 \right] \\
+   \Longrightarrow & a_1 & f & h \left[ f \text{ : } \texttt{NMarked (Visits 1) (NAp}\;b \;a_2 \texttt{)} \right]
+   \end{array}
+   $$
+   2. フォワードポインタが未だマークされていない`NPrim`ノードを指していた場合
+   $$
+   \begin{array}{rrrl}
+   & f & b & h\left[f \text{ : }\texttt{NPrim}\;p \right] \\
+   \Longrightarrow & f & b & h \left[ f \text{ : } \texttt{NMarked Done (NPrim}\;p \texttt{)} \right]
+   \end{array}
+   $$
+   3. `NSuperCombinator` と `NNum` ノードはアドレスを含まないので、同じ扱いでよい。
+   4. `NInd` の場合はフォワードポインタを間接参照先のアドレスに変更
+   $$
+   \begin{array}{rrrl}
+   & f & b & h\left[f \text{ : }\texttt{NInd}\;a \right] \\
+   \Longrightarrow & a & b & h
+   \end{array}
+   $$
+
+    
+
+---
+1. フォワードポインタがマーク済ノードを指す場合
+    1. バックワードポインタが `hNull` なら終了
+    2. そうでないなら、バックワードポインタが指すのはマークされた `NAp` のはず
+       1. その`MarkState`が`(Visits 1)`の場合（左側は操作済み）
+       $$
+       \begin{array}{rrrl}
+       & f & b & h \left[ \begin{array}{lcl}
+                          f&:&\texttt{NMarked Done}\;n \\
+                          b&:&\texttt{NMarked (Visits 1) (Nap}\;b^{\prime}\;a_2\texttt{)}
+                       \end{array} \right]\\
+       \Longrightarrow & a_2 & f & h \left[ \begin{array}{lcl} b&:&\texttt{NMarked (Visits 2) (Nap}\;f\;b^{\prime}\texttt{)} \end{array} \right]
+       \end{array}
+       $$
+       1. その`MarkState`が`(Visits 2)`の場合
+       $$
+       \begin{array}{rrrl}
+       & f & b & h \left[ \begin{array}{lcl}
+                          f&:&\texttt{NMarked Done}\;n \\
+                          b&:&\texttt{NMarked (Visits 2) (Nap}\;a_1\;b^{\prime} \texttt{)}
+                       \end{array} \right]\\
+       \Longrightarrow & a_2 & f & h \left[ \begin{array}{lcl} b&:&\texttt{NMarked Done (Nap}\;a_1\; f\texttt{)} \end{array} \right]
+       \end{array}
+       $$
+
+---
+### 2.9.4 2スペースGC
+
+生きているノードだけ、別のヒープ空間にコピーする
+
+1. 生きてるノードを、新ヒープにアロケートし、旧ヒープの当該ノードは移動先のアドレスを持たせる。
+2. 新しいヒープにアロケートしたノードに含まれるアドレスを更新する。
+
+---
+#### 実装
+
+1. `Node`型に`NForward`構成子を追加（`NMarked` は不要）
+2. `markFromXXXX` の代りに `evacuateXXXX` を使う
+   ```haskell
+   evacuateStack   :: TiHeap -> TiHeap -> TiStack -> (TiHeap, TiStack)
+   evacuateDump    :: TiHeap -> TiHeap -> TiDump -> (TiHeap, TiDump)
+   evacuateGlobals :: :: TiHeap -> TiHeap -> TiGlobals -> (TiHeap, TiGlobals)
+   ```
+3. evacuate後、`scavengeHeap` を使う
+   ```haskell
+   scavengeHeap :: TiHeap -> TiHeap -> TiHeap
+   ```
