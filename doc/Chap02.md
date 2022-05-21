@@ -1423,9 +1423,9 @@ data MarkState
        \begin{array}{rrrl}
        & f & b & h \left[ \begin{array}{lcl}
                           f&:&\texttt{NMarked Done}\;n \\
-                          b&:&\texttt{NMarked (Visits 1) (Nap}\;b^{\prime}\;a_2\texttt{)}
+                          b&:&\texttt{NMarked (Visits 1) (NAp}\;b^{\prime}\;a_2\texttt{)}
                        \end{array} \right]\\
-       \Longrightarrow & a_2 & b & h \left[ \begin{array}{lcl} b&:&\texttt{NMarked (Visits 2) (Nap}\;f\;b^{\prime}\texttt{)} \end{array} \right]
+       \Longrightarrow & a_2 & b & h \left[ \begin{array}{lcl} b&:&\texttt{NMarked (Visits 2) (NAp}\;f\;b^{\prime}\texttt{)} \end{array} \right]
        \end{array}
        $$
        1. その`MarkState`が`(Visits 2)`の場合
@@ -1433,9 +1433,9 @@ data MarkState
        \begin{array}{rrrl}
        & f & b & h \left[ \begin{array}{lcl}
                           f&:&\texttt{NMarked Done}\;n \\
-                          b&:&\texttt{NMarked (Visits 2) (Nap}\;a_1\;b^{\prime} \texttt{)}
+                          b&:&\texttt{NMarked (Visits 2) (NAp}\;a_1\;b^{\prime} \texttt{)}
                        \end{array} \right]\\
-       \Longrightarrow & b & b^{\prime} & h \left[ \begin{array}{lcl} b&:&\texttt{NMarked Done (Nap}\;a_1\; f\texttt{)} \end{array} \right]
+       \Longrightarrow & b & b^{\prime} & h \left[ \begin{array}{lcl} b&:&\texttt{NMarked Done (NAp}\;a_1\; f\texttt{)} \end{array} \right]
        \end{array}
        $$
 
