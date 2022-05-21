@@ -114,7 +114,7 @@ extraPreludeDefs =
     ]
 
 defaultHeapSize :: Int
-defaultHeapSize = 1024
+defaultHeapSize = 1024 ^ 2
 
 defaultThreshold :: Int
 defaultThreshold = 50

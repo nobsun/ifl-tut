@@ -67,9 +67,15 @@ compile prog = TiState
         (initialHeap, initialGlobals) = buildInitialHeap scDefs
         initialStack = singletonStack addressOfMain
         initialStack1 = singletonStack addr
-        addressOfMain = aLookup initialGlobals "main" (error "main is not defined")
+        addressOfMain = aLookup initialGlobals "main" (negate 1)
+        (heap1, addr1)
+            | addressOfMain < 0 = (initialHeap, aLookup initialGlobals "pmain" (error "no main and no pmain"))
+            | otherwise         = case aLookup initialGlobals "Cons" (error "Cons is not defined") of
+                addressOfCons    -> case aLookup initialGlobals "Nil" (error "Nil is not defined") of
+                    addressOfNil   -> case hAlloc initialHeap (NAp addressOfCons addressOfMain) of
+                        (h, a)       -> hAlloc h (NAp a addressOfNil)
         addressOfPrint = aLookup initialGlobals "printList" (error "printList is not defined")
-        (initialHeap1, addr) = hAlloc initialHeap (NAp addressOfPrint addressOfMain)
+        (initialHeap1, addr) = hAlloc heap1 (NAp addressOfPrint addr1)
 
 extraPreludeDefs :: CoreProgram
 extraPreludeDefs = 
@@ -328,14 +334,11 @@ test :: (?sz :: Int, ?th :: Int) => String -> IO ()
 test = interact . drive . run 
 
 -- Gabage Collector (Pointer reversal)
-
-
 gc :: TiState -> TiState
-gc state = state { heap = scanHeap $ fst
-                        $ mapAccumL markFrom state.heap
-                        $ findRoots state 
-                 , stats = incGcCount state.stats
-                 }
+gc state = case markFromStack state.heap state.stack of
+    (hp1, stack1) -> case markFromDump hp1 state.dump of
+        (hp2, dump1)  -> case markFromGlobals hp2 state.globals of
+            (hp3, globals1) -> state { stack = stack1, heap = scanHeap hp3, globals = globals1, stats = incGcCount state.stats }
 
 findStackRoots :: TiStack -> [Addr]
 findStackRoots stack = stack.stkItems
@@ -353,41 +356,70 @@ findRoots state = concat
     , findGlobalRoots state.globals
     ]
 
+markFromStack :: TiHeap -> TiStack -> (TiHeap, TiStack)
+markFromStack hp stk = case mapAccumL markFrom hp stk.stkItems of
+    (hp', stk') -> (hp', stk { stkItems = stk'})
+
+markFromDump :: TiHeap -> TiDump -> (TiHeap, TiDump)
+markFromDump hp dump = (hp, dump)
+
+markFromGlobals :: TiHeap -> TiGlobals -> (TiHeap, TiGlobals)
+markFromGlobals hp env = mapAccumL markFrom_ hp env
+    where
+        markFrom_ heap (name, addr) = case markFrom heap addr of
+            (heap', addr') -> (heap', (name, addr'))
 
 markFrom :: TiHeap -> Addr -> (TiHeap, Addr)
 markFrom heap addr = mark (GcState { forward = addr, backward = hNull, tiheap = heap })
 
 mark :: GcState -> (TiHeap, Addr)
-mark gcstate 
-    = dispatchNode
-        (\ addr1 addr2 -> mark (gcstate { forward = addr1
-                                        , backward = gcstate.forward
-                                        , tiheap = hUpdate gcstate.tiheap gcstate.forward (NMarked (Visits 1) (NAp gcstate.backward addr2))
-                                        }))
-        (\ name args expr -> mark (gcstate { tiheap = hUpdate gcstate.tiheap gcstate.forward (NMarked Done node)}))
-        (\ n -> mark (gcstate { tiheap = hUpdate gcstate.tiheap gcstate.forward (NMarked Done node)}))
-        (\ addr -> mark (gcstate { forward = addr }))
-        (\ name prim -> mark (gcstate { tiheap = hUpdate gcstate.tiheap gcstate.forward (NMarked Done node)}))
-        (\ tag addrs -> case mapAccumL markFrom gcstate.tiheap addrs of
-            (h',_) -> mark (gcstate { tiheap = hUpdate h' gcstate.forward (NMarked Done node)}))
-        (\ markstate node -> case markstate of
-            Done -> if gcstate.backward == hNull
-                    then (gcstate.tiheap, gcstate.forward)
-                    else case hLookup gcstate.tiheap gcstate.backward of
-                        NMarked (Visits 1) (NAp b a)
-                            -> mark (gcstate { forward = a
-                                             , tiheap = hUpdate gcstate.tiheap b (NMarked (Visits 2) (NAp gcstate.forward b))
-                                             })
-                        NMarked (Visits 2) (NAp a b)
-                            -> mark (gcstate { forward  = gcstate.backward
-                                             , backward = b
-                                             , tiheap = hUpdate gcstate.tiheap gcstate.backward (NMarked Done (NAp a gcstate.forward))
-                                             })
-                        _   -> undefined
-            _    -> undefined)
-        node
-        where
-            node = hLookup gcstate.tiheap gcstate.forward
+mark gcstate = case hLookup gcstate.tiheap gcstate.forward of
+    node -> case node of
+        NAp a1 a2 -> mark 
+            (gcstate { forward  = a1
+                     , backward = gcstate.forward
+                     , tiheap   = hUpdate gcstate.tiheap gcstate.forward (NMarked (Visits 1) (NAp gcstate.backward a2))
+                     })
+        NSupercomb n as e -> mark 
+            (gcstate { tiheap = hUpdate gcstate.tiheap gcstate.forward (NMarked Done node)})
+        NNum num -> mark (gcstate { tiheap = hUpdate gcstate.tiheap gcstate.forward (NMarked Done node)})
+        NInd a -> mark (gcstate { forward = a })
+        NPrim n p -> mark (gcstate { tiheap = hUpdate gcstate.tiheap gcstate.forward (NMarked Done node)})
+        NData t as -> case mapAccumL markFrom gcstate.tiheap as of
+            (heap, as1) -> mark (gcstate { tiheap = hUpdate heap gcstate.forward (NMarked Done (NData t as1))})
+        NMarked m node -> case m of
+            Done -> case gcstate.backward of
+                b | b == hNull -> (gcstate.tiheap, gcstate.forward)
+                  | otherwise  -> case hLookup gcstate.tiheap b of
+                      NMarked (Visits 1) (NAp b' a2) -> mark
+                        (gcstate { forward = a2
+                                 , tiheap  = hUpdate gcstate.tiheap gcstate.backward (NMarked (Visits 2) (NAp gcstate.forward b'))
+                                 })
+                      NMarked (Visits 2) (NAp a1 b') -> mark
+                        (gcstate { forward  = gcstate.backward
+                                 , backward = b'
+                                 , tiheap   = hUpdate gcstate.tiheap gcstate.backward (NMarked Done (NAp a1 gcstate.forward))
+                                 })
+
+
+--         (\ markstate node -> case markstate of
+--             Done -> if gcstate.backward == hNull
+--                     then (gcstate.tiheap, gcstate.forward)
+--                     else case hLookup gcstate.tiheap gcstate.backward of
+--                         NMarked (Visits 1) (NAp b a)
+--                             -> mark (gcstate { forward = a
+--                                              , tiheap = hUpdate gcstate.tiheap b (NMarked (Visits 2) (NAp gcstate.forward b))
+--                                              })
+--                         NMarked (Visits 2) (NAp a b)
+--                             -> mark (gcstate { forward  = gcstate.backward
+--                                              , backward = b
+--                                              , tiheap = hUpdate gcstate.tiheap gcstate.backward (NMarked Done (NAp a gcstate.forward))
+--                                              })
+--                         _   -> undefined
+--             _    -> undefined)
+--         node
+--         where
+--             node = hLookup gcstate.tiheap gcstate.forward
         
 {-
 markFrom :: TiHeap -> Addr -> (TiHeap, Addr)

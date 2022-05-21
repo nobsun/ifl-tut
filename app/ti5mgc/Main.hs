@@ -13,7 +13,7 @@ main = do
     }
 
 defaultHeapSize :: Int
-defaultHeapSize = 1024
+defaultHeapSize = 2^20
 
 defaultThreshold :: Int
-defaultThreshold = 256
+defaultThreshold = 105

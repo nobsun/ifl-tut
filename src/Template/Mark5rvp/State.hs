@@ -2,6 +2,7 @@
 {-# LANGUAGE NoFieldSelectors #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedRecordDot #-}
+{-# LANGUAGE LambdaCase #-}
 module Template.Mark5rvp.State
     where
 
@@ -260,6 +261,11 @@ dispatchNode nap nsupercomb nnum nind nprim ndata nmarked node = case node of
     NData tag contents     -> ndata tag contents
     NMarked mst node       -> nmarked mst node
 
+instance Show Node where
+    show = \ case
+        _ -> "hoge"
+
+
 isDataNode :: Node -> Bool
 isDataNode node = case node of
     NNum _    -> True
@@ -320,7 +326,7 @@ ruleTable
       , (18, "Rule (2.18): Ex 2.21: For δ-reduction of conditional")
       , (19, "Rule (2.19): Ex 2.21: For evaluation condition of conditional")
       , (20, "Rule (2.20): Ex 2.22: For δ-reduction of casePair")
-      , (21, "Rule (2.21): Ex 2.22: For evaluation of 1st arg of casePairhttps://mandala.gr.jp/aoyama/contact/reserve/")
+      , (21, "Rule (2.21): Ex 2.22: For evaluation of 1st arg of casePair")
       , (22, "Rule (2.22): Ex 2.24: For δ-reduction of caseList")
       , (23, "Rule (2.23): Ex 2.24: For evaluation of 1st arg of caseList")
       ]

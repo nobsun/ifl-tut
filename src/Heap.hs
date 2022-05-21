@@ -57,7 +57,7 @@ hFree heap addr = heap
         _         -> heap.assocs
     }
 
-hLookup heap addr = aLookup heap.assocs addr (error "hLookup: no entry")
+hLookup heap addr = aLookup heap.assocs addr (error ("hLookup: no entry: #" ++ show addr))
 
 hAddresses heap = aDomain heap.assocs
 
