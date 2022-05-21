@@ -60,6 +60,9 @@ library
                     , Template.Mark5rvp.Machine
                     , Template.Mark5rvp.State
                     , Template.Mark5rvp.PPrint
+                    , Template.Mark5cp.Machine
+                    , Template.Mark5cp.State
+                    , Template.Mark5cp.PPrint
 
     -- Modules included in this library but not exported.
     -- other-modules:
@@ -164,6 +167,15 @@ executable ti5rvp
         ifl-tut
 
     hs-source-dirs:   app/ti5rvp
+    default-language: GHC2021
+
+executable ti5cp
+    main-is:          Main.hs
+    build-depends:
+        base ^>=4.16.0.0,
+        ifl-tut
+
+    hs-source-dirs:   app/ti5cp
     default-language: GHC2021
 
 test-suite ifl-tut-test
