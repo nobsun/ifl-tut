@@ -57,7 +57,7 @@ showNode node = dispatchNode
     (\ name _ -> iStr ("NPrim " ++ name))
     (\ tag args -> iConcat [ iStr ("NData "), iNum tag, iSpace
                            , iInterleave iSpace (map showAddr args)])
-    (\ mnode -> iConcat [iStr "NMarked (", showNode mnode, iStr ")"])
+    (\ new -> iConcat [iStr "NForward (", showAddr new, iStr ")"])
     node
 
 showStack :: TiHeap -> TiStack -> IseqRep

@@ -197,7 +197,17 @@ primCaseList state
                         where
                             (heap2, addr) = hAlloc state.heap (NAp arg3Addr hd)
                     _         -> error ("primCaseList: not a cons " ++ show cmpnts)
-            _ -> error "not NData node"
+            _ -> error $ show arg1Addr ++ "# " ++ showNode arg1Node ++ " is " ++ "not NData node"
+                where 
+                    showNode node = dispatchNode
+                        (\ _ _ -> "NAp")
+                        (\ _ _ _ -> "NSupercombinator")
+                        (\ _ -> "Num")
+                        (\ _ -> "NInd")
+                        (\ _ _ -> "NPrim")
+                        (\ _ _ -> "NData")
+                        (\ _ -> "NForward")
+                        node
 
 primAbort :: TiState -> TiState
 primAbort = error "Program abort!"
@@ -237,7 +247,7 @@ data Node
     | NInd Addr
     | NPrim Name Primitive
     | NData Tag [Addr]
-    | NMarked Node
+    | NForward Addr
 
 dispatchNode :: (Addr -> Addr -> a)               -- ^ NAp
              -> (Name -> [Name] -> CoreExpr -> a) -- ^ NSupercomb
@@ -245,16 +255,16 @@ dispatchNode :: (Addr -> Addr -> a)               -- ^ NAp
              -> (Addr -> a)                       -- ^ NInd
              -> (Name -> Primitive -> a)          -- ^ NPrim
              -> (Tag -> [Addr] -> a)              -- ^ NData
-             -> (Node -> a)                       -- ^ NMarked
+             -> (Addr -> a)                       -- ^ NForward
              -> Node -> a
-dispatchNode nap nsupercomb nnum nind nprim ndata nmarked node = case node of
+dispatchNode nap nsupercomb nnum nind nprim ndata forward node = case node of
     NAp a b                -> nap a b
     NSupercomb f args body -> nsupercomb f args body
     NNum n                 -> nnum n
     NInd a                 -> nind a
     NPrim name prim        -> nprim name prim
     NData tag contents     -> ndata tag contents
-    NMarked node           -> nmarked node
+    NForward new           -> forward new
 
 isDataNode :: Node -> Bool
 isDataNode node = case node of

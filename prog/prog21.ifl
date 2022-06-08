@@ -1,0 +1,7 @@
+main = last (replicate 30 1) ;
+replicate n x = if (n == 0) Nil (Cons x (replicate (n - 1) x)) ;
+B f g x = f (g x) ; 
+C f x y = f y x ;
+foldl f e xs = caseList xs e (B (foldl f) (f e)) ;
+reverse xs = foldl (C Cons) Nil xs ;
+last xs = head (reverse xs)
