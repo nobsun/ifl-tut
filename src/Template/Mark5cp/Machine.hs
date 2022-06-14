@@ -339,12 +339,30 @@ gc :: (?sz :: Int, ?th :: Int) => TiState -> TiState
 gc state = case evacuateStack state.heap hInitial state.stack of
     ((from1, to1), stack1) -> case evacuateDump from1 to1 state.dump of
         ((from2, to2), dump1)  -> case evacuateGlobals from2 to2 state.globals of
-            ((from3, to3), globals1) -> state { stack = stack1
-                                              , dump = dump1
-                                              , heap = scavengeHeap from3 to3
-                                              , globals = globals1
-                                              , stats = incGcCount state.stats
-                                              }
+            ((from3, to3), globals1) -> trace ( iDisplay $ iConcat [ iStr "evacuated: from"
+                                                                   , iNewline
+                                                                   , showHeap from3
+                                                                   , iNewline
+                                                                   , iStr "evacuated: to"
+                                                                   , iNewline
+                                                                   , showHeap to3
+                                                                   , iNewline 
+                                                                   ]
+                                              ) $ 
+                                        case scavenge from3 to3 of
+                                            to4 -> trace (printHeap to4) $ state { stack = stack1
+                                                                                 , dump = dump1
+                                                                                 , heap = hIncThreshold to4
+                                                                                 , globals = globals1
+                                                                                 , stats = incGcCount state.stats
+                                                                                 }
+    where
+        printHeap heap = iDisplay $ iConcat [ iStr "scavenged: to"
+                                            , iNewline
+                                            , showHeap heap
+                                            , iNewline
+                                            ]
+        hIncThreshold h = h { threshold = 2 * h.threshold }
 
 evacuateStack :: TiHeap -> TiHeap -> TiStack -> ((TiHeap, TiHeap), TiStack)
 evacuateStack from to stack = case mapAccumL evacuateFrom (from, to) stack.stkItems of
@@ -354,54 +372,41 @@ evacuateDump :: TiHeap -> TiHeap -> TiDump -> ((TiHeap, TiHeap), TiDump)
 evacuateDump from to dump = ((from, to), dump)
 
 evacuateGlobals :: TiHeap -> TiHeap -> TiGlobals -> ((TiHeap, TiHeap), TiGlobals)
-evacuateGlobals from to globals = mapAccumL evacuateFrom_ (from, to) globals
-    where
-        evacuateFrom_ heaps (name, addr) = case evacuateFrom heaps addr of
-            (heaps1, addr1) -> (heaps, (name, addr1))
+evacuateGlobals from to globals = case unzip globals of
+    (names, addrs) -> case mapAccumL evacuateFrom (from, to) addrs of
+        ((from1, to1), addrs1) -> ((from1, to1), zip names addrs1)  
 
 evacuateFrom :: (TiHeap, TiHeap) -> Addr -> ((TiHeap, TiHeap), Addr)
-evacuateFrom (from, to) a = case hLookup from a of
-    node -> case hAlloc to node of
-        (to1, a') -> case hUpdate from a (NForward a') of
-            from1     -> case node of
-                NAp b c   -> case evacuateFrom (from1, to1) b of
-                    ((from2, to2), b') -> case evacuateFrom (from2, to2) c of
-                        ((from3, to3), c')  -> 
+evacuateFrom (from, to) a = case trace "eva:01" hLookup from a of
+    node -> case node of
+        NAp b c -> case hAlloc to node of
+            (to1, a') -> case hUpdate from a (NForward a') of
+                from1     -> case evacuateFrom (from1, to1) b of
+                    ((from2, to2), _) -> case evacuateFrom (from2, to2) c of
+                        ((from3, to3), _) -> ((from3, to3), a')
+        NInd b -> case evacuateFrom (from, to) b of
+            ((from1, to1), b') -> ((hUpdate from1 a (NForward b'), to1), b')
+        NData name args -> case hAlloc to node of
+            (to1, a') -> case hUpdate from a (NForward a') of
+                from1     -> case mapAccumL evacuateFrom (from1, to1) args of
+                    ((from2, to2), _) -> ((from2, to2), a')
+        NForward a' -> ((from, to), a')
+        _ -> case hAlloc to node of
+            (to1, a') -> case hUpdate from a (NForward a') of
+                from1     -> ((from1, to1), a')
 
-{-
-from                    --> alloc -->  to
-    addr : NInd ind                        addr' : NInd ind
-
-from                                   to
-    addr : NForward addr'                  addr' : node
-    ind  : node                            
-
-from                                   to
-    addr : NForward addr'                  addr' : node
-    ind  : NForward addr'
-
-
-
--}
-
-scavengeHeap :: TiHeap -> TiHeap -> TiHeap
-scavengeHeap from to = foldl (phi from) to to.assocs
+scavenge :: TiHeap -> TiHeap -> TiHeap
+scavenge from to = foldl (phi from) to to.assocs
     where
-        phi hfrom hto (addr, node) = dispatchNode
-            (\ addr1 addr2 -> case hLookup hfrom addr1 of
-                NForward fwd1  -> case hLookup hfrom addr2 of
-                    NForward fwd2  -> hUpdate hto addr (NAp fwd1 fwd2)
-                    _              -> error "Not NForward!"
-                _              -> error "Not NForward!")
-            (\ sc args e -> hto)
-            (\ n -> hto)
-            (\ addr1 -> error "NInd!")
-            (\ name prim -> hto)
-            (\ tag args -> case map (psi hfrom) args of
-                    args' -> hUpdate hto addr (NData tag args'))
-            (\ fwd -> error "NForward!")
-            node 
-            where
-                psi h a = case hLookup h a of
-                    NForward fwd -> fwd
-                    _            -> error "Not NForward!"
+        phi f t (a', n) = case n of
+            NAp b c -> case trace "sca:01" hLookup f b of
+                NForward b' -> case trace "sca:02" hLookup f c of
+                    NForward c'   -> hUpdate t a' (NAp b' c')
+            NInd _  -> error "scavenge: NInd"
+            NData name args -> hUpdate t a' (NData name (map (unNF . trace "sca:03" hLookup f) args))
+            _ -> to
+        unNF node = case node of
+            NForward fw -> fw
+            _           -> error "scavenge: not NForward"
+
+            

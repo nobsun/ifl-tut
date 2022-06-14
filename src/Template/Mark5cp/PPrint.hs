@@ -70,7 +70,8 @@ showStack heap stack = iConcat
     where
         showStackItem addr = iConcat
             [ showFWAddr addr, iStr ": "
-            , showStkNode heap (hLookup heap addr)
+            , showNode (hLookup heap addr)
+--            , showStkNode heap (hLookup heap addr)
             ]
 
 showDump :: TiDump -> IseqRep

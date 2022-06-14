@@ -1450,6 +1450,8 @@ data MarkState
 ---
 #### 実装
 
+実装の概要は以下のとおり、といいたいところであるが、evacuation 後、to-ヒープだけではなく、
+
 1. `Node`型に`NForward`構成子を追加（`NMarked` は不要）
 2. `markFromXXXX` の代りに `evacuateXXXX` を使う
    ```haskell

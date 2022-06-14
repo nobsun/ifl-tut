@@ -1,0 +1,2 @@
+double x = x + x ;
+main = double (double (double (1 + 2)))
