@@ -6,9 +6,11 @@ import Template.Mark5cp.Machine
 
 main :: IO ()
 main = do
-    { fp:_ <- getArgs
+    { fp:rs <- getArgs
     ; let ?sz = defaultHeapSize
-    ; let ?th = defaultThreshold
+    ; let ?th = case rs of
+                    [] -> defaultThreshold
+                    _  -> read (head rs)
     ; interact . drive . run =<< readFile fp
     }
 
@@ -16,4 +18,4 @@ defaultHeapSize :: Int
 defaultHeapSize = 2^20
 
 defaultThreshold :: Int
-defaultThreshold = 2^6
+defaultThreshold = 2^8

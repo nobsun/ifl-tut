@@ -4,6 +4,8 @@
 module Template.Mark5cp.PPrint
     where
 
+import Data.List (sortBy)
+import Data.Ord (comparing)
 import Language
 import Iseq
 import Heap
@@ -32,7 +34,7 @@ showState state = iConcat
 showHeap :: TiHeap -> IseqRep
 showHeap heap = iConcat
     [ iStr "Heap ["
-    , iIndent (iInterleave iNewline (map showHeapItem heap.assocs))
+    , iIndent (iInterleave iNewline (map showHeapItem (sortBy (flip (comparing fst)) heap.assocs)))
     , iStr " ]"
     ]
 
@@ -70,8 +72,8 @@ showStack heap stack = iConcat
     where
         showStackItem addr = iConcat
             [ showFWAddr addr, iStr ": "
-            , showNode (hLookup heap addr)
---            , showStkNode heap (hLookup heap addr)
+--            , showNode (hLookup heap addr)
+            , showStkNode heap (hLookup heap addr)
             ]
 
 showDump :: TiDump -> IseqRep

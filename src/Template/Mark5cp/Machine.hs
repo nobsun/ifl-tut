@@ -139,7 +139,7 @@ eval state = state : rests
               | otherwise      = eval $ doAdmin $ doAdminTotalSteps $ step state
 
 doAdmin :: (?sz :: Int, ?th :: Int) => TiState -> TiState
-doAdmin state = bool id (trace "GC" gc) (state.heap.curAllocs > state.heap.threshold) state
+doAdmin state = bool id (trace ("GC@"++show state.stats.totalSteps) gc) (state.heap.curAllocs > state.heap.threshold) state
 
 step :: TiState -> TiState
 step state = case map toLower $ head state.control of
@@ -339,24 +339,45 @@ gc :: (?sz :: Int, ?th :: Int) => TiState -> TiState
 gc state = case evacuateStack state.heap hInitial state.stack of
     ((from1, to1), stack1) -> case evacuateDump from1 to1 state.dump of
         ((from2, to2), dump1)  -> case evacuateGlobals from2 to2 state.globals of
-            ((from3, to3), globals1) -> trace ( iDisplay $ iConcat [ iStr "evacuated: from"
-                                                                   , iNewline
-                                                                   , showHeap from3
-                                                                   , iNewline
-                                                                   , iStr "evacuated: to"
-                                                                   , iNewline
-                                                                   , showHeap to3
-                                                                   , iNewline 
-                                                                   ]
-                                              ) $ 
-                                        case scavenge from3 to3 of
-                                            to4 -> trace (printHeap to4) $ state { stack = stack1
-                                                                                 , dump = dump1
-                                                                                 , heap = hIncThreshold to4
-                                                                                 , globals = globals1
-                                                                                 , stats = incGcCount state.stats
-                                                                                 }
+            ((from3, to3), globals1) -> case scavenge from3 to3 of
+                to4 ->  trace (gcPrint state.heap from1 to1 from3 to3 to4) $ 
+                        state { stack = stack1
+                              , dump = dump1
+                              , heap = hIncThreshold to4
+                              , globals = globals1
+                              , stats = incGcCount state.stats
+                              }
     where
+        gcPrint h0 f1 t1 f3 t3 t4 =  iDisplay $ iConcat [ iNewline
+                                                        , iStr "vvvvvvvvvvvvvvvvvvvv"
+                                                        , iNewline
+                                                        , iStr "before:"
+                                                        , iNewline
+                                                        , showHeap h0
+                                                        , iNewline
+                                                        , iStr "evacuated: from1"
+                                                        , iNewline
+                                                        , showHeap f1
+                                                        , iNewline
+                                                        , iStr "evacuated: to1"
+                                                        , iNewline
+                                                        , showHeap t1
+                                                        , iNewline 
+                                                        , iStr "evacuated: from3"
+                                                        , iNewline
+                                                        , showHeap f3
+                                                        , iNewline
+                                                        , iStr "evacuated: to3"
+                                                        , iNewline
+                                                        , showHeap t3
+                                                        , iNewline 
+                                                        , iStr "scavenged: after"
+                                                        , iNewline
+                                                        , showHeap t4
+                                                        , iNewline
+                                                        , iStr "^^^^^^^^^^^^^^^^^^^^"
+                                                        , iNewline
+                                                        ]
         printHeap heap = iDisplay $ iConcat [ iStr "scavenged: to"
                                             , iNewline
                                             , showHeap heap
