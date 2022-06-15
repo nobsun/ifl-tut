@@ -36,7 +36,7 @@
          - [x] 2.9.1 マーク・スキャン GC（Mark5mgc）
          - [x] 2.9.2 間接参照の除去
          - [x] 2.9.3 反転ポインタ
-         - [ ] 2.9.4 2-スペースGC（コピーGC）
+         - [x] 2.9.4 2-スペースGC（コピーGC）
 - [ ] 3. G-machine（グラフ簡約マシン）
 - [ ] 4. TIM（Three Instruction Machine）
 - [ ] 5. 並列G-machine
