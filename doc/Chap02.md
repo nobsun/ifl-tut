@@ -1450,16 +1450,27 @@ data MarkState
 ---
 #### 実装
 
-実装の概要は以下のとおり、といいたいところであるが、evacuation 後、to-ヒープだけではなく、
+実装の概要は以下のとおり、
 
 1. `Node`型に`NForward`構成子を追加（`NMarked` は不要）
 2. `markFromXXXX` の代りに `evacuateXXXX` を使う
    ```haskell
-   evacuateStack   :: TiHeap -> TiHeap -> TiStack -> (TiHeap, TiStack)
-   evacuateDump    :: TiHeap -> TiHeap -> TiDump -> (TiHeap, TiDump)
-   evacuateGlobals :: :: TiHeap -> TiHeap -> TiGlobals -> (TiHeap, TiGlobals)
+   evacuateStack   :: TiHeap -> TiHeap -> TiStack   -> (TiHeap, TiStack)
+   evacuateDump    :: TiHeap -> TiHeap -> TiDump    -> (TiHeap, TiDump)
+   evacuateGlobals :: TiHeap -> TiHeap -> TiGlobals -> (TiHeap, TiGlobals)
    ```
 3. evacuate後、`scavengeHeap` を使う
    ```haskell
    scavengeHeap :: TiHeap -> TiHeap -> TiHeap
    ```
+
+---
+#### N.B. evacuate の返り値
+
+evacuation の際、to-ヒープだけではなく、from-ヒープも更新されるので、evacuation で構成する値の中には、from-ヒープとto-ヒープの情報が含まれている必要がある。
+
+```haskell
+evacuateStack   :: TiHeap -> TiHeap -> TiStack   -> ((TiHeap, TiHeap), TiStack)
+evacuateDump    :: TiHeap -> TiHeap -> TiDump    -> ((TiHeap, TiHeap), TiDump)
+evacuateGlobals :: TiHeap -> TiHeap -> TiGlobals -> ((TiHeap, TiHeap), TiGlobals)
+```
