@@ -34,8 +34,8 @@ showState state = iConcat
 showHeap :: TiHeap -> IseqRep
 showHeap heap = iConcat
     [ iStr "Heap ["
-    , iIndent (iInterleave iNewline (map showHeapItem (sortBy (flip (comparing fst)) heap.assocs)))
-    , iStr " ]"
+    , iIndent (iInterleave iNewline (map showHeapItem {- (sortBy (flip (comparing fst)) -} heap.assocs)) -- )
+    , iStr " ]" 
     ]
 
 showHeapItem :: (Addr, Node) -> IseqRep

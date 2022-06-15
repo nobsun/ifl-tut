@@ -45,7 +45,7 @@ hAlloc heap node = case heap.frees of
 
 hUpdate heap addr node = heap
     { assocs = case break ((addr ==) . fst) heap.assocs of
-          (as, _:bs) -> (addr, node) : (as ++ bs)
+          (as, _:bs) -> (as ++ (addr, node) : bs)
           _          -> error "hUpdate: no entry"
     }
 

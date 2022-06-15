@@ -1,3 +1,4 @@
+{- LANGUAGE BangPatterns -}
 {-# LANGUAGE ImplicitParams #-}
 {-# LANGUAGE NoFieldSelectors #-}
 {-# LANGUAGE DuplicateRecordFields #-}
@@ -22,7 +23,7 @@ import Template.Mark5cp.PPrint
 import Debug.Trace qualified as Deb
 
 debug :: Bool
-debug = True
+debug = False
 
 trace :: String -> a -> a
 trace | debug     = Deb.trace
@@ -383,7 +384,7 @@ gc state = case evacuateStack state.heap hInitial state.stack of
                                             , showHeap heap
                                             , iNewline
                                             ]
-        hIncThreshold h = h { threshold = 2 * h.threshold }
+        hIncThreshold h = if debug  then h { threshold = 2 * h.threshold } else h
 
 evacuateStack :: TiHeap -> TiHeap -> TiStack -> ((TiHeap, TiHeap), TiStack)
 evacuateStack from to stack = case mapAccumL evacuateFrom (from, to) stack.stkItems of
@@ -417,15 +418,15 @@ evacuateFrom (from, to) a = case trace "eva:01" hLookup from a of
                 from1     -> ((from1, to1), a')
 
 scavenge :: TiHeap -> TiHeap -> TiHeap
-scavenge from to = foldl (phi from) to to.assocs
+scavenge from to = foldl phi to to.assocs
     where
-        phi f t (a', n) = case n of
-            NAp b c -> case trace "sca:01" hLookup f b of
-                NForward b' -> case trace "sca:02" hLookup f c of
+        phi t (a', n) = case n of
+            NAp b c -> case trace "sca:01" hLookup from b of
+                NForward b' -> case trace "sca:02" hLookup from c of
                     NForward c'   -> hUpdate t a' (NAp b' c')
             NInd _  -> error "scavenge: NInd"
-            NData name args -> hUpdate t a' (NData name (map (unNF . trace "sca:03" hLookup f) args))
-            _ -> to
+            NData name args -> hUpdate t a' (NData name (map (unNF . trace "sca:03" hLookup from) args))
+            _ -> t
         unNF node = case node of
             NForward fw -> fw
             _           -> error "scavenge: not NForward"
