@@ -1,6 +1,6 @@
 cabal-version:      3.0
 name:               ifl-tut
-version:            0.2.9.4.2
+version:            0.3.2
 synopsis:           Implementing Fuctional Lanbuage -- a tutorial
 
 -- A longer description of the package.
@@ -36,6 +36,10 @@ library
                     , Parser
                     , Stack
                     , Utils
+                    , Bool
+                    , List
+                    , Nat
+                    , Singleton
                     , Template.Mark1
                     , Template.Mark2
                     , Template.Mark3
@@ -63,6 +67,7 @@ library
                     , Template.Mark5cp.Machine
                     , Template.Mark5cp.State
                     , Template.Mark5cp.PPrint
+                    , Gmachine.AExpr
 
     -- Modules included in this library but not exported.
     -- other-modules:
