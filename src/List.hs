@@ -21,23 +21,25 @@ import Singleton
 
 -- List
 data instance Sing (a :: [k]) where
-    SNil  :: Sing '[]
-    SCons :: Sing (h :: k)
-          -> Sing (t :: [k])
-          -> Sing (h ': t)
+    SNil :: Sing '[]
+    (:%) :: Sing (h :: k)
+         -> Sing (t :: [k])
+         -> Sing (h ': t)
+
+infixr 5 :%
 
 instance (k ~ Demote k, SingKind k) => SingKind [k] where
     type Demote [k] = [k]
     toSing = \ case
         []  -> SomeSing SNil
         h:t -> withSomeSing (toSing h) $ \ sh ->
-            withSomeSing (toSing t) $ \ st -> SomeSing $ SCons sh st
+                   withSomeSing (toSing t) $ \ st -> SomeSing $ sh :% st
     fromSing = \ case 
-        SNil -> []
-        SCons sh st -> fromSing sh : fromSing st
+        SNil     -> []
+        sh :% st -> fromSing sh : fromSing st
 
 instance (SingI (h :: k), SingI (t :: [k])) => SingI (h ': t) where
-    sing = SCons sing sing
+    sing = sing :% sing
 
 --
 type family Head (α :: [k]) :: k where
@@ -45,14 +47,14 @@ type family Head (α :: [k]) :: k where
 
 sHead :: Sing (α :: [k]) -> SomeSing k
 sHead = \ case
-    SCons h _ -> SomeSing h 
+    h :% _ -> SomeSing h 
 
 type family Tail (α :: [k]) :: [k] where
     Tail (h ': t) = t
 
 sTail :: Sing (α :: [k]) -> SomeSing [k]
 sTail = \ case
-    SCons _ t -> SomeSing t
+    _ :% t -> SomeSing t
 
 type family Last (α :: [k]) :: k where
     Last (h ': '[]) = h
@@ -60,8 +62,8 @@ type family Last (α :: [k]) :: k where
 
 sLast :: Sing (α :: [k]) -> SomeSing k
 sLast = \ case
-    SCons h SNil -> SomeSing h
-    SCons h t    -> sLast t
+    h :% SNil -> SomeSing h
+    h :% t    -> sLast t
 
 type family Init (α :: [k]) :: [k] where
     Init (h ': '[]) = '[]
@@ -69,8 +71,8 @@ type family Init (α :: [k]) :: [k] where
 
 sInit :: Sing (α :: [k]) -> SomeSing [k]
 sInit = \ case
-    SCons h SNil -> SomeSing SNil
-    SCons h t    -> withSomeSing (sInit t) $ \ st -> SomeSing (SCons h st)
+    h :% SNil -> SomeSing SNil
+    h :% t    -> withSomeSing (sInit t) $ \ st -> SomeSing (h :% st)
 
 type family Take (n :: Nat) (α :: [k]) :: [k] where
     Take Z α            = '[]
@@ -83,14 +85,14 @@ type family Drop (n :: Nat) (α :: [k]) :: [k] where
     Drop (S n) (h ': t) = Drop n t
 
 sTake :: Sing (n :: Nat) -> Sing (α :: [k]) -> SomeSing [k]
-sTake SZ      _             = SomeSing SNil
-sTake (SS sn) SNil          = SomeSing SNil
-sTake (SS sn) (SCons sh st) = withSomeSing (sTake sn st) $ \ st' -> SomeSing (SCons sh st')
+sTake SZ      _          = SomeSing SNil
+sTake (SS sn) SNil       = SomeSing SNil
+sTake (SS sn) (sh :% st) = withSomeSing (sTake sn st) $ \ st' -> SomeSing (sh :% st')
 
 sDrop :: Sing (n :: Nat) -> Sing (α :: [k]) -> SomeSing [k]
-sDrop SZ sα                 = SomeSing sα
-sDrop (SS sn) SNil          = SomeSing SNil
-sDrop (SS sn) (SCons sh st) = sDrop sn st
+sDrop SZ sα             = SomeSing sα
+sDrop (SS sn) SNil      = SomeSing SNil
+sDrop (SS sn) (_ :% st) = sDrop sn st
 
 type family Length (α :: [k]) :: Nat where
     Length '[]      = Z
@@ -98,8 +100,8 @@ type family Length (α :: [k]) :: Nat where
 
 sLength :: Sing (α :: [k]) -> SomeSing Nat
 sLength = \ case
-    SNil -> SomeSing SZ
-    SCons _ t -> withSomeSing (sLength t) (SomeSing . SS)
+    SNil   -> SomeSing SZ
+    _ :% t -> withSomeSing (sLength t) (SomeSing . SS)
 
 type family (α :: [k]) ++ (β :: [k]) :: [k] where
     '[]      ++ β = β
@@ -108,16 +110,16 @@ type family (α :: [k]) ++ (β :: [k]) :: [k] where
 infixr 5 ++
 
 (%++) :: Sing (α :: [k]) -> Sing (β :: [k]) -> Sing (α ++ β)
-SNil      %++ b = b
-SCons h a %++ b = SCons h (a %++ b)
+SNil     %++ b = b
+(h :% a) %++ b = h :% (a %++ b)
 
 infixr 5 %++
 
 distributeLength :: Sing (α :: [k]) -> Sing (β :: [k])
                    -> Length (α ++ β) :~: Length α + Length β
 distributeLength a b = case a of
-    SNil      -> Refl
-    SCons h t -> case distributeLength t b of
+    SNil   -> Refl
+    _ :% t -> case distributeLength t b of
         Refl      -> Refl
 
 associativityOfJuxtaposition
@@ -125,8 +127,8 @@ associativityOfJuxtaposition
     -> (α ++ β) ++ γ :~: α ++ (β ++ γ)
 associativityOfJuxtaposition a b c
     = case a of
-        SNil      -> Refl
-        SCons h t -> case associativityOfJuxtaposition t b c of
+        SNil   -> Refl
+        h :% t -> case associativityOfJuxtaposition t b c of
             Refl      -> Refl
 
 leftCancelationOfJuxtaposition
@@ -136,7 +138,7 @@ leftCancelationOfJuxtaposition
 leftCancelationOfJuxtaposition a b c Refl
     = case a of
         SNil      -> Refl
-        SCons h t -> case leftCancelationOfJuxtaposition t b c Refl of
+        _ :% t -> case leftCancelationOfJuxtaposition t b c Refl of
             Refl      -> Refl
 
 newtype Compat α β α' β' = Compat (α ++ α' :~: β ++ β')

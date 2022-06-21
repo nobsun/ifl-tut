@@ -43,16 +43,98 @@ data AInstruction
 type Code = [AInstruction]
 type Stk  = [Nat]
 
+aCompile' :: AExpr -> Code
+aCompile' (Numb n)     = [INumb n]
+aCompile' (Plus e1 e2) = aCompile' e1 ++ aCompile' e2 ++ [IPlus]
+aCompile' (Mult e1 e2) = aCompile' e1 ++ aCompile' e2 ++ [IMult]
+
+{-
+一般化
+
+仕様： aCompile e c = aCompile' e ++ c
+
+定義の導出
+
+e : Numb n のとき
+
+    aCompile (Numb n) c
+=   { 仕様 }
+    aCompile' (Numb n) ++ c
+=   { aCompile' の定義 } 
+    [INumb n] ++ c
+=   { ++ の定義 }
+    INumb n : ([] ++ c)
+=   { ++ の左単位元 }
+    INumb n : c
+ 
+e : Plus e1 e2 のとき
+
+    aCompile (Plus e1 e2) c
+=   { 仕様 }
+    aCompile' (Plus e1 e2) ++ c
+=   { aCompile' の定義 }
+    aCompile' e1 ++ (aComile' e2 ++ [IPlus]) ++ c
+=   { ++ の結合律 }
+    aCompile' e1 ++ (aCompile' e2 ++ ([IPlus] ++ c))
+=   { ++ の定義 }
+    aCompile' e1 ++ (aCompile' e2 ++ (IPlus : ([] ++ c)))
+=   { ++ の左単位元 }
+    aCompile' e1 ++ (aCompile' e2 ++ IPlus n : c)
+=   { 仕様 }
+    aCompile e1 (aComile' e2 (IPlus n : c))
+
+e : Mult e1 e2 のとき
+    上と同様
+-}
+
 aCompile :: AExpr -> Code -> Code
-aCompile (Numb n) is = INumb n : is
-aCompile (Plus e1 e2) is = aCompile e1 (aCompile e2 (IPlus : is))
-aCompile (Mult e1 e2) is = aCompile e1 (aCompile e2 (IMult : is))
+aCompile (Numb n)     c = INumb n : c
+aCompile (Plus e1 e2) c = aCompile e1 (aCompile e2 (IPlus : c))
+aCompile (Mult e1 e2) c = aCompile e1 (aCompile e2 (IMult : c))
 
 aEval :: Code -> [Nat] -> [Nat]
 aEval []            ns             = ns
-aEval (INumb n : c) ns             = ns
-aEval (IPlus   : c) (n0 : n1 : ns) = (n1 + n0) : ns
-aEval (IMult   : c) (n0 : n1 : ns) = (n1 * n0) : ns
+aEval (INumb n : c) ns             = aEval c (n : ns)
+aEval (IPlus   : c) (n1 : n2 : ns) = aEval c (n2 + n1 : ns)
+aEval (IMult   : c) (n1 : n2 : ns) = aEval c (n2 * n1 : ns)
+
+{-
+コンパイラの正しさ
+
+    aEval (aCompile e c) s = aEval c (aInterp e : s)
+
+証明（等式論証）
+    
+    e に関する構造帰納法
+
+    基底部 (e が Numb n の場合)
+
+        aEval (aCompile (Numb n) c) s
+    =   { aCompile の定義 }
+        aEval (INumb n : c) s
+    =   { aEval の定義 }
+        aEval c (n : s)
+    =   { aInterp の定義 }
+        aEval c (aInterp (Numb n) : s)
+    
+    帰納部 (e が Plus e1 e2 の場合)
+        aEval (aCompile (Plus e1 e2) c) s
+    =   { aCompile の定義 }
+        aEval (aCompile e1 (aCompile e2 (IPlus : c))) s
+    =   { 帰納法の仮定より }
+        aEval (aCompile e2 (IPlus : c)) (aInterp x : s) 
+    =   { 帰納法の仮定 }
+        aEval (IPlus : c) (aInterp e2 : aInterp e1 : s)
+    =   { aEval の定義 }
+        aEval c ((aInterp e1 + aInterp e2) : s)
+    =   { aInterp の定義 }
+        aEval c (aInterp (Plus e1 e2) : s)
+    
+    帰納部 (e が Mult e1 e2 の場合)
+        上と同様
+-}
+
+{- 型族 -}
 
 type family AInterp (e :: AExpr) :: Nat where
     AInterp (Numb n)     = n
@@ -70,6 +152,8 @@ type family AEval (c :: Code) (s :: Stk) :: Stk where
     AEval ('IPlus   ': c) (n0 ': n1 ': s) = AEval c ((n1 + n0) ': s)
     AEval ('IMult   ': c) (n0 ': n1 ': s) = AEval c ((n1 * n0) ': s)
 
+{- シングルトン -}
+
 data instance Sing (e :: AExpr) where
     SNumb :: Sing (n :: Nat) -> Sing (Numb n)
     SPlus :: Sing e1 -> Sing e2 -> Sing (Plus e1 e2)
@@ -81,42 +165,31 @@ data instance Sing (i :: AInstruction) where
     SIMult :: Sing IMult
 
 saInterp :: Sing (e :: AExpr) -> Sing (AInterp e)
-saInterp (SNumb sn) = sn
+saInterp (SNumb sn)      = sn
 saInterp (SPlus se1 se2) = saInterp se1 %+ saInterp se2
 saInterp (SMult se1 se2) = saInterp se1 %* saInterp se2
 
 saCompile :: Sing (e :: AExpr) -> Sing (c :: Code) -> Sing (ACompile e c)
-saCompile (SNumb sn)      sc = SCons (SINumb sn) sc
-saCompile (SPlus se1 se2) sc = saCompile se1 (saCompile se2 (SCons SIPlus sc))
-saCompile (SMult se1 se2) sc = saCompile se1 (saCompile se2 (SCons SIMult sc))
+saCompile (SNumb sn)      sc = SINumb sn :% sc
+saCompile (SPlus se1 se2) sc = saCompile se1 (saCompile se2 (SIPlus :% sc))
+saCompile (SMult se1 se2) sc = saCompile se1 (saCompile se2 (SIMult :% sc))
 
 saEval :: Sing (c :: Code) -> Sing (s :: Stk) -> Sing (AEval c s)
-saEval SNil                   ss                         = ss
-saEval (SCons (SINumb sn) sc) ss                         = saEval sc (SCons sn           ss)
-saEval (SCons SIPlus      sc) (SCons sn0 (SCons sn1 ss)) = saEval sc (SCons (sn1 %+ sn0) ss)
-saEval (SCons SIMult      sc) (SCons sn0 (SCons sn1 ss)) = saEval sc (SCons (sn1 %* sn0) ss)
+saEval SNil              ss                   = ss
+saEval (SINumb sn :% sc) ss                   = saEval sc (sn           :% ss)
+saEval (SIPlus    :% sc) (sn0 :% (sn1 :% ss)) = saEval sc ((sn1 %+ sn0) :% ss)
+saEval (SIMult    :% sc) (sn0 :% (sn1 :% ss)) = saEval sc ((sn1 %* sn0) :% ss)
 
-validEvalCompile :: Sing (e :: AExpr) -> Sing (c :: Code) -> Sing (s :: Stk)
-                  -> AEval (ACompile e c) s :~: AEval c (AInterp e ': s)
-validEvalCompile (SNumb sn)      sc ss = Refl
-validEvalCompile (SPlus se1 se2) sc ss = case validEvalCompile se1 (saCompile se2 (SCons SIPlus sc)) ss of
-    Refl -> case validEvalCompile se2 (SCons SIPlus sc) (SCons (saInterp se1) ss) of
-        Refl -> Refl
-validEvalCompile (SMult se1 se2) sc ss = case validEvalCompile se1 (saCompile se2 (SCons SIMult sc)) ss of
-    Refl -> case validEvalCompile se2 (SCons SIMult sc) (SCons (saInterp se1) ss) of
-        Refl -> Refl
+{- コンパイルの正しさ（関数の型シグネチャ）と証明（関数実装） -}
 
-distribEval :: Sing (c :: Code) -> Sing (d :: Code) -> Sing (s :: Stk)
-            -> AEval (c ++ d) s :~: AEval d (AEval c s)
-distribEval sc sd ss = case sc of
-    SNil                  -> Refl
-    SCons (SINumb sn) sc' -> case distribEval sc' sd (SCons sn ss) of
-        Refl -> Refl
-    SCons SIPlus sc'      -> case ss of
-        SCons sn1 (SCons sn2 ss')
-                            -> case distribEval sc' sd (SCons (sn2 %+ sn1) ss') of
+validCompile :: Sing (e :: AExpr) -> Sing (c :: Code) -> Sing (s :: Stk)
+             -> AEval (ACompile e c) s :~: AEval c (AInterp e ': s)
+validCompile (SNumb sn)      sc ss = Refl
+validCompile (SPlus se1 se2) sc ss
+    = case validCompile se1 (saCompile se2 (SIPlus :% sc)) ss of
+        Refl -> case validCompile se2 (SIPlus :% sc) (saInterp se1 :% ss) of
             Refl -> Refl
-    SCons SIMult sc'      -> case ss of
-        SCons sn1 (SCons sn2 ss')
-                            -> case distribEval sc' sd (SCons (sn2 %* sn1) ss') of
+validCompile (SMult se1 se2) sc ss
+    = case validCompile se1 (saCompile se2 (SIMult :% sc)) ss of
+        Refl -> case validCompile se2 (SIMult :% sc) (saInterp se1 :% ss) of
             Refl -> Refl
