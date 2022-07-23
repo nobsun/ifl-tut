@@ -68,6 +68,7 @@ library
                     , Template.Mark5cp.State
                     , Template.Mark5cp.PPrint
                     , Gmachine.AExpr
+                    , Gmachine.AExprLet
 
     -- Modules included in this library but not exported.
     -- other-modules:

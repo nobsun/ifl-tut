@@ -17,6 +17,7 @@ cabal.sandbox.config
 *.hp
 *.eventlog
 ghci.log
+ghci.hist
 log/
 .stack-work/
 cabal.project.local
