@@ -19,7 +19,9 @@ module Gmachine.AExprLet where
 import Data.Type.Bool
 import Data.Type.Equality
 import Numeric.Natural
+import Unsafe.Coerce ( unsafeCoerce )
 
+import Bool
 import Nat
 import List
 import Singleton
@@ -96,7 +98,7 @@ e : Plus e1 e2 のとき
 =   { ++ の左単位元 }
     aCompile' e1 ++ (aCompile' e2 ++ IPlus n : c)
 =   { 仕様 }
-    aCompile e1 (aComile' e2 (IPlus n : c))
+    aCompile e1 (aComile e2 (IPlus n : c))
 
 e : Mult e1 e2 のとき
     上と同様
@@ -164,7 +166,8 @@ type family Substitute (s :: AExpr) (x :: Name) (t :: AExpr) :: AExpr where
     Substitute (Numb n)     x t = Numb n
     Substitute (Plus e1 e2) x t = Plus (Substitute e1 x t) (Substitute e2 x t)
     Substitute (Mult e1 e2) x t = Mult (Substitute e1 x t) (Substitute e2 x t)
-    Substitute (Var y)      x t = If (y == x) t (Var y)
+    Substitute (Var x)      x t = t
+    Substitute (Var x')     x t = Var x'
     Substitute (Let y e b)  x t = Let y (Substitute e x t) (Substitute b x t)
 
 type family ACompile (e :: AExpr) (c :: Code) :: Code where
@@ -241,9 +244,9 @@ saSubstitute ss sx st = case ss of
     SNumb _       -> ss
     SPlus se1 se2 -> SPlus (saSubstitute se1 sx st) (saSubstitute se2 sx st)
     SMult se1 se2 -> SMult (saSubstitute se1 sx st) (saSubstitute se2 sx st)
-    SVar sy -> case sx %~ sy of
+    SVar sy -> case SVar sx %~ SVar sy of
         Proved Refl -> st
-        Disproved _ -> ss 
+        Disproved _ -> unsafeCoerce ss 
     SLet sy se sb -> SLet sy (saSubstitute se sx st) (saSubstitute sb sx st) 
 
 eq :: Sing (m :: Name) -> Sing (n :: Name) -> m :~: n -> Sing (Var m) :~: Sing (Var n)
@@ -279,4 +282,3 @@ validCompile (SVar sx) sc ss = validCompile (SNumb SZ) sc ss
 validCompile (SLet sx se sb) sc ss
     = case validCompile (saSubstitute sb sx se) sc ss of
         Refl -> Refl
-
