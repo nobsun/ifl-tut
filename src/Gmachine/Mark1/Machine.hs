@@ -108,7 +108,7 @@ mkap state
     where
         (a1, stk')  = Stk.pop state.stack
         (a2, stk'') = Stk.pop stk'
-        (heap', a)  = hAlloc state.heap (NAp a1 a1)
+        (heap', a)  = hAlloc state.heap (NAp a1 a2)
         stack'      = Stk.push a stk''
 
 push :: Int -> GmState -> GmState
@@ -174,6 +174,7 @@ buildInitialHeap program
     where
         compiled :: [GmCompiledSC]
         compiled = map compileSc (preludeDefs ++ program) ++ compiledPrimitives
+        -- compiled = map compileSc program
 
 type GmCompiledSC = (Name, Arity, GmCode)
 
