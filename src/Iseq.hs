@@ -42,14 +42,14 @@ iLayn seqs
 iLayn' :: Iseq iseq => Int -> [iseq] -> [iseq]
 iLayn' i seqs = zipoidWith layItem [i ..] seqs
     where
-      layItem n seq
-        = iConcat [ iFWNum 4 n, iStr ") ", iIndent seq, iNewline ]
+      layItem n seq'
+        = iConcat [ iFWNum 4 n, iStr ") ", iIndent seq', iNewline ]
 
 zipoidWith :: (a -> b -> b) -> [a] -> [b] -> [b]
-zipoidWith f (x:xs) yys = case yys of
-    y:ys -> case ys of
-        [] -> [y]
-        _  -> f x y : zipoidWith f xs ys
+zipoidWith f (x:xs) (y:ys) = case ys of
+    [] -> [y]
+    _  -> f x y : zipoidWith f xs ys
+zipoidWith _ _ _ = error "zipoid: empty list"
 
 {- | instance of Iseq
 -}
@@ -72,20 +72,20 @@ instance Iseq IseqRep where
     iAppend INil seq2 = seq2
     iAppend seq1 INil = seq1
     iAppend seq1 seq2 = IAppend seq1 seq2
-    iIndent seq = IIndent seq
+    iIndent seq' = IIndent seq'
     iNewline = INewline
-    iDisplay seq = flatten 0 [(seq, 0)]
+    iDisplay seq' = flatten 0 [(seq', 0)]
 
 flatten :: Int
         -> [(IseqRep, Int)]
         -> String
 flatten col iseqs = case iseqs of
-    (INil, indent) : seqs   -> flatten col seqs
-    (IStr s, indent) : seqs -> s ++ flatten (col + length s) seqs
+    (INil, _) : seqs   -> flatten col seqs
+    (IStr s, _) : seqs -> s ++ flatten (col + length s) seqs
     (IAppend seq1 seq2, indent) : seqs
         -> flatten col ((seq1, indent) : (seq2, indent) : seqs)
     (INewline, indent) : seqs
         -> '\n' : (space indent ++ flatten indent seqs)
-    (IIndent seq, indent) : seqs
-        -> flatten col ((seq, col) : seqs)
+    (IIndent seq', _) : seqs
+        -> flatten col ((seq', col) : seqs)
     [] -> ""

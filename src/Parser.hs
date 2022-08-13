@@ -6,6 +6,7 @@ module Parser
   , tokLoc
   , tokStr
   , Parser
+  , pVar
   , pLit
   , pSat
   , pNum
@@ -19,6 +20,7 @@ module Parser
   , pMunch, pMunch1
   , pOneOrMoreWithSep
   , (<$$>), (<$$), (<**>), (<**), (**>)
+  , takeFirstParse
   ) where
 
 import Data.Char ( isAlpha, isDigit )
@@ -64,7 +66,7 @@ infixr 3 `pAlt`, `pAlt'`
 
 (<+) :: [a] -> [a] -> [a]
 [] <+ ys = ys
-xs <+ ys = xs
+xs <+ _  = xs
 
 infixr 5 <+
 

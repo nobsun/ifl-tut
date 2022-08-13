@@ -8,12 +8,10 @@ module Template.Mark5rvp.Machine
 import Data.Bool
 import Data.Char
 import Data.List
-import Data.List.Extra
 
 import Language
 import Heap
 import Stack
-import Iseq
 import Utils
 
 import Template.Mark5rvp.State
@@ -65,7 +63,7 @@ compile prog = TiState
     where
         scDefs = prog ++ preludeDefs ++ extraPreludeDefs
         (initialHeap, initialGlobals) = buildInitialHeap scDefs
-        initialStack = singletonStack addressOfMain
+        _initialStack = singletonStack addressOfMain
         initialStack1 = singletonStack addr
         addressOfMain = aLookup initialGlobals "main" (negate 1)
         (heap1, addr1)
@@ -160,7 +158,7 @@ step state = case map toLower $ head state.control of
                   $ state
 
 numStep :: Int -> TiState -> TiState
-numStep n state 
+numStep _n state 
     | isEmptyStack state.dump = error "numStep: Number applied as a function"
     | otherwise = case restore state.stack state.dump of
         (stack1, dump1) -> setRuleId 7 $ state { stack = stack1, dump = dump1 }
@@ -173,7 +171,7 @@ apStep a1 a2 (state :: TiState) = case hLookup state.heap a2 of
         (a,_) = pop state.stack
 
 scStep :: Name -> [Name] -> CoreExpr -> TiState -> TiState
-scStep name args body state
+scStep _name args body state
     | state.stack.curDepth < succ argsLen
         = error "scStep: too few arguments given"
     | otherwise
@@ -189,10 +187,10 @@ indStep :: Addr -> TiState -> TiState
 indStep addr state = setRuleId 4 $ state { stack = push addr (discard 1 state.stack) }
 
 primStep :: Name -> Primitive -> TiState -> TiState
-primStep name prim = prim
+primStep _name prim = prim
 
 dataStep :: Tag -> [Addr] -> TiState -> TiState
-dataStep tag contents state = state { stack = stack1, dump = dump1 }
+dataStep _tag _contents state = state { stack = stack1, dump = dump1 }
     where
         (stack1, dump1) = restore state.stack state.dump
 
@@ -217,10 +215,10 @@ instantiateVar heap env name
     = (heap, aLookup env name (error ("instantiateVar: Undefined name " ++ show name)))
 
 instantiateNum :: TiHeap -> Assoc Name Addr -> Int -> (TiHeap, Addr)
-instantiateNum heap env num = hAlloc heap (NNum num)
+instantiateNum heap _env num = hAlloc heap (NNum num)
 
 instantiateConstr :: TiHeap -> Assoc Name Addr -> Tag -> Arity -> (TiHeap, Addr)
-instantiateConstr heap env tag arity = hAlloc heap (NPrim "Constr" (primConstr tag arity))
+instantiateConstr heap _env tag arity = hAlloc heap (NPrim "Constr" (primConstr tag arity))
 
 instantiateAp :: TiHeap -> Assoc Name Addr -> CoreExpr -> CoreExpr -> (TiHeap, Addr)
 instantiateAp heap env a b = hAlloc heap2 (NAp a1 a2)
@@ -235,16 +233,16 @@ instantiateLet heap env isrec defs body = instantiate body heap' env'
         env' = extraBindings ++ env
         rhsEnv | isrec     = env'
                | otherwise = env
-        instantiateRhs heap (name, rhs)
+        instantiateRhs heap'' (name, rhs)
             = (heap1, (name, addr))
             where
-                (heap1, addr) = instantiate rhs heap rhsEnv
+                (heap1, addr) = instantiate rhs heap'' rhsEnv
 
 instantiateCase :: TiHeap -> Assoc Name Addr -> CoreExpr -> [CoreAlter] -> (TiHeap, Addr)
-instantiateCase heap env expr alters = error "Cannot instatiate case"
+instantiateCase _heap _env _expr _alters = error "Cannot instatiate case"
 
 instantiateLam :: TiHeap -> Assoc Name Addr -> [Name] -> CoreExpr -> (TiHeap, Addr)
-instantiateLam heap env vars body = error "Cannot instatiate lambda"
+instantiateLam _heap _env _vars _body = error "Cannot instatiate lambda"
 
 instantiateAndUpdate :: CoreExpr
                      -> Addr
@@ -275,7 +273,7 @@ instUpdENum :: Addr
             -> Assoc Name Addr
             -> Int
             -> TiHeap
-instUpdENum updAddr heap env n = hUpdate heap updAddr (NNum n)
+instUpdENum updAddr heap _env n = hUpdate heap updAddr (NNum n)
 
 instUpdEConstr :: Addr
                -> TiHeap
@@ -283,7 +281,7 @@ instUpdEConstr :: Addr
                -> Tag
                -> Arity
                -> TiHeap
-instUpdEConstr updAddr heap env tag arity
+instUpdEConstr updAddr heap _env tag arity
     = hUpdate heap updAddr (NPrim "Constr" (primConstr tag arity))
 
 instUpdEAp :: Addr
@@ -310,9 +308,9 @@ instUpdELet updAddr heap env isrec defs body = instantiateAndUpdate body updAddr
         env1 = extraBindings ++ env
         rhsEnv | isrec     = env1
                | otherwise = env
-        instantiateRhs heap (name, rhs) = (heap1, (name, addr))
+        instantiateRhs heap' (name, rhs) = (heap'', (name, addr))
             where
-                (heap1, addr) = instantiate rhs heap rhsEnv
+                (heap'', addr) = instantiate rhs heap' rhsEnv
 
 instUpdECase :: Addr
              -> TiHeap
@@ -320,7 +318,7 @@ instUpdECase :: Addr
              -> CoreExpr
              -> [CoreAlter]
              -> TiHeap
-instUpdECase updAddr heap env expr alts = error "not implemented"
+instUpdECase _updAddr _heap _env _expr _alts = error "not implemented"
 
 instUpdELam :: Addr
             -> TiHeap
@@ -328,7 +326,7 @@ instUpdELam :: Addr
             -> [Name]
             -> CoreExpr
             -> TiHeap
-instUpdELam updAddr heap env vars body = error "not implemented"
+instUpdELam _updAddr _heap _env _vars _body = error "not implemented"
 
 test :: (?sz :: Int, ?th :: Int) => String -> IO ()
 test = interact . drive . run 
@@ -337,14 +335,14 @@ test = interact . drive . run
 gc :: TiState -> TiState
 gc state = case markFromStack state.heap state.stack of
     (hp1, stack1) -> case markFromDump hp1 state.dump of
-        (hp2, dump1)  -> case markFromGlobals hp2 state.globals of
+        (hp2, _dump1)  -> case markFromGlobals hp2 state.globals of
             (hp3, globals1) -> state { stack = stack1, heap = scanHeap hp3, globals = globals1, stats = incGcCount state.stats }
 
 findStackRoots :: TiStack -> [Addr]
 findStackRoots stack = stack.stkItems
 
 findDumpRoots :: TiDump -> [Addr]
-findDumpRoots dump = []
+findDumpRoots _dump = []
 
 findGlobalRoots :: TiGlobals -> [Addr]
 findGlobalRoots globals = aRange globals
@@ -380,14 +378,14 @@ mark gcstate = case hLookup gcstate.tiheap gcstate.forward of
                      , backward = gcstate.forward
                      , tiheap   = hUpdate gcstate.tiheap gcstate.forward (NMarked (Visits 1) (NAp gcstate.backward a2))
                      })
-        NSupercomb n as e -> mark 
+        NSupercomb _n _as _e -> mark 
             (gcstate { tiheap = hUpdate gcstate.tiheap gcstate.forward (NMarked Done node)})
-        NNum num -> mark (gcstate { tiheap = hUpdate gcstate.tiheap gcstate.forward (NMarked Done node)})
+        NNum _num -> mark (gcstate { tiheap = hUpdate gcstate.tiheap gcstate.forward (NMarked Done node)})
         NInd a -> mark (gcstate { forward = a })
-        NPrim n p -> mark (gcstate { tiheap = hUpdate gcstate.tiheap gcstate.forward (NMarked Done node)})
+        NPrim _n _p -> mark (gcstate { tiheap = hUpdate gcstate.tiheap gcstate.forward (NMarked Done node)})
         NData t as -> case mapAccumL markFrom gcstate.tiheap as of
             (heap, as1) -> mark (gcstate { tiheap = hUpdate heap gcstate.forward (NMarked Done (NData t as1))})
-        NMarked m node -> case m of
+        NMarked m _node -> case m of
             Done -> case gcstate.backward of
                 b | b == hNull -> (gcstate.tiheap, gcstate.forward)
                   | otherwise  -> case hLookup gcstate.tiheap b of
@@ -400,7 +398,8 @@ mark gcstate = case hLookup gcstate.tiheap gcstate.forward of
                                  , backward = b'
                                  , tiheap   = hUpdate gcstate.tiheap gcstate.backward (NMarked Done (NAp a1 gcstate.forward))
                                  })
-
+                      _ -> error "mark: too many visited node"
+            _ -> error "mark: invalid marked node"
 
 --         (\ markstate node -> case markstate of
 --             Done -> if gcstate.backward == hNull

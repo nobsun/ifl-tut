@@ -4,14 +4,12 @@
 module Template.Mark5.PPrint
     where
 
-import Language
 import Iseq
 import Heap
 import Stack
 import Utils
 
 import Template.Mark5.Node
-import Template.Mark5.Primitive
 import Template.Mark5.State
 
 showResults :: [TiState] -> String
@@ -21,6 +19,7 @@ mapoid :: (a -> b, a -> b) -> [a] -> [b]
 mapoid (f, g) (x:xs) = case xs of
     [] -> f x : [g x]
     _  -> f x : mapoid (f,g) xs
+mapoid _ _ = error "mapoid: empty list"
 
 showState :: TiState -> IseqRep
 showState state = iConcat
@@ -52,7 +51,7 @@ showFWAddr addr = iStr (rjustify 4 (show addr))
 showNode :: Node -> IseqRep
 showNode node = dispatchNode
     (\ a1 a2 -> iConcat [ iStr "NAp ", showAddr a1, iStr " ", showAddr a2 ])
-    (\ name args body -> iStr ("NSupercomb " ++ name))
+    (\ name _args _body -> iStr ("NSupercomb " ++ name))
     (\ n -> iStr "NNum " `iAppend` iNum n)
     (\ a -> iStr "NInd " `iAppend` showAddr a)
     (\ name _ -> iStr ("NPrim " ++ name))
@@ -88,7 +87,7 @@ showOutput :: TiOutput -> IseqRep
 showOutput output = iStr ("Output " ++ show output)
 
 showRuleId :: TiRuleId -> IseqRep
-showRuleId rid = iStr ("Rule " ++ show (2, rid)) 
+showRuleId rid = iStr ("Rule " ++ show (2 :: Int, rid)) 
 
 showStats :: TiState -> IseqRep
 showStats state = iConcat

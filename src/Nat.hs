@@ -64,8 +64,8 @@ instance (SingI (n :: Nat)) => SingI ('S n) where
     sing = SS sing
 
 type family (m :: Nat) + (n :: Nat) :: Nat where
-    Z   + n = n
-    S m + n = S (m + n)
+    'Z   + n = n
+    'S m + n = 'S (m + n)
 
 (%+) :: Sing (m :: Nat) -> Sing (n :: Nat) -> Sing (m + n :: Nat)
 SZ    %+ sn = sn
@@ -79,23 +79,23 @@ associativityOfPlus si sj sk
         SS si' -> case associativityOfPlus si' sj sk of
             Refl   -> Refl
 
-leftUnit :: Sing (n :: Nat) -> Z + n :~: n
-leftUnit sn = Refl
+leftUnit :: Sing (n :: Nat) -> 'Z + n :~: n
+leftUnit _ = Refl
 
-rightUnit :: Sing (n :: Nat) -> n + Z :~: n
+rightUnit :: Sing (n :: Nat) -> n + 'Z :~: n
 rightUnit sn = case sn of
     SZ     -> Refl
     SS sn' -> case rightUnit sn' of
         Refl -> Refl
 
 swapSucc :: Sing (m :: Nat) -> Sing (n :: Nat)
-         -> S m + n :~: m + S n
+         -> 'S m + n :~: m + 'S n
 swapSucc sm sn = case sm of
     SZ     -> Refl
     SS sm' -> case swapSucc sm' sn of
         Refl   -> Refl
 
-plusOne :: Sing (m :: Nat) -> m + S Z :~: S m
+plusOne :: Sing (m :: Nat) -> m + 'S 'Z :~: 'S m
 plusOne sm = case sm of
     SZ -> Refl
     SS sm' -> case plusOne sm' of
@@ -116,7 +116,7 @@ type family (m :: Nat) * (n :: Nat) :: Nat where
     'S m * n = (m * n) + n
 
 (%*) :: Sing (m :: Nat) -> Sing (n :: Nat) -> Sing (m * n)
-SZ    %* sn = SZ
+SZ    %* _  = SZ
 SS sm %* sn = (sm %* sn) %+ sn
 
 distribPlusOnMult :: Sing (i :: Nat) -> Sing (j :: Nat) -> Sing (k :: Nat)
@@ -149,19 +149,19 @@ associativityOfMult si sj sk = case si of
         Refl   -> case associativityOfMult si' sj sk of
             Refl   -> Refl
 
-leftZero :: Sing (m :: Nat) -> Z * m :~: Z
-leftZero sm = Refl
+leftZero :: Sing (m :: Nat) -> 'Z * m :~: 'Z
+leftZero _ = Refl
 
-rightZero :: Sing (m :: Nat) -> m * Z :~: Z
+rightZero :: Sing (m :: Nat) -> m * 'Z :~: 'Z
 rightZero sm = case sm of
     SZ -> Refl
     SS sm' -> case rightZero sm' of
         Refl   -> Refl
 
-leftUnitMult :: Sing (m :: Nat) -> S Z * m :~: m
-leftUnitMult sm = Refl
+leftUnitMult :: Sing (m :: Nat) -> 'S 'Z * m :~: m
+leftUnitMult _ = Refl
 
-rightUnitMult :: Sing (m :: Nat) -> m * S Z :~: m
+rightUnitMult :: Sing (m :: Nat) -> m * 'S 'Z :~: m
 rightUnitMult sm = case sm of
     SZ     -> Refl
     SS sm' -> case rightUnitMult sm' of

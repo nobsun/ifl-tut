@@ -5,15 +5,12 @@
 module Template.Mark5c.Machine
     where
 
-import Data.Bool
 import Data.Char
 import Data.List
-import Data.List.Extra
 
 import Language
 import Heap
 import Stack
-import Iseq
 import Utils
 
 import Template.Mark5c.State
@@ -65,7 +62,7 @@ compile prog = TiState
     where
         scDefs = prog ++ preludeDefs ++ extraPreludeDefs
         (initialHeap, initialGlobals) = buildInitialHeap scDefs
-        initialStack = singletonStack addressOfMain
+        -- initialStack = singletonStack addressOfMain
         initialStack1 = singletonStack addr
         addressOfMain = aLookup initialGlobals "main" (negate 1)
         (heap1, addr1)
@@ -166,7 +163,7 @@ step state = case map toLower $ head state.control of
                $ state
 
 numStep :: Int -> TiState -> TiState
-numStep n state 
+numStep _n state 
     | isEmptyStack state.dump = error "numStep: Number applied as a function"
     | otherwise = case popAndRestore state.stack state.dump of
         (stack1, dump1) -> setRuleId 7 $ state { stack = stack1, dump = dump1 }
@@ -179,7 +176,7 @@ apStep a1 a2 state = case hLookup state.heap a2 of
         (a,_) = pop state.stack
 
 scStep :: Name -> [Name] -> CoreExpr -> TiState -> TiState
-scStep name args body state
+scStep _name args body state
     | state.stack.curDepth < succ argsLen
         = error "scStep: too few arguments given"
     | otherwise
@@ -195,10 +192,10 @@ indStep :: Addr -> TiState -> TiState
 indStep addr state = setRuleId 4 $ state { stack = push addr (discard 1 state.stack) }
 
 primStep :: Name -> Primitive -> TiState -> TiState
-primStep name prim = prim
+primStep _name prim = prim
 
 dataStep :: Tag -> [Addr] -> TiState -> TiState
-dataStep tag contents state = state { stack = stack1, dump = dump1 }
+dataStep _tag _contents state = state { stack = stack1, dump = dump1 }
     where
         (stack1, dump1) = popAndRestore state.stack state.dump
 
@@ -223,10 +220,10 @@ instantiateVar heap env name
     = (heap, aLookup env name (error ("instantiateVar: Undefined name " ++ show name)))
 
 instantiateNum :: TiHeap -> Assoc Name Addr -> Int -> (TiHeap, Addr)
-instantiateNum heap env num = hAlloc heap (NNum num)
+instantiateNum heap _env num = hAlloc heap (NNum num)
 
 instantiateConstr :: TiHeap -> Assoc Name Addr -> Tag -> Arity -> (TiHeap, Addr)
-instantiateConstr heap env tag arity = hAlloc heap (NPrim "Constr" (primConstr tag arity))
+instantiateConstr heap _env tag arity = hAlloc heap (NPrim "Constr" (primConstr tag arity))
 
 instantiateAp :: TiHeap -> Assoc Name Addr -> CoreExpr -> CoreExpr -> (TiHeap, Addr)
 instantiateAp heap env a b = hAlloc heap2 (NAp a1 a2)
@@ -241,16 +238,16 @@ instantiateLet heap env isrec defs body = instantiate body heap' env'
         env' = extraBindings ++ env
         rhsEnv | isrec     = env'
                | otherwise = env
-        instantiateRhs heap (name, rhs)
+        instantiateRhs heap'' (name, rhs)
             = (heap1, (name, addr))
             where
-                (heap1, addr) = instantiate rhs heap rhsEnv
+                (heap1, addr) = instantiate rhs heap'' rhsEnv
 
 instantiateCase :: TiHeap -> Assoc Name Addr -> CoreExpr -> [CoreAlter] -> (TiHeap, Addr)
-instantiateCase heap env expr alters = error "Cannot instatiate case"
+instantiateCase _heap _env _expr _alters = error "Cannot instatiate case"
 
 instantiateLam :: TiHeap -> Assoc Name Addr -> [Name] -> CoreExpr -> (TiHeap, Addr)
-instantiateLam heap env vars body = error "Cannot instatiate lambda"
+instantiateLam _heap _env _vars _body = error "Cannot instatiate lambda"
 
 instantiateAndUpdate :: CoreExpr
                      -> Addr
@@ -281,7 +278,7 @@ instUpdENum :: Addr
             -> Assoc Name Addr
             -> Int
             -> TiHeap
-instUpdENum updAddr heap env n = hUpdate heap updAddr (NNum n)
+instUpdENum updAddr heap _env n = hUpdate heap updAddr (NNum n)
 
 instUpdEConstr :: Addr
                -> TiHeap
@@ -289,7 +286,7 @@ instUpdEConstr :: Addr
                -> Tag
                -> Arity
                -> TiHeap
-instUpdEConstr updAddr heap env tag arity
+instUpdEConstr updAddr heap _env tag arity
     = hUpdate heap updAddr (NPrim "Constr" (primConstr tag arity))
 
 instUpdEAp :: Addr
@@ -316,9 +313,9 @@ instUpdELet updAddr heap env isrec defs body = instantiateAndUpdate body updAddr
         env1 = extraBindings ++ env
         rhsEnv | isrec     = env1
                | otherwise = env
-        instantiateRhs heap (name, rhs) = (heap1, (name, addr))
+        instantiateRhs heap' (name, rhs) = (heap1', (name, addr))
             where
-                (heap1, addr) = instantiate rhs heap rhsEnv
+                (heap1', addr) = instantiate rhs heap' rhsEnv
 
 instUpdECase :: Addr
              -> TiHeap
@@ -326,7 +323,7 @@ instUpdECase :: Addr
              -> CoreExpr
              -> [CoreAlter]
              -> TiHeap
-instUpdECase updAddr heap env expr alts = error "not implemented"
+instUpdECase _updAddr _heap _env _expr _alts = error "not implemented"
 
 instUpdELam :: Addr
             -> TiHeap
@@ -334,7 +331,7 @@ instUpdELam :: Addr
             -> [Name]
             -> CoreExpr
             -> TiHeap
-instUpdELam updAddr heap env vars body = error "not implemented"
+instUpdELam _updAddr _heap _env _vars _body = error "not implemented"
 
 test :: String -> IO ()
 test = interact . drive . run 

@@ -10,8 +10,6 @@ import Language
 import Heap
 import Stack
 import Utils hiding (rjustify)
-import Data.Function
-import Control.Monad
 
 data TiState
     = TiState
@@ -97,9 +95,11 @@ primNeg state
                                $ state { stack = stack1, heap = heap1 }
     where
         args      = take 1 $ getargs state.heap state.stack
-        [argAddr] = args
+        argAddr   = head args
         argNode   = hLookup state.heap argAddr
-        NNum argValue = argNode
+        argValue  = case argNode of
+            NNum n -> n 
+            _      -> error "primNeg: NaN operand"
         (_, stack1) = pop state.stack
         (root, _)   = pop stack1
         heap1 = hUpdate state.heap root (NNum (negate argValue))
@@ -108,6 +108,7 @@ primArith :: (Int -> Int -> Int) -> TiState -> TiState
 primArith op = primDyadic op'
     where
         op' (NNum m) (NNum n) = NNum (m `op` n)
+        op' _ _ = error "primArith: NaN operand"
 
 primComp :: (Int -> Int -> Bool) -> TiState -> TiState
 primComp op = primDyadic op'
@@ -115,6 +116,7 @@ primComp op = primDyadic op'
         op' (NNum m) (NNum n)
             | m `op` n  = NData 1 []
             | otherwise = NData 0 []
+        op' _ _ = error "primComp: NaN operand"
 
 primDyadic :: (Node -> Node -> Node) -> TiState -> TiState
 primDyadic op state 
@@ -127,8 +129,11 @@ primDyadic op state
                                 $ state { stack = stack1, heap = heap1 }
     where
         args = take 2 $ getargs state.heap state.stack
-        [arg1Addr, arg2Addr] = args
-        [arg1Node, arg2Node] = map (hLookup state.heap) args
+        arg1Addr = head args
+        arg2Addr = head $ tail args
+        arg1Node = head argNodes
+        arg2Node = head $ tail argNodes
+        argNodes = map (hLookup state.heap) args
         stack1 = discard 2 state.stack
         (root, _) = pop stack1
         heap1 = hUpdate state.heap root (op arg1Node arg2Node)
@@ -152,7 +157,9 @@ primIf state
     | otherwise = doAdminPrimSteps $ setRuleId 18 $ state { stack = stack1, heap = heap1}
     where
         args = take 3 $ getargs state.heap state.stack
-        [arg1Addr, arg2Addr, arg3Addr] = args
+        arg1Addr = head args
+        arg2Addr = head $ tail args
+        arg3Addr = head $ drop 2 args
         arg1Node = hLookup state.heap arg1Addr
         stack1 = discard 3 state.stack 
         (root, _) = pop stack1
@@ -169,14 +176,16 @@ primCasePair state
     | otherwise = doAdminPrimSteps $ setRuleId 20 $ state { stack = stack1, heap = heap1 }
     where
         args = take 2 $ getargs state.heap state.stack
-        [arg1Addr, arg2Addr] = args
+        arg1Addr = head args
+        arg2Addr = head $ tail args
         arg1Node = hLookup state.heap arg1Addr
         stack1 = discard 2 state.stack
         (root, _) = pop stack1
         heap1 = case arg1Node of
-            NData tag [ft,sd] -> hUpdate heap2 root (NAp addr sd)
+            NData _ [ft,sd] -> hUpdate heap2 root (NAp addr sd)
                 where
                     (heap2 ,addr) = hAlloc state.heap (NAp arg2Addr ft)
+            _ -> error "printCasePair: not NData node"
 
 primCaseList :: TiState -> TiState
 primCaseList state
@@ -186,7 +195,9 @@ primCaseList state
     | otherwise = doAdminPrimSteps $ setRuleId 22 $ state { stack = stack1, heap = heap1 }
     where
         args = take 3 $ getargs state.heap state.stack
-        [arg1Addr, arg2Addr, arg3Addr] = args
+        arg1Addr = head args
+        arg2Addr = head $ tail args
+        arg3Addr = head $ tail $ tail args
         arg1Node = hLookup state.heap arg1Addr
         stack1 = discard 3 state.stack
         (root, _) = pop stack1
@@ -224,9 +235,10 @@ primPrint state
     where
         args = take 2 $ getargs state.heap state.stack
         argsLen = length args
-        [arg1Addr, arg2Addr] = args
+        arg1Addr = head args
+        arg2Addr = head $ tail args
         arg1Node = hLookup state.heap arg1Addr
-        NNum arg1Value = arg1Node
+        -- NNum _ = arg1Node
         stack1 = discard argsLen state.stack
 
 -- | Node
@@ -259,7 +271,7 @@ dispatchNode nap nsupercomb nnum nind nprim ndata nmarked node = case node of
     NInd a                 -> nind a
     NPrim name prim        -> nprim name prim
     NData tag contents     -> ndata tag contents
-    NMarked mst node       -> nmarked mst node
+    NMarked mst node'      -> nmarked mst node'
 
 instance Show Node where
     show = \ case
@@ -283,7 +295,7 @@ doAdminPrimSteps = applyToStats incPrimSteps
 
 getargs :: TiHeap -> TiStack -> [Addr]
 getargs heap stack = case pop stack of
-    (sc, stack1) -> map getarg stack1.stkItems
+    (_, stack1) -> map getarg stack1.stkItems
         where
             getarg addr = case hLookup heap addr of
                 NAp _ arg -> arg

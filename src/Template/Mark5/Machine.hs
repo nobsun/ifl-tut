@@ -10,7 +10,6 @@ import Data.List
 import Language
 import Heap
 import Stack
-import Iseq
 import Utils
 
 import Template.Mark5.Node
@@ -52,7 +51,7 @@ compile prog = TiState
     where
         scDefs = prog ++ preludeDefs ++ extraPreludeDefs
         (initialHeap, initialGlobals) = buildInitialHeap scDefs
-        initialStack = singletonStack addressOfMain
+        -- initialStack = singletonStack addressOfMain
         initialStack1 = singletonStack addr
         addressOfMain = aLookup initialGlobals "main" (error "main is not defined")
         addressOfPrint = aLookup initialGlobals "printList" (error "printList is not defined")
@@ -132,8 +131,6 @@ tiFinal state
     -- | isSingletonStack state.stack = isDataNode (hLookup state.heap soleAddr)
     --                               && isEmptyStack state.dump
     | otherwise                    = False
-    where
-        (soleAddr, _) = pop state.stack
 
 isDataNode :: Node -> Bool
 isDataNode node = case node of
@@ -162,7 +159,7 @@ step state = dispatchNode
            $ state
 
 numStep :: Int -> TiState -> TiState
-numStep n state 
+numStep _n state 
     | isEmptyStack state.dump = error "numStep: Number applied as a function"
     | otherwise = case restore state.stack state.dump of
         (stack1, dump1) -> setRuleId 7 $ state { stack = stack1, dump = dump1 }
@@ -175,7 +172,7 @@ apStep a1 a2 state = case hLookup state.heap a2 of
         (a,_) = pop state.stack
 
 scStep :: Name -> [Name] -> CoreExpr -> TiState -> TiState
-scStep name args body state
+scStep _name args body state
     | state.stack.curDepth < succ argsLen
         = error "scStep: too few arguments given"
     | otherwise
@@ -189,17 +186,19 @@ scStep name args body state
 
 getargs :: TiHeap -> TiStack -> [Addr]
 getargs heap stack = case pop stack of
-    (sc, stack') -> map getarg stack'.stkItems
+    (_sc, stack') -> map getarg stack'.stkItems
         where
             getarg addr = arg
                 where
-                    NAp fun arg = hLookup heap addr
+                    arg = case hLookup heap addr of
+                        NAp _fun a -> a
+                        _          -> error "getargs: not NAp node"
 
 indStep :: Addr -> TiState -> TiState
 indStep addr state = setRuleId 4 $ state { stack = push addr (discard 1 state.stack) }
 
 primStep :: Name -> Primitive -> TiState -> TiState
-primStep name prim = case prim of
+primStep _name prim = case prim of
     Neg -> primNeg
     Add -> primArith (+)
     Sub -> primArith (-)
@@ -230,9 +229,11 @@ primNeg state
                                $ state { stack = stack1, heap = heap1 }
     where
         args      = getargs state.heap state.stack
-        [argAddr] = args
+        argAddr   = head args
         argNode   = hLookup state.heap argAddr
-        NNum argValue = argNode
+        argValue = case argNode of
+            NNum n -> n
+            _ -> error "primNeg: NaN operand"
         (_, stack1) = pop state.stack
         (root, _)   = pop stack1
         heap1 = hUpdate state.heap root (NNum (negate argValue))
@@ -242,6 +243,7 @@ primArith :: (Int -> Int -> Int) -> TiState -> TiState
 primArith op = primDyadic op'
     where
         op' (NNum m) (NNum n) = NNum (m `op` n)
+        op' _ _ = error "primArith: NaN operand"
 
 primComp :: (Int -> Int -> Bool) -> TiState -> TiState
 primComp op = primDyadic op'
@@ -249,6 +251,7 @@ primComp op = primDyadic op'
         op' (NNum m) (NNum n)
             | m `op` n  = NData 1 []
             | otherwise = NData 0 []
+        op' _ _ = error "primComp: NaN operand"
 
 primDyadic :: (Node -> Node -> Node) -> TiState -> TiState
 primDyadic op state 
@@ -263,8 +266,11 @@ primDyadic op state
                                 $ state { stack = stack1, heap = heap1 }
     where
         args = getargs state.heap state.stack
-        [arg1Addr, arg2Addr] = args
-        [arg1Node, arg2Node] = map (hLookup state.heap) args
+        arg1Addr = head args
+        arg2Addr = head $ tail args
+        arg1Node = head argNodes
+        arg2Node = head $ tail argNodes
+        argNodes = map (hLookup state.heap) args
         stack1 = discard 2 state.stack
         (root, _) = pop stack1
         heap1 = hUpdate state.heap root (op arg1Node arg2Node)
@@ -289,7 +295,9 @@ primIf state
     | otherwise = doAdminPrimSteps $ setRuleId 19 $ state { stack = stack1, heap = heap1}
     where
         args = getargs state.heap state.stack
-        [arg1Addr, arg2Addr, arg3Addr] = take 3 args
+        arg1Addr = head $ drop 0 args
+        arg2Addr = head $ drop 1 args
+        arg3Addr = head $ drop 2 args
         arg1Node = hLookup state.heap arg1Addr
         stack1 = discard 3 state.stack 
         (root, _) = pop stack1
@@ -306,14 +314,16 @@ primCasePair state
     | otherwise = doAdminPrimSteps $ state { stack = stack1, heap = heap1 }
     where
         args = getargs state.heap state.stack
-        [arg1Addr, arg2Addr] = args
+        arg1Addr = head args
+        arg2Addr = head $ tail args
         arg1Node = hLookup state.heap arg1Addr
         stack1 = discard 2 state.stack
         (root, _) = pop stack1
         heap1 = case arg1Node of
-            NData tag [ft,sd] -> hUpdate heap2 root (NAp addr sd)
+            NData _tag [ft,sd] -> hUpdate heap2 root (NAp addr sd)
                 where
                     (heap2 ,addr) = hAlloc state.heap (NAp arg2Addr ft)
+            _ -> error "primCasePair: not NData node"
 
 primCaseList :: TiState -> TiState
 primCaseList state
@@ -323,7 +333,9 @@ primCaseList state
     | otherwise = doAdminPrimSteps $ state { stack = stack1, heap = heap1 }
     where
         args = getargs state.heap state.stack
-        [arg1Addr, arg2Addr, arg3Addr] = take 3 args
+        arg1Addr = head $ drop 0 args
+        arg2Addr = head $ drop 1 args
+        arg3Addr = head $ drop 2 args
         arg1Node = hLookup state.heap arg1Addr
         stack1 = discard 3 state.stack
         (root, _) = pop stack1
@@ -334,6 +346,8 @@ primCaseList state
                     [hd, tl]  -> hUpdate heap2 root (NAp addr tl)
                         where
                             (heap2, addr) = hAlloc state.heap (NAp arg3Addr hd)
+                    _ -> error "primCaseList: invalid node"
+            _ -> error "primCaseList: not NData node"
 
 primAbort :: TiState -> TiState
 primAbort = error "Program abort!"
@@ -358,13 +372,13 @@ primPrint state
     where
         args = getargs state.heap state.stack
         argsLen = length args
-        [arg1Addr, arg2Addr] = args
+        arg1Addr = head args
+        arg2Addr = head $ tail args
         arg1Node = hLookup state.heap arg1Addr
-        NNum arg1Value = arg1Node
         stack1 = discard argsLen state.stack
 
 dataStep :: Tag -> [Addr] -> TiState -> TiState
-dataStep tag contents state = state { stack = stack1, dump = dump1 }
+dataStep _tag _contents state = state { stack = stack1, dump = dump1 }
     where
         (stack1, dump1) = restore state.stack state.dump
 
@@ -389,10 +403,10 @@ instantiateVar heap env name
     = (heap, aLookup env name (error ("instantiateVar: Undefined name " ++ show name)))
 
 instantiateNum :: TiHeap -> Assoc Name Addr -> Int -> (TiHeap, Addr)
-instantiateNum heap env num = hAlloc heap (NNum num)
+instantiateNum heap _env num = hAlloc heap (NNum num)
 
 instantiateConstr :: TiHeap -> Assoc Name Addr -> Tag -> Arity -> (TiHeap, Addr)
-instantiateConstr heap env tag arity = hAlloc heap (NPrim "Constr" (PrimConstr tag arity))
+instantiateConstr heap _env tag arity = hAlloc heap (NPrim "Constr" (PrimConstr tag arity))
 
 instantiateAp :: TiHeap -> Assoc Name Addr -> CoreExpr -> CoreExpr -> (TiHeap, Addr)
 instantiateAp heap env a b = hAlloc heap2 (NAp a1 a2)
@@ -407,16 +421,16 @@ instantiateLet heap env isrec defs body = instantiate body heap' env'
         env' = extraBindings ++ env
         rhsEnv | isrec     = env'
                | otherwise = env
-        instantiateRhs heap (name, rhs)
+        instantiateRhs heap'' (name, rhs)
             = (heap1, (name, addr))
             where
-                (heap1, addr) = instantiate rhs heap rhsEnv
+                (heap1, addr) = instantiate rhs heap'' rhsEnv
 
 instantiateCase :: TiHeap -> Assoc Name Addr -> CoreExpr -> [CoreAlter] -> (TiHeap, Addr)
-instantiateCase heap env expr alters = error "Cannot instatiate case"
+instantiateCase _heap _env _expr _alters = error "Cannot instatiate case"
 
 instantiateLam :: TiHeap -> Assoc Name Addr -> [Name] -> CoreExpr -> (TiHeap, Addr)
-instantiateLam heap env vars body = error "Cannot instatiate lambda"
+instantiateLam _heap _env _vars _body = error "Cannot instatiate lambda"
 
 instantiateAndUpdate :: CoreExpr
                      -> Addr
@@ -447,7 +461,7 @@ instUpdENum :: Addr
             -> Assoc Name Addr
             -> Int
             -> TiHeap
-instUpdENum updAddr heap env n = hUpdate heap updAddr (NNum n)
+instUpdENum updAddr heap _env n = hUpdate heap updAddr (NNum n)
 
 instUpdEConstr :: Addr
                -> TiHeap
@@ -455,7 +469,7 @@ instUpdEConstr :: Addr
                -> Tag
                -> Arity
                -> TiHeap
-instUpdEConstr updAddr heap env tag arity
+instUpdEConstr updAddr heap _env tag arity
     = hUpdate heap updAddr (NPrim "Constr" (PrimConstr tag arity))
 
 instUpdEAp :: Addr
@@ -482,9 +496,9 @@ instUpdELet updAddr heap env isrec defs body = instantiateAndUpdate body updAddr
         env1 = extraBindings ++ env
         rhsEnv | isrec     = env1
                | otherwise = env
-        instantiateRhs heap (name, rhs) = (heap1, (name, addr))
+        instantiateRhs heap' (name, rhs) = (heap1', (name, addr))
             where
-                (heap1, addr) = instantiate rhs heap rhsEnv
+                (heap1', addr) = instantiate rhs heap' rhsEnv
 
 instUpdECase :: Addr
              -> TiHeap
@@ -492,7 +506,7 @@ instUpdECase :: Addr
              -> CoreExpr
              -> [CoreAlter]
              -> TiHeap
-instUpdECase updAddr heap env expr alts = error "not implemented"
+instUpdECase _updAddr _heap _env _expr _alts = error "not implemented"
 
 instUpdELam :: Addr
             -> TiHeap
@@ -500,7 +514,7 @@ instUpdELam :: Addr
             -> [Name]
             -> CoreExpr
             -> TiHeap
-instUpdELam updAddr heap env vars body = error "not implemented"
+instUpdELam _updAddr _heap _env _vars _body = error "not implemented"
 
 {- | Testing -}
 

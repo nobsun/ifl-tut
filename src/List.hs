@@ -47,7 +47,8 @@ type family Head (α :: [k]) :: k where
 
 sHead :: Sing (α :: [k]) -> SomeSing k
 sHead = \ case
-    h :% _ -> SomeSing h 
+    h :% _ -> SomeSing h
+    _      -> error "sHead: empty list"
 
 type family Tail (α :: [k]) :: [k] where
     Tail (h ': t) = t
@@ -55,6 +56,7 @@ type family Tail (α :: [k]) :: [k] where
 sTail :: Sing (α :: [k]) -> SomeSing [k]
 sTail = \ case
     _ :% t -> SomeSing t
+    _      -> error "sTail: empty list"
 
 type family Last (α :: [k]) :: k where
     Last (h ': '[]) = h
@@ -63,7 +65,8 @@ type family Last (α :: [k]) :: k where
 sLast :: Sing (α :: [k]) -> SomeSing k
 sLast = \ case
     h :% SNil -> SomeSing h
-    h :% t    -> sLast t
+    _ :% t    -> sLast t
+    _         -> error "sLast: empty list"
 
 type family Init (α :: [k]) :: [k] where
     Init (h ': '[]) = '[]
@@ -71,32 +74,33 @@ type family Init (α :: [k]) :: [k] where
 
 sInit :: Sing (α :: [k]) -> SomeSing [k]
 sInit = \ case
-    h :% SNil -> SomeSing SNil
+    _ :% SNil -> SomeSing SNil
     h :% t    -> withSomeSing (sInit t) $ \ st -> SomeSing (h :% st)
+    _         -> error "sInit: empty list"
 
 type family Take (n :: Nat) (α :: [k]) :: [k] where
-    Take Z α            = '[]
-    Take (S n) '[]      = '[]
-    Take (S n) (h ': t) = h ': Take n t
+    Take 'Z α            = '[]
+    Take ('S n) '[]      = '[]
+    Take ('S n) (h ': t) = h ': Take n t
 
 type family Drop (n :: Nat) (α :: [k]) :: [k] where
-    Drop Z     α        = α
-    Drop (S n) '[]      = '[]
-    Drop (S n) (h ': t) = Drop n t
+    Drop 'Z     α        = α
+    Drop ('S n) '[]      = '[]
+    Drop ('S n) (h ': t) = Drop n t
 
 sTake :: Sing (n :: Nat) -> Sing (α :: [k]) -> SomeSing [k]
 sTake SZ      _          = SomeSing SNil
-sTake (SS sn) SNil       = SomeSing SNil
+sTake (SS _) SNil        = SomeSing SNil
 sTake (SS sn) (sh :% st) = withSomeSing (sTake sn st) $ \ st' -> SomeSing (sh :% st')
 
 sDrop :: Sing (n :: Nat) -> Sing (α :: [k]) -> SomeSing [k]
 sDrop SZ sα             = SomeSing sα
-sDrop (SS sn) SNil      = SomeSing SNil
+sDrop (SS _) SNil       = SomeSing SNil
 sDrop (SS sn) (_ :% st) = sDrop sn st
 
 type family Length (α :: [k]) :: Nat where
-    Length '[]      = Z
-    Length (h ': t) = S (Length t)
+    Length '[]      = 'Z
+    Length (h ': t) = 'S (Length t)
 
 sLength :: Sing (α :: [k]) -> SomeSing Nat
 sLength = \ case
@@ -128,7 +132,7 @@ associativityOfJuxtaposition
 associativityOfJuxtaposition a b c
     = case a of
         SNil   -> Refl
-        h :% t -> case associativityOfJuxtaposition t b c of
+        _ :% t -> case associativityOfJuxtaposition t b c of
             Refl      -> Refl
 
 leftCancelationOfJuxtaposition

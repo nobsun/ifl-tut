@@ -12,7 +12,6 @@ import Language
 import Heap
 import qualified Stack as Stk (push, pop, discard)
 import Stack hiding (push, pop, discard)
-import Iseq
 import Utils
 
 import Gmachine.Mark1.Code
@@ -72,9 +71,10 @@ gmFinal state = null state.code
 -- #### ステップ実行
 
 step :: GmState -> GmState
-step state = dispatch i (state { code = is })
-    where
-        i:is = state.code
+step state = case state.code of
+    i:is -> dispatch i (state { code = is })
+    []   -> error "already final state"
+
 
 dispatch :: Instruction -> GmState -> GmState
 dispatch (Pushglobal f) = pushglobal f
@@ -136,8 +136,8 @@ unwind state
     where
         (a, stk) = Stk.pop state.stack
         newState node = case node of
-            NNum n    -> state { ruleid = 6 }
-            NAp a1 a2 -> state { code = [Unwind]
+            NNum _    -> state { ruleid = 6 }
+            NAp a1 _  -> state { code = [Unwind]
                                , stack = stack'
                                , ruleid = 7 }
                 where
@@ -149,7 +149,7 @@ unwind state
 
 -- ### 3.3.4 プログラムのコンパイル
 defaultHeapSize :: Int
-defaultHeapSize = 1024 ^ 2
+defaultHeapSize = 1024 ^ (2 :: Int)
 
 defaultThreshold :: Int
 defaultThreshold = 50
@@ -207,6 +207,7 @@ compileC expr env = case expr of
     ENum n  -> [Pushint n]
     EAp e1 e2 
             -> compileC e2 env ++ compileC e1 (argOffset 1 env) ++ [Mkap]
+    _       -> error "Not implemented"
 
 argOffset :: Int -> GmEnvironment -> GmEnvironment
 argOffset n env = [(v, m+n) | (v, m) <- env ]

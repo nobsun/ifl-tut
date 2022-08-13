@@ -5,7 +5,7 @@ import Data.Char ( isDigit, isAlpha, isSpace )
 import Data.Maybe ( fromJust, isJust )
 
 import Iseq
-import Parser
+import Parser hiding ( pVar, takeFirstParse )
 import Utils
 
 {- ** コア式の抽象構文木 -}
@@ -47,8 +47,8 @@ dispatchCoreExpr contEVar contENum contEConstr contEAp contELet contECase contEL
     EConstr tag arity -> contEConstr tag arity
     EAp a b -> contEAp a b
     ELet isrec bindings body -> contELet isrec bindings body
-    ECase expr alters -> contECase expr alters
-    ELam vars expr -> contELam vars expr
+    ECase e alters -> contECase e alters
+    ELam vars body -> contELam vars body
 
 {- | 名前 -}
 type Name = String
@@ -67,10 +67,10 @@ nonRecursive = False
 {- | バインダ -}
 type Binder a b = (a, b)
 bindersOf :: [Binder a b] -> [a]
-bindersOf defns = [ name | (name, rhs) <- defns ]
+bindersOf defns = [ name | (name, _) <- defns ]
 
 rhssOf :: [(a, b)] -> [b]
-rhssOf defns = [ rhs | (name, rhs) <- defns ]
+rhssOf defns = [ rhs | (_, rhs) <- defns ]
 
 {- | 選択肢 -}
 type Alter a 
@@ -244,19 +244,19 @@ pprExpr p expr = case expr of
     | isJust mfx -> bool id iParen (p >= p') infixexpr
     where
       mfx = lookup op binOps
-      fx'@(p', a') = fromJust mfx
+      (p', _) = fromJust mfx
       infixexpr = iConcat [ pprExpr p' e1
                           , iSpace, iStr op, iSpace
                           , pprExpr p' e2 ]
   EAp e1 e2 -> bool id iParen (p > 6) appexpr
     where
       appexpr = iConcat [ pprExpr 6 e1, iStr " ", pprExpr 7 e2]
-  ELet isrec defns expr
+  ELet isrec defns body
     -> bool id iParen (p > 0) letexpr
     where
       letexpr = iConcat [ iStr keyword, iNewline
                         , iStr "  ", iIndent (pprDefns defns), iNewline
-                        , iStr "in ", pprExpr 0 expr ]
+                        , iStr "in ", pprExpr 0 body ]
       keyword | isrec     = "letrec"
               | otherwise = "let"
   ECase e alts
@@ -321,7 +321,7 @@ takeFirstParse :: Show a => [(a, [Token])] -> a
 takeFirstParse res = case res of
   (x, []) : _ 
     -> x
-  r@((_, (i,_) : _): ps)
+  ((_, (i,_) : _): ps)
     -> case ps of
       _ : _ -> takeFirstParse ps
       []    -> error $ "syntax error at line " ++ show i

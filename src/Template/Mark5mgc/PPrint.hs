@@ -4,7 +4,6 @@
 module Template.Mark5mgc.PPrint
     where
 
-import Language
 import Iseq
 import Heap
 import Stack
@@ -19,6 +18,7 @@ mapoid :: (a -> b, a -> b) -> [a] -> [b]
 mapoid (f, g) (x:xs) = case xs of
     [] -> f x : [g x]
     _  -> f x : mapoid (f,g) xs
+mapoid _ _ = error "mapoid: empty list"
 
 showState :: TiState -> IseqRep
 showState state = iConcat
@@ -51,7 +51,7 @@ showFWAddr addr = iStr (rjustify 4 (show addr))
 showNode :: Node -> IseqRep
 showNode node = dispatchNode
     (\ a1 a2 -> iConcat [ iStr "NAp ", showAddr a1, iStr " ", showAddr a2 ])
-    (\ name args body -> iStr ("NSupercomb " ++ name))
+    (\ name _args _body -> iStr ("NSupercomb " ++ name))
     (\ n -> iStr "NNum " `iAppend` iNum n)
     (\ a -> iStr "NInd " `iAppend` showAddr a)
     (\ name _ -> iStr ("NPrim " ++ name))

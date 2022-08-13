@@ -20,7 +20,7 @@ rjustify w s = reverse $ take w $ reverse s ++ repeat ' '
 type Assoc a b = [(a, b)]
 
 aLookup :: Eq a => Assoc a b -> a -> b -> b
-aLookup []             k'  def = def
+aLookup []             _  def = def
 aLookup ((k, v) : kvs) k' def
     | k == k'   = v
     | otherwise = aLookup kvs k' def

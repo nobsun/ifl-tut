@@ -79,7 +79,7 @@ data TiStats
 initialStats :: TiStats
 initialStats = TiStats { totalSteps = 0, scSteps = 0, primSteps = 0, deltaSteps = 0 }
 
-incTotalSteps, incScSteps, incPrimSteps :: TiStats -> TiStats
+incTotalSteps, incScSteps, incPrimSteps, incDeltaSteps :: TiStats -> TiStats
 incTotalSteps stats = stats { totalSteps = succ stats.totalSteps }
 incScSteps    stats = stats { scSteps    = succ stats.scSteps }
 incPrimSteps  stats = stats { primSteps  = succ stats.primSteps }
@@ -169,13 +169,13 @@ step state = dispatchNode apStep scStep numStep (hLookup state.heap (fst (pop st
            $ state
 
 numStep :: Int -> TiState -> TiState
-numStep n = error "numStep: Number applied as a function"
+numStep _n = error "numStep: Number applied as a function"
 
 apStep :: Addr -> Addr -> TiState -> TiState
-apStep a b state = setRuleId 1 $ state { stack = push a (state.stack :: TiStack) }
+apStep a _b state = setRuleId 1 $ state { stack = push a (state.stack :: TiStack) }
 
 scStep :: Name -> [Name] -> CoreExpr -> TiState -> TiState
-scStep name args body state
+scStep _name args body state
     | state.stack.curDepth < n' 
         = error "scStep: too few arguments given"
     | otherwise
@@ -189,11 +189,13 @@ scStep name args body state
 
 getargs :: TiHeap -> TiStack -> [Addr]
 getargs heap stack = case pop stack of
-    (sc, stack') -> map getarg stack'.stkItems
+    (_sc, stack') -> map getarg stack'.stkItems
         where
             getarg addr = arg
                 where
-                    NAp fun arg = hLookup heap addr
+                    arg = case hLookup heap addr of
+                        NAp _f a -> a
+                        _ -> error "getargs: not NAp node"
 
 {- | Instantiation -}
 
@@ -215,10 +217,10 @@ instantiateVar :: TiHeap -> Assoc Name Addr -> Name -> (TiHeap, Addr)
 instantiateVar heap env name = (heap, aLookup env name (error ("instantiateVar: Undefined name " ++ show name)))
 
 instantiateNum :: TiHeap -> Assoc Name Addr -> Int -> (TiHeap, Addr)
-instantiateNum heap env num = hAlloc heap (NNum num)
+instantiateNum heap _env num = hAlloc heap (NNum num)
 
 instantiateConstr :: TiHeap -> Assoc Name Addr -> Tag -> Arity -> (TiHeap, Addr)
-instantiateConstr heap env tag arity = error "Cannot instantiate constructor yet"
+instantiateConstr _heap _env _tag _arity = error "Cannot instantiate constructor yet"
 
 instantiateAp :: TiHeap -> Assoc Name Addr -> CoreExpr -> CoreExpr -> (TiHeap, Addr)
 instantiateAp heap env a b = hAlloc heap2 (NAp a1 a2)
@@ -227,13 +229,13 @@ instantiateAp heap env a b = hAlloc heap2 (NAp a1 a2)
         (heap2, a2) = instantiate b heap1 env
 
 instantiateLet :: TiHeap -> Assoc Name Addr -> IsRec -> Assoc Name CoreExpr -> CoreExpr -> (TiHeap, Addr)
-instantiateLet heap env isrec bindings body = error "Cannot instatiate let(rec) yet"
+instantiateLet _heap _env _isrec _bindings _body = error "Cannot instatiate let(rec) yet"
 
 instantiateCase :: TiHeap -> Assoc Name Addr -> CoreExpr -> [CoreAlter] -> (TiHeap, Addr)
-instantiateCase heap env expr alters = error "Cannot instatiate case"
+instantiateCase _heap _env _expr _alters = error "Cannot instatiate case"
 
 instantiateLam :: TiHeap -> Assoc Name Addr -> [Name] -> CoreExpr -> (TiHeap, Addr)
-instantiateLam heap env vars body = error "Cannot instatiate lambda"
+instantiateLam _heap _env _vars _body = error "Cannot instatiate lambda"
 
 {- | Formatting Results -}
 
@@ -244,6 +246,7 @@ mapoid :: (a -> b, a -> b) -> [a] -> [b]
 mapoid (f, g) (x:xs) = case xs of
     [] -> f x : [g x]
     _  -> f x : mapoid (f,g) xs
+mapoid _ _ = error "mapoid: empty list"
 
 showState :: TiState -> IseqRep
 showState state = iConcat
@@ -274,7 +277,7 @@ showFWAddr addr = iStr (rjustify 4 (show addr))
 showNode :: Node -> IseqRep
 showNode node = dispatchNode
     (\ a1 a2 -> iConcat [ iStr "NAp ", showAddr a1, iStr " ", showAddr a2 ])
-    (\ name args body -> iStr ("NSupercomb " ++ name))
+    (\ name _args _body -> iStr ("NSupercomb " ++ name))
     (\ n -> iStr "NNum " `iAppend` iNum n)
     node
 
@@ -300,7 +303,7 @@ showStkNode heap node = dispatchNode
     node
 
 showRuleId :: TiRuleId -> IseqRep
-showRuleId rid = iStr ("Rule " ++ show (2, rid)) 
+showRuleId rid = iStr ("Rule " ++ show (2 :: Int, rid)) 
 
 showStats :: TiState -> IseqRep
 showStats state = iConcat
