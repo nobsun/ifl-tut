@@ -1,6 +1,6 @@
 cabal-version:      3.0
 name:               ifl-tut
-version:            0.3.2
+version:            3.3.5
 synopsis:           Implementing Fuctional Lanbuage -- a tutorial
 
 -- A longer description of the package.
