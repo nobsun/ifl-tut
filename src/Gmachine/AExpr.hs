@@ -73,7 +73,7 @@ e : Plus e1 e2 のとき
 =   { 仕様 }
     aCompile' (Plus e1 e2) ++ c
 =   { aCompile' の定義 }
-    aCompile' e1 ++ (aComile' e2 ++ [IPlus]) ++ c
+    aCompile' e1 ++ (aCompile' e2 ++ [IPlus]) ++ c
 =   { ++ の結合律 }
     aCompile' e1 ++ (aCompile' e2 ++ ([IPlus] ++ c))
 =   { ++ の定義 }
@@ -81,7 +81,7 @@ e : Plus e1 e2 のとき
 =   { ++ の左単位元 }
     aCompile' e1 ++ (aCompile' e2 ++ IPlus n : c)
 =   { 仕様 }
-    aCompile e1 (aComile' e2 (IPlus n : c))
+    aCompile e1 (aCompile e2 (IPlus n : c))
 
 e : Mult e1 e2 のとき
     上と同様
