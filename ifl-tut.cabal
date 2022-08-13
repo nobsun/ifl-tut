@@ -69,6 +69,11 @@ library
                     , Template.Mark5cp.PPrint
                     , Gmachine.AExpr
                     , Gmachine.AExprLet
+                    , Gmachine.Mark1.Code
+                    , Gmachine.Mark1.Node
+                    , Gmachine.Mark1.PPrint
+                    , Gmachine.Mark1.State
+                    , Gmachine.Mark1.Machine
 
     -- Modules included in this library but not exported.
     -- other-modules:
@@ -182,6 +187,15 @@ executable ti5cp
         ifl-tut
 
     hs-source-dirs:   app/ti5cp
+    default-language: GHC2021
+
+executable gm1
+    main-is:          Main.hs
+    build-depends:
+        base ^>=4.16.0.0,
+        ifl-tut
+
+    hs-source-dirs:   app/gm1
     default-language: GHC2021
 
 test-suite ifl-tut-test
