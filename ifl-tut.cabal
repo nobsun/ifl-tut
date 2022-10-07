@@ -74,6 +74,11 @@ library
                     , Gmachine.Mark1.PPrint
                     , Gmachine.Mark1.State
                     , Gmachine.Mark1.Machine
+                    , Gmachine.Mark2.Code
+                    , Gmachine.Mark2.Node
+                    , Gmachine.Mark2.PPrint
+                    , Gmachine.Mark2.State
+                    , Gmachine.Mark2.Machine
 
     -- Modules included in this library but not exported.
     -- other-modules:
