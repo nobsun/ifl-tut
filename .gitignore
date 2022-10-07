@@ -24,3 +24,5 @@ cabal.project.local
 cabal.project.local~
 .HTF/
 .ghc.environment.*
+programming_session.log
+start_programming

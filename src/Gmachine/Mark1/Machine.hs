@@ -35,7 +35,7 @@ traceShow | debug     = Deb.traceShow
 -- ### 3.3.1 全体構造
 
 run :: String -> String
-run = showResult . eval . compile . parse
+run = showResults . eval . compile . parse
 
 {- --
 compile :: CoreProgram -> GmState
@@ -43,8 +43,8 @@ compile = undefined
 -- -}
 
 {- --
-showResult :: [GmState] -> String
-showResult = undefined
+showResults :: [GmState] -> String
+showResults = undefined
 -- -}
 
 -- ### 3.3.2 データ型定義
@@ -94,9 +94,14 @@ pushglobal f state
 
 pushint :: Int -> GmState -> GmState
 pushint n state
-    = state { stack = Stk.push a state.stack
-            , heap  = heap'
-            , ruleid = 2 }
+    = case aLookup state.globals (show n) (negate 1) of
+        a' | a' < 0    -> state { stack = Stk.push a state.stack
+                                , heap  = heap'
+                                , ruleid = 14 
+                                }
+           | otherwise -> state { stack = Stk.push a' state.stack
+                                , ruleid = 13
+                                }
     where
         (heap', a) = hAlloc state.heap (NNum n)
 
@@ -187,6 +192,10 @@ allocateSc heap (name, arity, instrs)
 initialCode :: GmCode
 initialCode = [Pushglobal "main", Unwind]
 
+{- | スーパーコンビネータのコンパイル
+>>> compileSc ("K", ["x", "y"], EVar "x")
+("K",2,[Push 0,Slide 3,Unwind])
+-}
 compileSc :: CoreScDefn -> GmCompiledSC
 compileSc (name, args, body)
     = (name, length args, compileR body (zip args [0 ..]))

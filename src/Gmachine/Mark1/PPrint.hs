@@ -15,8 +15,8 @@ import Gmachine.Mark1.Node
 import Gmachine.Mark1.State
 
 {- -}
-showResult :: [GmState] -> String
-showResult states = iDisplay
+showResults :: [GmState] -> String
+showResults states = iDisplay
     (iConcat [ iStr "Supercombinator definitions"
              , iNewline
              , iInterleave iNewline (map (showSC s) s.globals)
