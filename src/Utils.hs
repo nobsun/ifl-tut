@@ -1,6 +1,6 @@
 module Utils
     ( space, layn, rjustify
-    , Assoc, aLookup, aDomain, aRange, aEmpty 
+    , Assoc, aLookup, aDomain, aRange, aEmpty, aInsert
     )
     where
 
@@ -24,6 +24,9 @@ aLookup []             _  def = def
 aLookup ((k, v) : kvs) k' def
     | k == k'   = v
     | otherwise = aLookup kvs k' def
+
+aInsert :: Eq a => Assoc a b -> a -> b -> Assoc a b
+aInsert tab k v = (k, v) : tab
 
 aDomain :: Assoc a b -> [a]
 aDomain as = [ k | (k, _) <- as ]

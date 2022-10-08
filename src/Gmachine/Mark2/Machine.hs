@@ -73,16 +73,19 @@ pushglobal f state
 
 pushint :: Int -> GmState -> GmState
 pushint n state
-    = case aLookup state.globals (show n) (negate 1) of
+    = case aLookup state.globals name (negate 1) of
         a' | a' < 0    -> state { stack = Stk.push a state.stack
                                 , heap  = heap'
+                                , globals = aInsert state.globals name a
                                 , ruleid = 14
                                 }
            | otherwise -> state { stack = Stk.push a' state.stack
                                 , ruleid = 13
                                 }
     where
-        (heap', a) = hAlloc state.heap (NNum n)
+        name = show n
+        node = NNum n
+        (heap', a) = hAlloc state.heap node
 
 mkap :: GmState -> GmState
 mkap state
