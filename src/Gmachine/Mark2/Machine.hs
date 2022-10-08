@@ -32,25 +32,8 @@ traceShow :: Show a => a -> b -> b
 traceShow | debug     = Deb.traceShow
           | otherwise = const id
 
--- ### 3.3.1 全体構造
-
 run :: String -> String
 run = showResults . eval . compile . parse
-
-{- --
-compile :: CoreProgram -> GmState
-compile = undefined
--- -}
-
-{- --
-showResults :: [GmState] -> String
-showResults = undefined
--- -}
-
--- ### 3.3.2 データ型定義
--- `Gmachine.Mark1.Node`、`Gmachine.Mark1.State`
-
--- ### 3.3.3 評価器
 
 eval :: GmState -> [GmState]
 eval state = state : restStates
@@ -63,25 +46,21 @@ eval state = state : restStates
 doAdmin :: GmState -> GmState
 doAdmin state = state { stats = statIncSteps state.stats }
 
--- #### 終了状態判定
-
 gmFinal :: GmState -> Bool
 gmFinal state = null state.code
-
--- #### ステップ実行
 
 step :: GmState -> GmState
 step state = case state.code of
     i:is -> dispatch i (state { code = is })
     []   -> error "already final state"
 
-
 dispatch :: Instruction -> GmState -> GmState
 dispatch (Pushglobal f) = pushglobal f
 dispatch (Pushint n)    = pushint n
 dispatch Mkap           = mkap
 dispatch (Push n)       = push n
-dispatch (Slide n)      = slide n
+dispatch (Update n)     = update n
+dispatch (Pop n)        = pop n
 dispatch Unwind         = unwind
 
 pushglobal :: Name -> GmState -> GmState
@@ -127,13 +106,21 @@ getArg :: Node -> Addr
 getArg (NAp _ a2) = a2
 getArg _          = error "getArg: Not application node"
 
-slide :: Int -> GmState -> GmState
-slide n state
-    = state { stack = stack'
-            , ruleid = 5 }
+update :: Int -> GmState -> GmState
+update n state
+    = state { stack  = stack'
+            , heap   = heap'
+            , ruleid = 15
+            }
     where
-        (a, stk) = Stk.pop state.stack
-        stack' = Stk.push a (Stk.discard n stk)
+        (a, stack') = Stk.pop state.stack
+        heap' = hUpdate state.heap (stack'.stkItems !! n) (NInd a)
+
+pop :: Int -> GmState -> GmState
+pop n state
+    = state { stack = Stk.discard n state.stack
+            , ruleid = 16
+            }
 
 unwind :: GmState -> GmState
 unwind state
@@ -151,8 +138,11 @@ unwind state
                 | stk.curDepth < n -> error "Unwinding with too few artuments"
                 | otherwise        -> state { code = c
                                             , ruleid = 8 }
+            NInd a1   -> state { code = [Unwind]
+                               , stack = Stk.push a1 stk
+                               , ruleid = 17
+                               }
 
--- ### 3.3.4 プログラムのコンパイル
 defaultHeapSize :: Int
 defaultHeapSize = 1024 ^ (2 :: Int)
 
@@ -201,7 +191,9 @@ compileSc (name, args, body)
     = (name, length args, compileR body (zip args [0 ..]))
 
 compileR :: GmCompiler
-compileR e env = compileC e env ++ [Slide (length env + 1), Unwind]
+compileR e args = compileC e args ++ [Update n, Pop n, Unwind]
+    where
+        n = length args
 
 type GmCompiler = CoreExpr -> GmEnvironment -> GmCode
 type GmEnvironment = Assoc Name Addr

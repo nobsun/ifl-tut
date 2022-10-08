@@ -357,7 +357,64 @@ $$
 この変更を反映した `pushint` を実装せよ。
 
 ---
-### 3.4 Mark 2：Lazyにする
+## 3.4 Mark 2：Lazyにする
 
+Mark 1 は、巻き戻しに先立って、元の式のルートノードを上書きしないので、Lazy にはなっていない。
+Mark 2 では、元の式のルートノードを具体化したスーパーコンビネータの本体を指す間接参照ノードで上書きする。
+こうすることで、前回、簡約可能項を簡約して得た値を記憶し、再計算を排除できる。
 
+---
+### 3.4.1 データ構造
 
+#### `Instruction`
+- `Update Int` と `Pop Int` を追加
+- `Slide Int` を削除
+
+#### 練習問題 3.7 
+`showInstruction` を対応させよ
+
+---
+#### `Node`
+
+- `NInd Addr` を追加
+
+#### 練習問題 3.8
+`showNode` を対応させよ
+
+---
+### 3.4.2 評価器
+
+`Update` $n$ はスタック上の n+1 番目の項目をスタックトップの項目への間接参照で上書きする
+
+(3.15)
+$$
+\begin{array}{rrrll}
+& \texttt{Update}\;n : i & a:a_0:...:a_n:s & h & m\\
+\Longrightarrow & i & a_0:...:a_n : s & h[a_n:\texttt{NInd}\;a] & m
+\end{array}
+$$
+
+---
+`Pop` $n$ は単純に$n$個の項目をスタックから取り除く
+
+(3.16)
+$$
+\begin{array}{rrrll}
+& \texttt{Pop}\;n : i & a_0:...:a_n:s & h & m\\
+\Longrightarrow & i & s & h & m
+\end{array}
+$$
+
+---
+スタックトップの項目が間接参照ノードであった場合は、`Unwind` は、間接参照ノードが指す先に置き換える
+
+(3.17)
+$$
+\begin{array}{rrrll}
+& [\texttt{Unwind}] & a_0:s & h[a_0:\texttt{NInd}\;a] & m\\
+\Longrightarrow & [\texttt{Unwind}] & a : s & h & m
+\end{array}
+$$
+
+#### 練習問題 3.9
+Mark 1 の `dispatch`関数を新しく導入したインストラクションと遷移規則に対応できるよう変更せよ。

@@ -56,7 +56,8 @@ showInstruction i = case i of
     Push n       -> iStr "Push "       `iAppend` iNum n
     Pushint n    -> iStr "Pushint "    `iAppend` iNum n
     Mkap         -> iStr "Mkap"
-    Slide n      -> iStr "Slide "      `iAppend` iNum n
+    Update n     -> iStr "Update "     `iAppend` iNum n
+    Pop n        -> iStr "Pop "        `iAppend` iNum n
 
 showState :: GmState -> IseqRep
 showState s = iConcat
@@ -85,6 +86,9 @@ showNode s a node = case node of
             v = head [ n | (n, b) <- s.globals, a == b ]
     NAp a1 a2   -> iConcat [ iStr "Ap ", showAddr a1
                            , iStr " ",   showAddr a2
+                           ]
+    NInd a1     -> iConcat [ iStr "Ind "
+                           , showAddr a1
                            ]
 
 showStats :: GmState -> IseqRep

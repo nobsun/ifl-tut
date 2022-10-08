@@ -204,6 +204,15 @@ executable gm1
     hs-source-dirs:   app/gm1
     default-language: GHC2021
 
+executable gm2
+    main-is:          Main.hs
+    build-depends:
+        base ^>=4.16.0.0,
+        ifl-tut
+
+    hs-source-dirs:   app/gm2
+    default-language: GHC2021
+
 test-suite ifl-tut-test
     default-language: GHC2021
     type:             exitcode-stdio-1.0

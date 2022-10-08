@@ -65,4 +65,9 @@ ruleTable
       , (6, "Rule (3.10): Unwind NNum")
       , (7, "Rule (3.11): Unwind NAp")
       , (8, "rule (3.12): Unwind NGlobal")
+      , (13, "rule (3.13): Pushint (reuse)")
+      , (14, "rule (3.14): Pushint (alloc)")
+      , (15, "rule (3.15): Update")
+      , (16, "rule (3.16): Pop")
+      , (17, "rule (3.17): Unwind NInd")
       ]

@@ -11,5 +11,6 @@ data Instruction
     | Pushint Int
     | Push Int
     | Mkap
-    | Slide Int
+    | Update Int
+    | Pop Int
     deriving (Eq, Show)

@@ -1,0 +1,3 @@
+twic f x = f (f x) ;
+id x = x ;
+main = twic twic id 3
