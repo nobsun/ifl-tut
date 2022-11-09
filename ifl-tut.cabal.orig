@@ -1,0 +1,221 @@
+cabal-version: 3.0
+name:               ifl-tut
+version:            3.4
+synopsis:           Implementing Fuctional Lanbuage -- a tutorial
+
+-- A longer description of the package.
+-- description:
+homepage:           https://github.com/nobsun/ifl-tut
+
+-- A URL where users can report bugs.
+-- bug-reports:
+license:            BSD-3-Clause
+license-file:       LICENSE
+author:             Nobuo Yamashita
+maintainer:         nobsun@gmail.com
+
+-- A copyright notice.
+-- copyright:
+category:           Language
+extra-source-files: CHANGELOG.md
+
+common ifl-common-stanza
+    build-depends:    containers
+                    , extra
+                    , unicode-show
+                    , bytestring
+                    , text
+                    , utf8-string
+
+library
+    import:         ifl-common-stanza
+    exposed-modules:  MyLib
+                    , Heap
+                    , Iseq
+                    , Language
+                    , Parser
+                    , Stack
+                    , Utils
+                    , Bool
+                    , List
+                    , Nat
+                    , Singleton
+                    , Template.Mark1
+                    , Template.Mark2
+                    , Template.Mark3
+                    , Template.Mark4
+                    , Template.Mark5.Machine
+                    , Template.Mark5.Node
+                    , Template.Mark5.Primitive
+                    , Template.Mark5.State
+                    , Template.Mark5.PPrint
+                    , Template.Mark5a.Machine
+                    , Template.Mark5a.State
+                    , Template.Mark5a.PPrint
+                    , Template.Mark5b.Machine
+                    , Template.Mark5b.State
+                    , Template.Mark5b.PPrint
+                    , Template.Mark5c.Machine
+                    , Template.Mark5c.State
+                    , Template.Mark5c.PPrint
+                    , Template.Mark5mgc.Machine
+                    , Template.Mark5mgc.State
+                    , Template.Mark5mgc.PPrint
+                    , Template.Mark5rvp.Machine
+                    , Template.Mark5rvp.State
+                    , Template.Mark5rvp.PPrint
+                    , Template.Mark5cp.Machine
+                    , Template.Mark5cp.State
+                    , Template.Mark5cp.PPrint
+                    , Gmachine.AExpr
+                    , Gmachine.AExprLet
+                    , Gmachine.Mark1.Code
+                    , Gmachine.Mark1.Node
+                    , Gmachine.Mark1.PPrint
+                    , Gmachine.Mark1.State
+                    , Gmachine.Mark1.Machine
+                    , Gmachine.Mark2.Code
+                    , Gmachine.Mark2.Node
+                    , Gmachine.Mark2.PPrint
+                    , Gmachine.Mark2.State
+                    , Gmachine.Mark2.Machine
+
+    -- Modules included in this library but not exported.
+    -- other-modules:
+
+    -- LANGUAGE extensions used by modules in this package.
+    -- other-extensions:
+    build-depends:    base ^>=4.16.0.0
+    hs-source-dirs:   src
+    default-language: GHC2021
+    ghc-options:    -Wall -Wno-orphans
+
+executable ti1
+    main-is:          Main.hs
+
+    -- Modules included in this executable, other than Main.
+    -- other-modules:
+
+    -- LANGUAGE extensions used by modules in this package.
+    -- other-extensions:
+    build-depends:
+        base ^>=4.16.0.0,
+        ifl-tut
+
+    hs-source-dirs:   app/ti1
+    default-language: GHC2021
+
+executable ti2
+    main-is:          Main.hs
+    build-depends:
+        base ^>=4.16.0.0,
+        ifl-tut
+
+    hs-source-dirs:   app/ti2
+    default-language: GHC2021
+
+executable ti3
+    main-is:          Main.hs
+    build-depends:
+        base ^>=4.16.0.0,
+        ifl-tut
+
+    hs-source-dirs:   app/ti3
+    default-language: GHC2021
+
+executable ti4
+    main-is:          Main.hs
+    build-depends:
+        base ^>=4.16.0.0,
+        ifl-tut
+
+    hs-source-dirs:   app/ti4
+    default-language: GHC2021
+
+executable ti5
+    main-is:          Main.hs
+    build-depends:
+        base ^>=4.16.0.0,
+        ifl-tut
+
+    hs-source-dirs:   app/ti5
+    default-language: GHC2021
+
+executable ti5a
+    main-is:          Main.hs
+    build-depends:
+        base ^>=4.16.0.0,
+        ifl-tut
+
+    hs-source-dirs:   app/ti5a
+    default-language: GHC2021
+
+executable ti5b
+    main-is:          Main.hs
+    build-depends:
+        base ^>=4.16.0.0,
+        ifl-tut
+
+    hs-source-dirs:   app/ti5b
+    default-language: GHC2021
+
+executable ti5c
+    main-is:          Main.hs
+    build-depends:
+        base ^>=4.16.0.0,
+        ifl-tut
+
+    hs-source-dirs:   app/ti5c
+    default-language: GHC2021
+
+executable ti5mgc
+    main-is:          Main.hs
+    build-depends:
+        base ^>=4.16.0.0,
+        ifl-tut
+
+    hs-source-dirs:   app/ti5mgc
+    default-language: GHC2021
+
+executable ti5rvp
+    main-is:          Main.hs
+    build-depends:
+        base ^>=4.16.0.0,
+        ifl-tut
+
+    hs-source-dirs:   app/ti5rvp
+    default-language: GHC2021
+
+executable ti5cp
+    main-is:          Main.hs
+    build-depends:
+        base ^>=4.16.0.0,
+        ifl-tut
+
+    hs-source-dirs:   app/ti5cp
+    default-language: GHC2021
+
+executable gm1
+    main-is:          Main.hs
+    build-depends:
+        base ^>=4.16.0.0,
+        ifl-tut
+
+    hs-source-dirs:   app/gm1
+    default-language: GHC2021
+
+executable gm2
+    main-is:          Main.hs
+    build-depends:
+        base ^>=4.16.0.0,
+        ifl-tut
+
+    hs-source-dirs:   app/gm2
+    default-language: GHC2021
+
+test-suite ifl-tut-test
+    default-language: GHC2021
+    type:             exitcode-stdio-1.0
+    hs-source-dirs:   test
+    main-is:          MyLibTest.hs
+    build-depends:    base ^>=4.16.0.0

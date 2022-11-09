@@ -1,0 +1,145 @@
+name:                ifl-tut
+version:             3.4.3
+synopsis:           Implementing Fuctional Lanbuage -- a tutorial
+
+github:              "nobsun/ifl-tut"
+license:             BSD3
+author:              "Nobuo Yamashita"
+maintainer:          "nobsun@sampou.org"
+copyright:           "Copyright: (c) 2022 Nobuo Yamashita"
+
+extra-source-files:
+- README.md
+- ChangeLog.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Experiment
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/nobsun/ifl-tut#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+- unicode-show
+- bytestring
+- utf8-string
+- time
+- hspec
+- containers
+- extra
+- text
+
+default-language: GHC2021
+
+library:
+  source-dirs: src
+
+executables:
+  ifl-tut:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -rtsopts
+    # - -threaded
+    # - -with-rtsopts=-N
+    dependencies:
+    - ifl-tut
+
+  ti1:
+    main:                Main.hs
+    source-dirs:         app/ti1
+    dependencies:
+    - ifl-tut
+
+  ti2:
+    main:                Main.hs
+    source-dirs:         app/ti2
+    dependencies:
+    - ifl-tut
+
+  ti3:
+    main:                Main.hs
+    source-dirs:         app/ti3
+    dependencies:
+    - ifl-tut
+
+  ti4:
+    main:                Main.hs
+    source-dirs:         app/ti4
+    dependencies:
+    - ifl-tut
+
+  ti5:
+    main:                Main.hs
+    source-dirs:         app/ti5
+    dependencies:
+    - ifl-tut
+
+  ti5a:
+    main:                Main.hs
+    source-dirs:         app/ti5a
+    dependencies:
+    - ifl-tut
+
+  ti5b:
+    main:                Main.hs
+    source-dirs:         app/ti5b
+    dependencies:
+    - ifl-tut
+
+  ti5mgc:
+    main:                Main.hs
+    source-dirs:         app/ti5mgc
+    dependencies:
+    - ifl-tut
+
+  ti5rvp:
+    main:                Main.hs
+    source-dirs:         app/ti5rvp
+    dependencies:
+    - ifl-tut
+
+  ti5cp:
+    main:                Main.hs
+    source-dirs:         app/ti5cp
+    dependencies:
+    - ifl-tut
+
+  gm1:
+    main:                Main.hs
+    source-dirs:         app/gm1
+    dependencies:
+    - ifl-tut
+
+  gm2:
+    main:                Main.hs
+    source-dirs:         app/gm2
+    dependencies:
+    - ifl-tut
+
+tests:
+  ifl-tut-test:
+    main:                spec.hs
+    source-dirs:         test
+    # ghc-options:
+    # - -threaded
+    # - -rtsopts
+    # - -with-rtsopts=-N
+    dependencies:
+    - ifl-tut
+    - hspec
+    - main-tester
+
+  ifl-tut-doctest:
+    main:                doctests.hs
+    source-dirs:         test
+    # ghc-options:
+    # - -threaded
+    # - -rtsopts
+    # - -with-rtsopts=-N
+    dependencies:
+    - ifl-tut
+    - doctest
