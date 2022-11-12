@@ -1,3 +1,4 @@
+{-# LANGUAGE NPlusKPatterns #-}
 {-# LANGUAGE ImplicitParams #-}
 {-# LANGUAGE NoFieldSelectors #-}
 {-# LANGUAGE DuplicateRecordFields #-}
@@ -14,7 +15,7 @@ import qualified Stack as Stk (push, pop, discard)
 import Stack hiding (push, pop, discard)
 import Utils
 
-import Gmachine.Mark3.Code
+import Gmachine.Mark3.Code ( GmCode, Instruction(..) )
 import Gmachine.Mark3.Node
 import Gmachine.Mark3.PPrint
 import Gmachine.Mark3.State
@@ -32,8 +33,15 @@ traceShow :: Show a => a -> b -> b
 traceShow | debug     = Deb.traceShow
           | otherwise = const id
 
-run :: String -> String
-run = showResults . eval . compile . parse
+run :: String -> ([String] -> [String])
+run prog inputs = showResults 
+    $ eval 
+    $ setControl inputs
+    $ compile 
+    $ parse prog
+
+setControl :: [String] -> GmState -> GmState
+setControl ctrl state = state { ctrl = ctrl }
 
 eval :: GmState -> [GmState]
 eval state = state : restStates
@@ -58,15 +66,17 @@ dispatch :: Instruction -> GmState -> GmState
 dispatch (Pushglobal f) = pushglobal f
 dispatch (Pushint n)    = pushint n
 dispatch Mkap           = mkap
+dispatch (Slide n)      = slide n
 dispatch (Push n)       = push n
 dispatch (Update n)     = update n
 dispatch (Pop n)        = pop n
 dispatch Unwind         = unwind
+dispatch (Alloc n)      = alloc n
 
 pushglobal :: Name -> GmState -> GmState
 pushglobal f state
     = state { stack = Stk.push a state.stack
-            , ruleid = 1
+            , ruleid = 5
             }
     where
         a = aLookup state.globals f (error $ "Undeclared global " ++f)
@@ -91,7 +101,7 @@ mkap :: GmState -> GmState
 mkap state
     = state { stack = stack'
             , heap  = heap'
-            , ruleid = 3 }
+            , ruleid = 7 }
     where
         (a1, stk')  = Stk.pop state.stack
         (a2, stk'') = Stk.pop stk'
@@ -100,10 +110,16 @@ mkap state
 
 push :: Int -> GmState -> GmState
 push n state
-    = state { stack = Stk.push a state.stack
-            , ruleid = 4 }
-    where
-        a = getArg (hLookup state.heap (state.stack.stkItems !! (n+1)))
+    = state { stack = Stk.push an state.stack
+            , ruleid = 18 }
+        where
+            an = state.stack.stkItems !! n
+
+-- push n state
+--     = state { stack = Stk.push a state.stack
+--             , ruleid = 8 }
+--     where
+--         a = getArg (hLookup state.heap (state.stack.stkItems !! (n+1)))
 
 getArg :: Node -> Addr
 getArg (NAp _ a2) = a2
@@ -125,26 +141,64 @@ pop n state
             , ruleid = 16
             }
 
+slide :: Int -> GmState -> GmState
+slide n state
+    = state { stack = stack'
+            , ruleid = 5 }
+    where
+        (a, stk) = Stk.pop state.stack
+        stack' = Stk.push a (Stk.discard n stk)
+
 unwind :: GmState -> GmState
 unwind state
     = newState (hLookup state.heap a)
     where
         (a, stk) = Stk.pop state.stack
         newState node = case node of
-            NNum _    -> state { ruleid = 6 }
+            NNum _    -> state { ruleid = 10 }
             NAp a1 _  -> state { code = [Unwind]
                                , stack = stack'
-                               , ruleid = 7 }
+                               , ruleid = 11 }
                 where
                     stack' = Stk.push a1 state.stack
-            NGlobal n c
-                | stk.curDepth < n -> error "Unwinding with too few artuments"
-                | otherwise        -> state { code = c
-                                            , ruleid = 8 }
             NInd a1   -> state { code = [Unwind]
                                , stack = Stk.push a1 stk
                                , ruleid = 17
                                }
+            NGlobal n c
+                | stk.curDepth < n -> error "Unwinding with too few artuments"
+                | otherwise 
+                    -> state { code = c
+                             , stack = rearrange n state.heap stk
+                             , ruleid = 19
+                             }
+                        where
+                            phi a = case hLookup state.heap a of
+                                NAp _ a' -> Stk.push a' 
+
+rearrange :: Int -> GmHeap -> GmStack -> GmStack
+rearrange n heap stk
+    = foldr phi (Stk.discard n stk) $ take n stk.stkItems
+    where
+        phi a = Stk.push (getArg (hLookup heap a))
+
+alloc :: Int -> GmState -> GmState
+alloc n state
+    = state 
+    { stack = foldr Stk.push state.stack as
+    , heap  = heap'
+    , ruleid = 20
+    }
+    where
+        (heap', as) = allocNodes n state.heap
+
+allocNodes :: Int -> GmHeap -> (GmHeap, [Addr])
+allocNodes 0     heap = (heap, [])
+allocNodes (n+1) heap = (heap2, a:as)
+    where
+        (heap1, as) = allocNodes n heap
+        (heap2, a ) = hAlloc heap1 (NInd hNull)
+
 
 defaultHeapSize :: Int
 defaultHeapSize = 1024 ^ (2 :: Int)
@@ -155,7 +209,8 @@ defaultThreshold = 50
 compile :: CoreProgram -> GmState
 compile program
     = GmState
-    { code  = initialCode
+    { ctrl  = []
+    , code  = initialCode
     , stack = emptyStack
     , heap  = heap'
     , globals = globals'
@@ -198,9 +253,6 @@ compileR e args = compileC e args ++ [Update n, Pop n, Unwind]
     where
         n = length args
 
-type GmCompiler = CoreExpr -> GmEnvironment -> GmCode
-type GmEnvironment = Assoc Name Addr
-
 compileC :: GmCompiler
 compileC expr env = case expr of
     EVar v
@@ -211,11 +263,45 @@ compileC expr env = case expr of
     ENum n  -> [Pushint n]
     EAp e1 e2
             -> compileC e2 env ++ compileC e1 (argOffset 1 env) ++ [Mkap]
+    ELet recursive defs e
+        | recursive -> compileLetrec compileC defs e env
+        | otherwise -> compileLet compileC defs e env
     _       -> error "Not implemented"
+
+compileLet :: GmCompiler -> Assoc Name CoreExpr -> GmCompiler
+compileLet comp defs expr env
+    = compileLet' defs env ++ comp expr env' ++ [Slide (length defs)]
+    where
+        env' = compileArgs defs env
+
+compileLet' :: Assoc Name CoreExpr -> GmEnvironment -> GmCode
+compileLet' [] env = []
+compileLet' ((name, expr):defs) env
+    = compileC expr env ++ compileLet' defs (argOffset 1 env)
+
+compileArgs :: Assoc Name CoreExpr -> GmEnvironment -> GmEnvironment
+compileArgs defs env
+    = zip (aDomain defs) [n-1, n-2 .. 0] ++ argOffset n env
+    where
+        n = length defs
 
 argOffset :: Int -> GmEnvironment -> GmEnvironment
 argOffset n env = [(v, m+n) | (v, m) <- env ]
 
+compileLetrec :: GmCompiler -> Assoc Name CoreExpr -> GmCompiler
+compileLetrec comp defs e env
+    =  [Alloc n]
+    ++ compiled defs (n-1)
+    ++ comp e newArgs
+    ++ [Slide n]
+    where
+        newArgs = compileArgs defs env
+        n = length defs
+        compiled dds i = case dds of
+            []   -> []
+            d:ds -> compileC (snd d) newArgs
+                 ++ [Update i]
+                 ++ compiled ds (i-1)
+
 compiledPrimitives :: [GmCompiledSC]
 compiledPrimitives = []
-

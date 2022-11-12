@@ -17,7 +17,8 @@ import Gmachine.Mark3.Node
 
 data GmState
     = GmState
-    { code    :: GmCode
+    { ctrl    :: [String]
+    , code    :: GmCode
     , stack   :: GmStack
     , heap    :: GmHeap
     , globals :: GmGlobals
@@ -39,9 +40,16 @@ type GmGlobals = Assoc Name Addr
 
 --
 
+type GmCompiler = CoreExpr -> GmEnvironment -> GmCode
+
+--
+
+type GmEnvironment = Assoc Name Addr
+
+
 data GmStats
     = GmStats
-    { steps :: Int
+    { steps :: Int 
     }
 
 statInitial :: GmStats
@@ -55,19 +63,22 @@ statIncSteps stats = stats { steps = succ stats.steps }
 type GmRuleId = Int
 
 ruleTable :: Assoc GmRuleId String
-ruleTable
-    = [ (0, "Initial Stats")
-      , (1, "Rule (3,5): Pushglobal")
-      , (2, "Rule (3,6): Pushint")
-      , (3, "Rule (3.7): Mkap")
-      , (4, "Rule (3.8): Push")
-      , (5, "Rule (3.9): Slide")
-      , (6, "Rule (3.10): Unwind NNum")
-      , (7, "Rule (3.11): Unwind NAp")
-      , (8, "rule (3.12): Unwind NGlobal")
-      , (13, "rule (3.13): Pushint (reuse)")
-      , (14, "rule (3.14): Pushint (alloc)")
+ruleTable 
+    = [ (0, "Initial State")
+      , (5, "Rule (3,5): Pushglobal")
+      , (6, "Rule (3,6): Pushint")
+      , (7, "Rule (3.7): Mkap")
+      , (8, "Rule (3.8): Push")
+      , (9, "Rule (3.9): Slide")
+      , (10, "Rule (3.10): Unwind NNum")
+      , (11, "Rule (3.11): Unwind NAp")
+      , (12, "rule (3.12): Unwind NGlobal")
+      , (13, "rule (3.13): Pushint")
+      , (14, "rule (3.14): Pushint")
       , (15, "rule (3.15): Update")
       , (16, "rule (3.16): Pop")
       , (17, "rule (3.17): Unwind NInd")
+      , (18, "rule (3.18): Push")
+      , (19, "rule (3.19): Unwind NGlobal")
+      , (20, "rule (3.20): Alloc")
       ]

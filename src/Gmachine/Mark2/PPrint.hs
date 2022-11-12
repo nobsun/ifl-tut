@@ -14,7 +14,10 @@ import Gmachine.Mark2.Code
 import Gmachine.Mark2.Node
 import Gmachine.Mark2.State
 
-{- -}
+showResults :: [GmState] -> [String]
+showResults = map iDisplay . iLayn' 0 . mapoid (showState, showStats)
+
+{- --
 showResults :: [GmState] -> String
 showResults states = iDisplay
     (iConcat [ iStr "Supercombinator definitions"
@@ -26,7 +29,7 @@ showResults states = iDisplay
     (unlines $ map iDisplay $ iLayn' 0 $ mapoid (showState, showStats) states)
     where
         s = head states
-
+-- -}
 mapoid :: (a -> b, a -> b) -> [a] -> [b]
 mapoid (f, g) (x:xs) = case xs of
     [] -> f x : [g x]
@@ -56,8 +59,8 @@ showInstruction i = case i of
     Push n       -> iStr "Push "       `iAppend` iNum n
     Pushint n    -> iStr "Pushint "    `iAppend` iNum n
     Mkap         -> iStr "Mkap"
-    Update n     -> iStr "Update "     `iAppend` iNum n
-    Pop n        -> iStr "Pop "        `iAppend` iNum n
+    Update n     -> iStr "Update"      `iAppend` iNum n
+    Pop n        -> iStr "Pop"         `iAppend` iNum n
 
 showState :: GmState -> IseqRep
 showState s = iConcat
@@ -87,9 +90,7 @@ showNode s a node = case node of
     NAp a1 a2   -> iConcat [ iStr "Ap ", showAddr a1
                            , iStr " ",   showAddr a2
                            ]
-    NInd a1     -> iConcat [ iStr "Ind "
-                           , showAddr a1
-                           ]
+    NInd a      -> iConcat [iStr "Ind ", showAddr a ]
 
 showStats :: GmState -> IseqRep
 showStats s

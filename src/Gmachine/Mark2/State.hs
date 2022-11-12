@@ -17,7 +17,8 @@ import Gmachine.Mark2.Node
 
 data GmState
     = GmState
-    { code    :: GmCode
+    { ctrl    :: [String]
+    , code    :: GmCode
     , stack   :: GmStack
     , heap    :: GmHeap
     , globals :: GmGlobals
@@ -41,7 +42,7 @@ type GmGlobals = Assoc Name Addr
 
 data GmStats
     = GmStats
-    { steps :: Int
+    { steps :: Int 
     }
 
 statInitial :: GmStats
@@ -55,7 +56,7 @@ statIncSteps stats = stats { steps = succ stats.steps }
 type GmRuleId = Int
 
 ruleTable :: Assoc GmRuleId String
-ruleTable
+ruleTable 
     = [ (0, "Initial Stats")
       , (1, "Rule (3,5): Pushglobal")
       , (2, "Rule (3,6): Pushint")
@@ -65,9 +66,4 @@ ruleTable
       , (6, "Rule (3.10): Unwind NNum")
       , (7, "Rule (3.11): Unwind NAp")
       , (8, "rule (3.12): Unwind NGlobal")
-      , (13, "rule (3.13): Pushint (reuse)")
-      , (14, "rule (3.14): Pushint (alloc)")
-      , (15, "rule (3.15): Update")
-      , (16, "rule (3.16): Pop")
-      , (17, "rule (3.17): Unwind NInd")
       ]

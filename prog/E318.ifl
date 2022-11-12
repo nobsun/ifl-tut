@@ -1,0 +1,1 @@
+Y f = letrec x = f x in x

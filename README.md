@@ -38,6 +38,7 @@
          - [x] 2.9.3 反転ポインタ
          - [x] 2.9.4 2-スペースGC（コピーGC）
 - [ ] 3. G-machine（グラフ簡約マシン）
+    - [x] 3.1 
 - [ ] 4. TIM（Three Instruction Machine）
 - [ ] 5. 並列G-machine
 - [ ] 6. λ リフティング
@@ -48,10 +49,10 @@
 
 ## 起動
 
-プロジェクトルートにおいて、コマンド `cabal run ti5b prog/prog17.ifl` で雛形具体化機械 `ti5b` にサンプルプログラム `prog17.ifl` ロードして起動すると、
+プロジェクトルートにおいて、コマンド `stack exec -- ti5b prog/prog17.ifl` で雛形具体化機械 `ti5b` にサンプルプログラム `prog17.ifl` ロードして起動すると、
 
 ```
-% cabal run ti5b prog/prog17.ifl
+% stack exec -- ti5b prog/prog17.ifl
    0) Heap [  40: NAP #21 #1
               39: NPrim print
               ...

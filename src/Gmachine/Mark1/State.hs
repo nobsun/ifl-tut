@@ -17,7 +17,8 @@ import Gmachine.Mark1.Node
 
 data GmState
     = GmState
-    { code    :: GmCode
+    { ctrl    :: [String]
+    , code    :: GmCode
     , stack   :: GmStack
     , heap    :: GmHeap
     , globals :: GmGlobals

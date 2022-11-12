@@ -14,7 +14,10 @@ import Gmachine.Mark1.Code
 import Gmachine.Mark1.Node
 import Gmachine.Mark1.State
 
-{- -}
+showResults :: [GmState] -> [String]
+showResults = map iDisplay . iLayn' 0 . mapoid (showState, showStats)
+
+{- --
 showResults :: [GmState] -> String
 showResults states = iDisplay
     (iConcat [ iStr "Supercombinator definitions"
@@ -26,7 +29,7 @@ showResults states = iDisplay
     (unlines $ map iDisplay $ iLayn' 0 $ mapoid (showState, showStats) states)
     where
         s = head states
-
+-- -}
 mapoid :: (a -> b, a -> b) -> [a] -> [b]
 mapoid (f, g) (x:xs) = case xs of
     [] -> f x : [g x]

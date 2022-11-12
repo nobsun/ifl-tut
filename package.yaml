@@ -120,6 +120,12 @@ executables:
     dependencies:
     - ifl-tut
 
+  gm3:
+    main:                Main.hs
+    source-dirs:         app/gm3
+    dependencies:
+    - ifl-tut
+
 tests:
   ifl-tut-test:
     main:                spec.hs

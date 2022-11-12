@@ -6,6 +6,7 @@
 module Gmachine.Mark1.Machine
     where
 
+import Data.Char
 import Data.List
 
 import Language
@@ -34,8 +35,16 @@ traceShow | debug     = Deb.traceShow
 
 -- ### 3.3.1 全体構造
 
-run :: String -> String
-run = showResults . eval . compile . parse
+run :: String -> ([String] -> [String])
+run prog inputs
+    = showResults
+    $ eval 
+    $ setControl inputs
+    $ compile 
+    $ parse prog
+
+setControl :: [String] -> GmState -> GmState
+setControl ctrl state = state { ctrl = ctrl }
 
 {- --
 compile :: CoreProgram -> GmState
@@ -71,10 +80,15 @@ gmFinal state = null state.code
 -- #### ステップ実行
 
 step :: GmState -> GmState
-step state = case state.code of
-    i:is -> dispatch i (state { code = is })
-    []   -> error "already final state"
-
+step state = case map toLower (head state.ctrl) of
+    ""                -> state' { ctrl = tail state.ctrl }
+    "c"               -> state' { ctrl = repeat "" }
+    s | all isDigit s -> state' { ctrl = replicate (pred (read s)) "" ++ tail state.ctrl }
+      | otherwise     -> state' { ctrl = tail state.ctrl }
+  where
+      state' = case state.code of
+        i:is -> dispatch i $ state { code = is }
+        []   -> error "already final state"
 
 dispatch :: Instruction -> GmState -> GmState
 dispatch (Pushglobal f) = pushglobal f
@@ -165,7 +179,8 @@ defaultThreshold = 50
 compile :: CoreProgram -> GmState
 compile program
     = GmState
-    { code  = initialCode
+    { ctrl = []
+    , code  = initialCode
     , stack = emptyStack
     , heap  = heap'
     , globals = globals'

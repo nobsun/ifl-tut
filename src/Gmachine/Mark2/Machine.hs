@@ -32,8 +32,16 @@ traceShow :: Show a => a -> b -> b
 traceShow | debug     = Deb.traceShow
           | otherwise = const id
 
-run :: String -> String
-run = showResults . eval . compile . parse
+run :: String -> ([String] -> [String])
+run prog inputs
+    = showResults
+    $ eval
+    $ setControl inputs
+    $ compile
+    $ parse prog
+
+setControl :: [String] -> GmState -> GmState
+setControl ctrl state = state { ctrl = ctrl }
 
 eval :: GmState -> [GmState]
 eval state = state : restStates
@@ -155,7 +163,8 @@ defaultThreshold = 50
 compile :: CoreProgram -> GmState
 compile program
     = GmState
-    { code  = initialCode
+    { ctrl = []
+    , code  = initialCode
     , stack = emptyStack
     , heap  = heap'
     , globals = globals'

@@ -135,6 +135,25 @@ executable gm2
     , utf8-string
   default-language: GHC2021
 
+executable gm3
+  main-is: Main.hs
+  other-modules:
+      Paths_ifl_tut
+  hs-source-dirs:
+      app/gm3
+  build-depends:
+      base >=4.7 && <5
+    , bytestring
+    , containers
+    , extra
+    , hspec
+    , ifl-tut
+    , text
+    , time
+    , unicode-show
+    , utf8-string
+  default-language: GHC2021
+
 executable ifl-tut
   main-is: Main.hs
   other-modules:
