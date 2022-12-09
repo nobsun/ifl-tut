@@ -72,6 +72,19 @@ dispatch (Update n)     = update n
 dispatch (Pop n)        = pop n
 dispatch Unwind         = unwind
 dispatch (Alloc n)      = alloc n
+dispatch Add            = arithmetic2 (+)
+dispatch Sub            = arithmetic2 (-)
+dispatch Mul            = arithmetic2 (*)
+dispatch Div            = arithmetic2 div
+dispatch Neg            = arithmetic1 negate
+dispatch Eq             = comparison (==)
+dispatch Ne             = comparison (/=)
+dispatch Lt             = comparison (<)
+dispatch Le             = comparison (<=)
+dispatch Gt             = comparison (>)
+dispatch Ge             = comparison (>=)
+dispatch Eval           = evalop
+dispatch (Cond i1 i2)   = cond i1 i2
 
 pushglobal :: Name -> GmState -> GmState
 pushglobal f state
@@ -115,12 +128,6 @@ push n state
         where
             an = state.stack.stkItems !! n
 
--- push n state
---     = state { stack = Stk.push a state.stack
---             , ruleid = 8 }
---     where
---         a = getArg (hLookup state.heap (state.stack.stkItems !! (n+1)))
-
 getArg :: Node -> Addr
 getArg (NAp _ a2) = a2
 getArg _          = error "getArg: Not application node"
@@ -155,7 +162,17 @@ unwind state
     where
         (a, stk) = Stk.pop state.stack
         newState node = case node of
-            NNum _    -> state { ruleid = 10 }
+            NNum _
+                | isEmptyStack state.dump
+                    -> state { ruleid = 10 }
+                | otherwise
+                    -> state { code  = i'
+                             , stack = Stk.push a stk'
+                             , dump  = dump'
+                             , ruleid = 22
+                             }
+                where
+                    ((i',stk'), dump') = Stk.pop state.dump
             NAp a1 _  -> state { code = [Unwind]
                                , stack = stack'
                                , ruleid = 11 }
@@ -199,6 +216,85 @@ allocNodes (n+1) heap = (heap2, a:as)
         (heap1, as) = allocNodes n heap
         (heap2, a ) = hAlloc heap1 (NInd hNull)
 
+arithmetic1 :: (Int -> Int) -> GmState -> GmState
+arithmetic1 = primitive1 boxInteger unboxInteger
+
+arithmetic2 :: (Int -> Int -> Int) -> GmState -> GmState
+arithmetic2 = primitive2 boxInteger unboxInteger
+
+comparison :: (Int -> Int -> Bool) -> GmState -> GmState
+comparison = primitive2 boxBoolean unboxInteger
+
+boxInteger :: Int -> GmState -> GmState
+boxInteger n state
+    = state { stack = Stk.push addr state.stack
+            , heap  = heap'
+            }
+    where
+        (heap', addr) = hAlloc state.heap (NNum n)
+
+unboxInteger :: Addr -> GmState -> Int
+unboxInteger a state
+    = ub (hLookup state.heap a)
+    where
+        ub node = case node of
+            NNum i -> i
+            _      -> error "unboxInteger: Unboxing a non-integer"
+
+primitive1 :: (b -> GmState -> GmState) -- ^ boxing function
+           -> (Addr -> GmState -> a)    -- ^ unboxing function
+           -> (a -> b)                  -- ^ operator
+           -> (GmState -> GmState)      -- ^ state transition
+primitive1 box unbox op state
+    = box (op (unbox a state)) (state { stack = stack', ruleid = 25})
+    where
+        (a, stack') = Stk.pop state.stack
+
+primitive2 :: (b -> GmState -> GmState) -- ^ boxing function
+           -> (Addr -> GmState -> a)    -- ^ unboxing function
+           -> (a -> a -> b)             -- ^ operator
+           -> (GmState -> GmState)      -- ^ state transition
+primitive2 box unbox op state
+    = box (op (unbox a0 state) (unbox a1 state)) (state { stack = stack'', ruleid = 24})
+    where
+        (a0, stack')  = Stk.pop state.stack
+        (a1, stack'') = Stk.pop stack'
+
+boxBoolean :: Bool -> GmState -> GmState
+boxBoolean b state
+    = state { stack = Stk.push addr state.stack 
+            , heap  = heap' }
+    where
+        (heap', addr) = hAlloc state.heap (NNum b')
+        b' | b         = 1
+           | otherwise = 0
+
+evalop :: GmState -> GmState
+evalop state
+    = state
+    { code = [Unwind]
+    , stack = Stk.push a emptyStack
+    , dump  = dump'
+    , ruleid = 23
+    }
+    where
+        (a, stack') = Stk.pop state.stack
+        dump' = Stk.push (state.code, stack') state.dump
+
+cond :: GmCode -> GmCode -> GmState -> GmState
+cond i1 i2 state = case hLookup state.heap a of
+    NNum 1 -> state { code = i1 ++ state.code
+                    , stack = stack'
+                    , ruleid = 21
+                    }
+    NNum 0 -> state { code = i2 ++ state.code
+                    , stack = stack'
+                    , ruleid = 22
+                    }
+    where
+        (a, stack') = Stk.pop state.stack
+
+--
 
 defaultHeapSize :: Int
 defaultHeapSize = 1024 ^ (2 :: Int)
@@ -212,6 +308,7 @@ compile program
     { ctrl  = []
     , code  = initialCode
     , stack = emptyStack
+    , dump  = emptyStack
     , heap  = heap'
     , globals = globals'
     , stats = statInitial
@@ -256,7 +353,7 @@ compileR e args = compileC e args ++ [Update n, Pop n, Unwind]
 compileC :: GmCompiler
 compileC expr env = case expr of
     EVar v
-        | elem v (aDomain env) -> [Push a]
+        | v `elem` aDomain env -> [Push a]
         | otherwise            -> [Pushglobal v]
         where
             a = aLookup env v (error "compileC: Cannot happen")

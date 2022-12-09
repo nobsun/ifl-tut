@@ -6,17 +6,17 @@ import Language
 type GmCode = [Instruction]
 
 data Instruction
-    = Unwind
+    = Slide Int
+    | Alloc Int
+    | Update Int
+    | Pop Int
+    | Unwind
     | Pushglobal Name
     | Pushint Int
     | Push Int
     | Mkap
-    | Slide Int
-    | Update Int
-    | Pop Int
-    | Alloc Int
     | Eval
-    | Add | Sub | Mul | Div
+    | Add | Sub | Mul | Div | Neg
     | Eq | Ne | Lt | Le | Gt | Ge
     | Cond GmCode GmCode
     deriving (Eq, Show)

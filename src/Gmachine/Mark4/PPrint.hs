@@ -54,19 +54,37 @@ showInstructions is
 
 showInstruction :: Instruction -> IseqRep
 showInstruction i = case i of
-    Unwind       -> iStr "Unwind"
-    Pushglobal f -> iStr "Pushglobal " `iAppend` iStr f
-    Push n       -> iStr "Push "       `iAppend` iNum n
-    Pushint n    -> iStr "Pushint "    `iAppend` iNum n
-    Mkap         -> iStr "Mkap"
     Slide n      -> iStr "Slide"       `iAppend` iNum n
+    Alloc n      -> iStr "Alloc"       `iAppend` iNum n
     Update n     -> iStr "Update"      `iAppend` iNum n
     Pop n        -> iStr "Pop"         `iAppend` iNum n
-    Alloc n      -> iStr "Alloc"       `iAppend` iNum n
+    Unwind       -> iStr "Unwind"
+    Pushglobal f -> iStr "Pushglobal " `iAppend` iStr f
+    Pushint n    -> iStr "Pushint "    `iAppend` iNum n
+    Push n       -> iStr "Push "       `iAppend` iNum n
+    Mkap         -> iStr "Mkap"
+    Eval         -> iStr "Eval"
+    Add          -> iStr "Add"
+    Sub          -> iStr "Sub"
+    Mul          -> iStr "Mul"
+    Div          -> iStr "Div"
+    Neg          -> iStr "Neg"
+    Eq           -> iStr "Eq"
+    Ne           -> iStr "Ne"
+    Lt           -> iStr "Lt"
+    Le           -> iStr "Le"
+    Gt           -> iStr "Gt"
+    Ge           -> iStr "Ge"
+    Cond i1 i2
+        -> iConcat
+         [ iStr "Cond [2: ", shortShowInstructions 2 i1
+         , iStr ", 1: ",     shortShowInstructions 2 i2
+         , iStr "]"]
 
 showState :: GmState -> IseqRep
 showState s = iConcat
     [ showStack s            , iNewline
+    , showDump s             , iNewline
     , showInstructions s.code, iNewline
     ]
 
@@ -93,7 +111,42 @@ showNode s a node = case node of
                            , iStr " ",   showAddr a2
                            ]
     NInd a      -> iConcat [ iStr "Ind ", showAddr a]
-    _           -> error "showNode: unexpected node"
+--    _           -> error "showNode: unexpected node"
+
+showDump :: GmState -> IseqRep
+showDump s
+    = iConcat
+    [ iStr "  Dump:["
+    , iIndent (iInterleave iNewline
+        (map showDumpItem (reverse (s.dump.stkItems))))
+    , iStr "]"
+    ]
+
+showDumpItem :: GmDumpItem -> IseqRep
+showDumpItem (code, stack)
+    = iConcat 
+    [ iStr "<"
+    , shortShowInstructions 3 code, iStr ", "
+    , shortShowStack stack,         iStr ">"
+    ]
+
+shortShowInstructions :: Int -> GmCode -> IseqRep
+shortShowInstructions number code
+    = iConcat
+    [ iStr "{", iInterleave (iStr "; ") dotcodes, iStr "}" ]
+    where
+        codes = map showInstruction (take number code)
+        dotcodes
+            | length code > number = codes ++ [iStr "..."]
+            | otherwise            = codes
+
+shortShowStack :: GmStack -> IseqRep
+shortShowStack stack
+    =  iConcat
+    [ iStr "["
+    , iInterleave (iStr ", ") (map showAddr stack.stkItems)
+    , iStr "]"
+    ]
 
 showStats :: GmState -> IseqRep
 showStats s

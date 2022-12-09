@@ -87,4 +87,5 @@ ruleTable
       , (18, "rule (3.18): Push")
       , (19, "rule (3.19): Unwind NGlobal")
       , (20, "rule (3.20): Alloc")
+      , (21, "rule (3.21): Add")
       ]
