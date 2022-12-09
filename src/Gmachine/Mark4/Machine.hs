@@ -7,6 +7,7 @@
 module Gmachine.Mark4.Machine
     where
 
+import Data.Char
 import Data.List
 
 import Language
@@ -58,9 +59,15 @@ gmFinal :: GmState -> Bool
 gmFinal state = null state.code
 
 step :: GmState -> GmState
-step state = case state.code of
-    i:is -> dispatch i (state { code = is })
-    []   -> error "already final state"
+step state = case map toLower $ head state.ctrl of
+    ""                -> state' { ctrl = tail state.ctrl }
+    "c"               -> state' { ctrl = repeat "" }
+    s | all isDigit s -> state' { ctrl = replicate (pred $ read s) "" ++ tail state.ctrl }
+      | otherwise     -> state' { ctrl = tail state.ctrl }
+    where
+        state' = case state.code of
+            i:is -> dispatch i (state { code = is })
+            []   -> error "already final state"
 
 dispatch :: Instruction -> GmState -> GmState
 dispatch (Pushglobal f) = pushglobal f
@@ -186,7 +193,7 @@ unwind state
                 | stk.curDepth < n -> error "Unwinding with too few artuments"
                 | otherwise 
                     -> state { code = c
-                             , stack = rearrange n state.heap stk
+                             , stack = rearrange n state.heap state.stack
                              , ruleid = 19
                              }
                         where
@@ -195,7 +202,7 @@ unwind state
 
 rearrange :: Int -> GmHeap -> GmStack -> GmStack
 rearrange n heap stk
-    = foldr phi (Stk.discard n stk) $ take n stk.stkItems
+    = foldr phi (Stk.discard n stk) $ take n $ tail stk.stkItems
     where
         phi a = Stk.push (getArg (hLookup heap a))
 

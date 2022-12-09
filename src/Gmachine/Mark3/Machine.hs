@@ -7,6 +7,7 @@
 module Gmachine.Mark3.Machine
     where
 
+import Data.Char
 import Data.List
 
 import Language
@@ -57,10 +58,21 @@ doAdmin state = state { stats = statIncSteps state.stats }
 gmFinal :: GmState -> Bool
 gmFinal state = null state.code
 
+-- step :: GmState -> GmState
+-- step state = case state.code of
+--     i:is -> dispatch i (state { code = is })
+--     []   -> error "already final state"
+
 step :: GmState -> GmState
-step state = case state.code of
-    i:is -> dispatch i (state { code = is })
-    []   -> error "already final state"
+step state = case map toLower $ head state.ctrl of
+    ""                -> state' { ctrl = tail state.ctrl }
+    "c"               -> state' { ctrl = repeat "" }
+    s | all isDigit s -> state' { ctrl = replicate (pred $ read s) "" ++ tail state.ctrl }
+      | otherwise     -> state' { ctrl = tail state.ctrl }
+    where
+        state' = case state.code of
+            i:is -> dispatch i (state { code = is })
+            []   -> error "already final state"
 
 dispatch :: Instruction -> GmState -> GmState
 dispatch (Pushglobal f) = pushglobal f
@@ -113,13 +125,7 @@ push n state
     = state { stack = Stk.push an state.stack
             , ruleid = 18 }
         where
-            an = trace "116" state.stack.stkItems !! n
-
--- push n state
---     = state { stack = Stk.push a state.stack
---             , ruleid = 8 }
---     where
---         a = getArg (hLookup state.heap (state.stack.stkItems !! (n+1)))
+            an = state.stack.stkItems !! n
 
 getArg :: Node -> Addr
 getArg (NAp _ a2) = a2
@@ -133,7 +139,7 @@ update n state
             }
     where
         (a, stack') = Stk.pop state.stack
-        heap' = trace "136" hUpdate state.heap (stack'.stkItems !! n) (NInd a)
+        heap' = hUpdate state.heap (stack'.stkItems !! n) (NInd a)
 
 pop :: Int -> GmState -> GmState
 pop n state
@@ -175,7 +181,7 @@ unwind state
 
 rearrange :: Int -> GmHeap -> GmStack -> GmStack
 rearrange n heap stk
-    = foldr phi (Stk.discard 0 stk) $ take n $ tail stk.stkItems
+    = foldr phi (Stk.discard n stk) $ take n $ tail stk.stkItems
     where
         phi a = Stk.push (getArg (hLookup heap a))
 

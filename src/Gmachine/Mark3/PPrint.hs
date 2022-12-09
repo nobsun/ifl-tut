@@ -50,7 +50,7 @@ showInstructions :: GmCode -> IseqRep
 showInstructions is
     = iConcat [ iStr "  Code:{ "
               , iIndent (iInterleave iNewline (map showInstruction is))
-              , iStr " }", iNewline]
+              , iStr " }"]
 
 showInstruction :: Instruction -> IseqRep
 showInstruction i = case i of
