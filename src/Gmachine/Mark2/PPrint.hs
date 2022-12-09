@@ -59,8 +59,8 @@ showInstruction i = case i of
     Push n       -> iStr "Push "       `iAppend` iNum n
     Pushint n    -> iStr "Pushint "    `iAppend` iNum n
     Mkap         -> iStr "Mkap"
-    Update n     -> iStr "Update"      `iAppend` iNum n
-    Pop n        -> iStr "Pop"         `iAppend` iNum n
+    Update n     -> iStr "Update "     `iAppend` iNum n
+    Pop n        -> iStr "Pop "        `iAppend` iNum n
 
 showState :: GmState -> IseqRep
 showState s = iConcat

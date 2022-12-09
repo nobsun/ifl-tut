@@ -302,6 +302,8 @@ defaultHeapSize = 1024 ^ (2 :: Int)
 defaultThreshold :: Int
 defaultThreshold = 50
 
+--
+
 compile :: CoreProgram -> GmState
 compile program
     = GmState
@@ -335,7 +337,7 @@ allocateSc heap (name, arity, instrs)
         (heap', addr) = hAlloc heap (NGlobal arity instrs)
 
 initialCode :: GmCode
-initialCode = [Pushglobal "main", Unwind]
+initialCode = [Pushglobal "main", Eval]
 
 {- | スーパーコンビネータのコンパイル
 >>> compileSc ("K", ["x", "y"], EVar "x")
@@ -401,4 +403,17 @@ compileLetrec comp defs e env
                  ++ compiled ds (i-1)
 
 compiledPrimitives :: [GmCompiledSC]
-compiledPrimitives = []
+compiledPrimitives
+    = [ ("+", 2, [Push 1, Eval, Push 1, Eval, Add, Update 2, Pop 2, Unwind])
+      , ("-", 2, [Push 1, Eval, Push 1, Eval, Sub, Update 2, Pop 2, Unwind])
+      , ("*", 2, [Push 1, Eval, Push 1, Eval, Mul, Update 2, Pop 2, Unwind])
+      , ("/", 2, [Push 1, Eval, Push 1, Eval, Div, Update 2, Pop 2, Unwind])
+      , ("negate", 1, [Push 0, Eval, Neg, Update 1, Pop 1, Unwind])
+      , ("==", 2, [Push 1, Eval, Push 1, Eval, Eq, Update 2, Pop 2, Unwind])
+      , ("/=", 2, [Push 1, Eval, Push 1, Eval, Ne, Update 2, Pop 2, Unwind])
+      , ("<", 2, [Push 1, Eval, Push 1, Eval, Lt, Update 2, Pop 2, Unwind])
+      , ("<=", 2, [Push 1, Eval, Push 1, Eval, Le, Update 2, Pop 2, Unwind])
+      , (">", 2, [Push 1, Eval, Push 1, Eval, Gt, Update 2, Pop 2, Unwind])
+      , (">=", 2, [Push 1, Eval, Push 1, Eval, Ge, Update 2, Pop 2, Unwind])
+      , ("if", 3, [Push 0, Eval, Cond [Push 1] [Push 2], Update 3, Pop 3, Unwind])
+      ]

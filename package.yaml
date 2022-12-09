@@ -1,5 +1,5 @@
 name:                ifl-tut
-version:             3.6.3
+version:             3.6.4
 synopsis:           Implementing Fuctional Lanbuage -- a tutorial
 
 github:              "nobsun/ifl-tut"
@@ -123,6 +123,12 @@ executables:
   gm3:
     main:                Main.hs
     source-dirs:         app/gm3
+    dependencies:
+    - ifl-tut
+
+  gm4:
+    main:                Main.hs
+    source-dirs:         app/gm4
     dependencies:
     - ifl-tut
 

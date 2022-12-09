@@ -113,7 +113,7 @@ push n state
     = state { stack = Stk.push an state.stack
             , ruleid = 18 }
         where
-            an = state.stack.stkItems !! n
+            an = trace "116" state.stack.stkItems !! n
 
 -- push n state
 --     = state { stack = Stk.push a state.stack
@@ -123,7 +123,7 @@ push n state
 
 getArg :: Node -> Addr
 getArg (NAp _ a2) = a2
-getArg _          = error "getArg: Not application node"
+getArg n = error $ "getArg: Not application node (" ++ show n ++ ")"
 
 update :: Int -> GmState -> GmState
 update n state
@@ -133,7 +133,7 @@ update n state
             }
     where
         (a, stack') = Stk.pop state.stack
-        heap' = hUpdate state.heap (stack'.stkItems !! n) (NInd a)
+        heap' = trace "136" hUpdate state.heap (stack'.stkItems !! n) (NInd a)
 
 pop :: Int -> GmState -> GmState
 pop n state
@@ -169,16 +169,13 @@ unwind state
                 | stk.curDepth < n -> error "Unwinding with too few artuments"
                 | otherwise 
                     -> state { code = c
-                             , stack = rearrange n state.heap stk
+                             , stack = rearrange n state.heap state.stack
                              , ruleid = 19
                              }
-                        where
-                            phi a = case hLookup state.heap a of
-                                NAp _ a' -> Stk.push a' 
 
 rearrange :: Int -> GmHeap -> GmStack -> GmStack
 rearrange n heap stk
-    = foldr phi (Stk.discard n stk) $ take n stk.stkItems
+    = foldr phi (Stk.discard 0 stk) $ take n $ tail stk.stkItems
     where
         phi a = Stk.push (getArg (hLookup heap a))
 
@@ -305,3 +302,9 @@ compileLetrec comp defs e env
 
 compiledPrimitives :: [GmCompiledSC]
 compiledPrimitives = []
+
+sample :: String
+sample = "main = I 3"
+
+sampleY :: String
+sampleY = "Y f = letrec x = f x in x"

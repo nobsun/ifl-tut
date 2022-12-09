@@ -59,10 +59,10 @@ showInstruction i = case i of
     Push n       -> iStr "Push "       `iAppend` iNum n
     Pushint n    -> iStr "Pushint "    `iAppend` iNum n
     Mkap         -> iStr "Mkap"
-    Slide n      -> iStr "Slide"       `iAppend` iNum n
-    Update n     -> iStr "Update"      `iAppend` iNum n
-    Pop n        -> iStr "Pop"         `iAppend` iNum n
-    Alloc n      -> iStr "Alloc"       `iAppend` iNum n
+    Slide n      -> iStr "Slide "      `iAppend` iNum n
+    Update n     -> iStr "Update "     `iAppend` iNum n
+    Pop n        -> iStr "Pop "        `iAppend` iNum n
+    Alloc n      -> iStr "Alloc "      `iAppend` iNum n
 
 showState :: GmState -> IseqRep
 showState s = iConcat
@@ -93,7 +93,6 @@ showNode s a node = case node of
                            , iStr " ",   showAddr a2
                            ]
     NInd a      -> iConcat [ iStr "Ind ", showAddr a]
-    _           -> error "showNode: unexpected node"
 
 showStats :: GmState -> IseqRep
 showStats s
