@@ -43,7 +43,7 @@ iLayn' :: Iseq iseq => Int -> [iseq] -> [iseq]
 iLayn' i seqs = zipoidWith layItem [i ..] seqs
     where
       layItem n seq'
-        = iConcat [ iFWNum 4 n, iStr ") ", iIndent seq', iNewline ]
+        = iConcat [ iFWNum 6 n, iStr ") ", iIndent seq', iNewline ]
 
 zipoidWith :: (a -> b -> b) -> [a] -> [b] -> [b]
 zipoidWith f (x:xs) (y:ys) = case ys of
