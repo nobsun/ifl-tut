@@ -1,3 +1,6 @@
+cons a b cc cn = cc a b ;
+nil      cc cn = cn ;
+
 length xs = xs length1 0 ;
 length1 x xs = 1 + (length xs) ;
 
