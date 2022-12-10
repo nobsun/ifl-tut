@@ -1,3 +1,4 @@
-nfib n = if (n < 2) 1
-    (nfib (n - 1) + nfib (n - 2)) ;
+nfib n = if (n == 0) 1
+    (if (n == 1) 1
+        (nfib (n - 1) + nfib (n - 2))) ;
 main = nfib 10
