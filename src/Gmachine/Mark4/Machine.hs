@@ -333,7 +333,6 @@ buildInitialHeap program
     where
         compiled :: [GmCompiledSC]
         compiled = map compileSc (preludeDefs ++ program) ++ compiledPrimitives
-        -- compiled = map compileSc program
 
 type GmCompiledSC = (Name, Arity, GmCode)
 
@@ -345,6 +344,9 @@ allocateSc heap (name, arity, instrs)
 
 initialCode :: GmCode
 initialCode = [Pushglobal "main", Eval]
+
+oldInitialCode :: GmCode
+oldInitialCode = [Pushglobal "main", Unwind]
 
 {- | スーパーコンビネータのコンパイル
 >>> compileSc ("K", ["x", "y"], EVar "x")
