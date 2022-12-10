@@ -69,7 +69,7 @@ step state = case map toLower $ head state.ctrl of
                 inspect = iConcat [ iStr "         #"
                                   , iStr n, iStr " -> "
                                   , showNode state a node
-                                  , iNewline
+                                  , iNewline, iNewline
                                   ]
                 (a,_) = Stk.pop state.stack
                 node  = hLookup state.heap a
