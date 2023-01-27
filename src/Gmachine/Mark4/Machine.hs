@@ -230,7 +230,7 @@ arithmetic2 :: (Int -> Int -> Int) -> GmState -> GmState
 arithmetic2 = primitive2 boxInteger unboxInteger
 
 comparison :: (Int -> Int -> Bool) -> GmState -> GmState
-comparison = primitive2 boxBoolean unboxInteger
+comparison cmp = primitive2 boxBoolean unboxInteger cmp
 
 boxInteger :: Int -> GmState -> GmState
 boxInteger n state
@@ -262,7 +262,8 @@ primitive2 :: (b -> GmState -> GmState) -- ^ boxing function
            -> (a -> a -> b)             -- ^ operator
            -> (GmState -> GmState)      -- ^ state transition
 primitive2 box unbox op state
-    = box (op (unbox a0 state) (unbox a1 state)) (state { stack = stack'', ruleid = 24})
+    = box (op (unbox a0 state) (unbox a1 state))
+          (state { stack = stack'', ruleid = 2426 })
     where
         (a0, stack')  = Stk.pop state.stack
         (a1, stack'') = Stk.pop stack'
@@ -358,6 +359,7 @@ compileSc (name, args, body)
 
 compileR :: GmCompiler
 compileR e args = compileC e args ++ [Update n, Pop n, Unwind]
+-- compileR e args = compileC e args ++ [Eval]
     where
         n = length args
 

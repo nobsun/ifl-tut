@@ -201,14 +201,22 @@ unwind state
                                , ruleid = 17
                                }
             NGlobal n c
-                | stk.curDepth < n -> error "Unwinding with too few artuments"
-                | otherwise 
+                | k < n
+                    -> state { code  = i'
+                             , stack = Stk.push ak stk'
+                             , dump  = dump'
+                             , ruleid = 29
+                             }
+                | otherwise
                     -> state { code = c
                              , stack = rearrange n state.heap state.stack
                              , ruleid = 19
                              }
-                        where
-                            phi a = case hLookup state.heap a of
+                where 
+                    k      = stk.curDepth
+                    (ak,_) = Stk.pop $ Stk.discard k state.stack
+                    ((i',stk'), dump') = Stk.pop state.dump
+                    phi a = case hLookup state.heap a of
                                 NAp _ a' -> Stk.push a' 
 
 rearrange :: Int -> GmHeap -> GmStack -> GmStack
@@ -364,9 +372,26 @@ compileSc (name, args, body)
     = (name, length args, compileR body (zip args [0 ..]))
 
 compileR :: GmCompiler
-compileR e args = compileC e args ++ [Update n, Pop n, Unwind]
+compileR e args = compileE e args ++ [Update n, Pop n, Unwind]
     where
         n = length args
+
+compileE :: GmCompiler
+compileE expr env = case expr of
+    ENum n -> [Pushint n]
+    ELet isRec defs e
+        | isRec     -> compileLetrec compileE defs e env
+        | otherwise -> compileLet    compileE defs e env
+    EAp (EAp (EVar name) e0) e1
+        | name `elem` aDomain builtInDyadic
+                    -> compileE e1 env ++ compileE e0 (argOffset 1 env) ++ [dyadic]
+            where
+                dyadic = aLookup builtInDyadic name (error "Invalid dyadic operator" )
+    EAp (EVar "negate") e
+                    -> compileE e env ++ [Neg]
+    EAp (EAp (EAp (EVar "if") e0) e1) e2
+                    -> compileE e0 env ++ [Cond (compileE e1 env) (compileE e2 env)]
+    _ -> compileC expr env ++ [Eval]
 
 builtInDyadic :: Assoc Name Instruction
 builtInDyadic 

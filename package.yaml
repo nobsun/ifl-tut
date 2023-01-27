@@ -38,16 +38,6 @@ library:
   source-dirs: src
 
 executables:
-  ifl-tut:
-    main:                Main.hs
-    source-dirs:         app
-    ghc-options:
-    - -rtsopts
-    # - -threaded
-    # - -with-rtsopts=-N
-    dependencies:
-    - ifl-tut
-
   ti1:
     main:                Main.hs
     source-dirs:         app/ti1
@@ -139,18 +129,6 @@ executables:
     - ifl-tut
 
 tests:
-  ifl-tut-test:
-    main:                spec.hs
-    source-dirs:         test
-    # ghc-options:
-    # - -threaded
-    # - -rtsopts
-    # - -with-rtsopts=-N
-    dependencies:
-    - ifl-tut
-    - hspec
-    - main-tester
-
   ifl-tut-doctest:
     main:                doctests.hs
     source-dirs:         test
