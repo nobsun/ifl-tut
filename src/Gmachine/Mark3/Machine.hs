@@ -201,6 +201,7 @@ allocNodes (n+1) heap = (heap2, a:as)
     where
         (heap1, as) = allocNodes n heap
         (heap2, a ) = hAlloc heap1 (NInd hNull)
+allocNodes _     _    = error "allocNodes: negative number"
 
 
 defaultHeapSize :: Int
@@ -266,8 +267,8 @@ compileC expr env = case expr of
     ENum n  -> [Pushint n]
     EAp e1 e2
             -> compileC e2 env ++ compileC e1 (argOffset 1 env) ++ [Mkap]
-    ELet recursive defs e
-        | recursive -> compileLetrec compileC defs e env
+    ELet recflg defs e
+        | recflg    -> compileLetrec compileC defs e env
         | otherwise -> compileLet compileC defs e env
     _       -> error "Not implemented"
 
@@ -278,8 +279,8 @@ compileLet comp defs expr env
         env' = compileArgs defs env
 
 compileLet' :: Assoc Name CoreExpr -> GmEnvironment -> GmCode
-compileLet' [] env = []
-compileLet' ((name, expr):defs) env
+compileLet' [] _env = []
+compileLet' ((_name, expr):defs) env
     = compileC expr env ++ compileLet' defs (argOffset 1 env)
 
 compileArgs :: Assoc Name CoreExpr -> GmEnvironment -> GmEnvironment

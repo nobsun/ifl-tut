@@ -220,16 +220,16 @@ unwind state
                     k      = stk.curDepth
                     (ak,_) = Stk.pop $ Stk.discard k state.stack
                     ((i',stk'), dump') = Stk.pop state.dump
-                    phi a = case hLookup state.heap a of
-                                NAp _ a' -> Stk.push a'
-            NConstr t as
+                    -- phi a = case hLookup state.heap a of
+                    --             NAp _ a' -> Stk.push a'
+            NConstr _t _as
                 -> state { code = i'
-                         , stack = Stk.push a stk'
+                         , stack = Stk.push a' stk'
                          , dump  = dump'
                          , ruleid = 35
                          }
                 where
-                    (a,_)              = Stk.pop state.stack
+                    (a',_)             = Stk.pop state.stack
                     ((i',stk'), dump') = Stk.pop state.dump 
 
 rearrange :: Int -> GmHeap -> GmStack -> GmStack
@@ -254,6 +254,7 @@ allocNodes (n+1) heap = (heap2, a:as)
     where
         (heap1, as) = allocNodes n heap
         (heap2, a ) = hAlloc heap1 (NInd hNull)
+allocNodes _ _ = error "allocNodes: negative number"
 
 arithmetic1 :: (Int -> Int) -> GmState -> GmState
 arithmetic1 = primitive1 boxInteger unboxInteger
@@ -330,6 +331,7 @@ cond i1 i2 state = case hLookup state.heap a of
                     , stack = stack'
                     , ruleid = 22
                     }
+    _ -> error "cond: invalid node"
     where
         (a, stack') = Stk.pop state.stack
 
@@ -341,7 +343,7 @@ pack t n state
             }
     where
         (as, stack') = Stk.npop n state.stack
-        (heap', a)   = hAlloc state.heap (NConstr t as)
+        (heap', _a)   = hAlloc state.heap (NConstr t as)
 
 casejump :: [(Int, GmCode)] -> GmState -> GmState
 casejump alts state
@@ -351,7 +353,7 @@ casejump alts state
     where
         (a, _) = Stk.pop state.stack
         i = case hLookup state.heap a of
-            NConstr t as
+            NConstr t _as
                 -> aLookup alts t (error $ "No case for constructor" ++ show t)
             _   -> error "Not data structure"
 
@@ -363,7 +365,7 @@ split n state
     where
         (a, stk) = Stk.pop state.stack
         stack' = case hLookup state.heap a of
-            NConstr t as
+            NConstr _t as
                 | n == length as -> foldr Stk.push stk as
                 | otherwise      -> error "Not saturated"
             _                    -> error "Not data structure"
@@ -484,10 +486,10 @@ compileC expr env = case expr of
     ENum n  -> [Pushint n]
     EAp e1 e2
             -> compileC e2 env ++ compileC e1 (argOffset 1 env) ++ [Mkap]
-    ELet recursive defs e
-        | recursive -> compileLetrec compileC defs e env
+    ELet recflg defs e
+        | recflg    -> compileLetrec compileC defs e env
         | otherwise -> compileLet compileC defs e env
-    ECase e as
+    ECase e _as
             -> compileE e env -- ++ [Casejump (compileAlts as env)]
     _       -> error "Not implemented"
 
@@ -498,8 +500,8 @@ compileLet comp defs expr env
         env' = compileArgs defs env
 
 compileLet' :: Assoc Name CoreExpr -> GmEnvironment -> GmCode
-compileLet' [] env = []
-compileLet' ((name, expr):defs) env
+compileLet' [] _env = []
+compileLet' ((_name, expr):defs) env
     = compileC expr env ++ compileLet' defs (argOffset 1 env)
 
 compileArgs :: Assoc Name CoreExpr -> GmEnvironment -> GmEnvironment
@@ -553,3 +555,12 @@ compileAlts comp alts env
 compileE' :: Int -> GmCompiler
 compileE' offset expr env
     = [Split offset] ++ compileE expr env ++ [Slide offset]
+
+--
+
+sample :: String
+sample = unlines
+    [ "length xs = case xs of"
+    , "                   <1> -> 0 ;"
+    , "                   <2> y ys -> 1 + length ys"
+    ]

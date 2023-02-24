@@ -118,11 +118,11 @@ showStackItem s a
               ]
 
 showNode :: GmState -> Addr -> Node -> IseqRep
-showNode s a node = case node of
+showNode s addr node = case node of
     NNum n       -> iNum n
     NGlobal _ _  -> iConcat [iStr "Global ", iStr v]
         where
-            v = head [ n | (n, b) <- s.globals, a == b ]
+            v = head [ n | (n, b) <- s.globals, addr == b ]
     NAp a1 a2    -> iConcat [ iStr "Ap ", showAddr a1
                            , iStr " ",   showAddr a2
                            ]

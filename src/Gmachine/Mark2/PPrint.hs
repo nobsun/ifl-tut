@@ -90,7 +90,7 @@ showNode s a node = case node of
     NAp a1 a2   -> iConcat [ iStr "Ap ", showAddr a1
                            , iStr " ",   showAddr a2
                            ]
-    NInd a      -> iConcat [iStr "Ind ", showAddr a ]
+    NInd addr   -> iConcat [iStr "Ind ", showAddr addr ]
 
 showStats :: GmState -> IseqRep
 showStats s

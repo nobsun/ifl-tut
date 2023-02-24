@@ -3,7 +3,10 @@ _prompt _ n = (utcToLocalTime <$> getCurrentTimeZone <*> getCurrentTime) >>= pri
 :set prompt-function _prompt
 import Text.Show.Unicode
 :set -interactive-print=uprint
-:set -XLambdaCase -XMultiWayIf -XOverloadedStrings -XBangPatterns -XScopedTypeVariables
+:set -XGHC2021 -XLambdaCase -XMultiWayIf -XNPlusKPatterns -XOverloadedStrings
+:set -XNoStarIsType -XTypeFamilyDependencies -XTypeInType -XUndecidableInstances
+:set -XImplicitParams -XNoFieldSelectors -XDuplicateRecordFields -XOverloadedRecordDot
+:! alias catn='cat -n'
 :set editor catn
 import Text.Printf
 :def! l (\ s -> readFile s >>= sequence . (zipWith (printf "%4d    %s\n") [(1::Int)..]) . lines >> return (unwords ["::l", s]))

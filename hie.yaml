@@ -1,56 +1,56 @@
 cradle:
   stack:
-    - path: "./test/doctests.hs"
-    component: "ifl-tut:test:ifl-tut-doctest"
+    # - path: "./test/doctests.hs"
+    # component: "ifl-tut:test:ifl-tut-doctest"
 
-    - path: "./app/ti1/Main.hs"
-    component: "ifl-tut:exe:ti1"
+    # - path: "./app/ti1/Main.hs"
+    # component: "ifl-tut:exe:ti1"
 
-    - path: "./app/ti2/Main.hs"
-    component: "ifl-tut:exe:ti2"
+    # - path: "./app/ti2/Main.hs"
+    # component: "ifl-tut:exe:ti2"
 
-    - path: "./app/ti3/Main.hs"
-    component: "ifl-tut:exe:ti3"
+    # - path: "./app/ti3/Main.hs"
+    # component: "ifl-tut:exe:ti3"
 
-    - path: "./app/ti4/Main.hs"
-    component: "ifl-tut:exe:ti4"
+    # - path: "./app/ti4/Main.hs"
+    # component: "ifl-tut:exe:ti4"
 
-    - path: "./app/ti5/Main.hs"
-    component: "ifl-tut:exe:ti5"
+    # - path: "./app/ti5/Main.hs"
+    # component: "ifl-tut:exe:ti5"
 
-    - path: "./app/ti5a/Main.hs"
-    component: "ifl-tut:exe:ti5a"
+    # - path: "./app/ti5a/Main.hs"
+    # component: "ifl-tut:exe:ti5a"
 
-    - path: "./app/ti5b/Main.hs"
-    component: "ifl-tut:exe:ti5b"
+    # - path: "./app/ti5b/Main.hs"
+    # component: "ifl-tut:exe:ti5b"
 
-    - path: "./app/ti5c/Main.hs"
-    component: "ifl-tut:exe:ti5c"
+    # - path: "./app/ti5c/Main.hs"
+    # component: "ifl-tut:exe:ti5c"
 
-    - path: "./app/ti5mgc/Main.hs"
-    component: "ifl-tut:exe:ti5mgc"
+    # - path: "./app/ti5mgc/Main.hs"
+    # component: "ifl-tut:exe:ti5mgc"
 
-    - path: "./app/ti5rvp/Main.hs"
-    component: "ifl-tut:exe:ti5rvp"
+    # - path: "./app/ti5rvp/Main.hs"
+    # component: "ifl-tut:exe:ti5rvp"
 
-    - path: "./app/ti5cp/Main.hs"
-    component: "ifl-tut:exe:ti5cp"
+    # - path: "./app/ti5cp/Main.hs"
+    # component: "ifl-tut:exe:ti5cp"
 
-    - path: "./app/gm1/Main.hs"
-    component: "ifl-tut:exe:gm1"
+    # - path: "./app/gm1/Main.hs"
+    # component: "ifl-tut:exe:gm1"
 
-    - path: "./app/gm2/Main.hs"
-    component: "ifl-tut:exe:gm2"
+    # - path: "./app/gm2/Main.hs"
+    # component: "ifl-tut:exe:gm2"
 
-    - path: "./app/gm3/Main.hs"
-    component: "ifl-tut:exe:gm3"
+    # - path: "./app/gm3/Main.hs"
+    # component: "ifl-tut:exe:gm3"
 
-    - path: "./app/gm4/Main.hs"
-    component: "ifl-tut:exe:gm4"
+    # - path: "./app/gm4/Main.hs"
+    # component: "ifl-tut:exe:gm4"
 
-    - path: "./app/gm5/Main.hs"
-    component: "ifl-tut:exe:gm5"
+    # - path: "./app/gm5/Main.hs"
+    # component: "ifl-tut:exe:gm5"
 
-    - path: "./app/gm6/Main.hs"
-    component: "ifl-tut:exe:gm6"
+    # - path: "./app/gm6/Main.hs"
+    # component: "ifl-tut:exe:gm6"
 
