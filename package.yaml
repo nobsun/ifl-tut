@@ -34,6 +34,28 @@ dependencies:
 
 language: GHC2021
 
+default-extensions:
+- LambdaCase
+- MultiWayIf
+- NPlusKPatterns
+- OverloadedStrings
+- NoStarIsType
+- TypeFamilyDependencies
+- TypeInType
+- UndecidableInstances
+- ImplicitParams
+- NoFieldSelectors
+- DuplicateRecordFields
+- OverloadedRecordDot
+
+ghc-options:
+- -Wall
+- -Wno-unticked-promoted-constructors
+- -Wno-unused-imports
+- -Wno-unused-top-binds
+- -Wno-unused-top-binds
+- -Wno-orphans
+
 library:
   source-dirs: src
 
