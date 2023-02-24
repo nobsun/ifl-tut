@@ -2,7 +2,7 @@
 {-# LANGUAGE NoFieldSelectors #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedRecordDot #-}
-module Gmachine.Mark5.State
+module Gmachine.Mark6.State
     where
 
 import Language
@@ -10,14 +10,15 @@ import Heap
 import Stack
 import Utils
 
-import Gmachine.Mark5.Code
-import Gmachine.Mark5.Node
+import Gmachine.Mark6.Code
+import Gmachine.Mark6.Node
 
 --
 
 data GmState
     = GmState
     { ctrl    :: [String]
+    , output  :: GmOutput
     , code    :: GmCode
     , stack   :: GmStack
     , dump    :: GmDump
@@ -26,6 +27,10 @@ data GmState
     , stats   :: GmStats
     , ruleid  :: GmRuleId
     }
+
+--
+
+type GmOutput = String
 
 --
 
@@ -93,8 +98,7 @@ ruleTable
       , (24, "rule (3.24): Arithmetic instruction")
       , (25, "rule (3.25): Arithmetic unary")
       , (26, "rule (3.26): Comparison operator")
-      , (27, "rule (3.37): Cond for True")
-      , (28, "rule (3.38): Cond for False")
+      , (27, "rule (3.27): Cond for True")
+      , (28, "rule (3.28): Cond for False")
       , (29, "rule (3.29): Unwind for Eval any object to WHNF")
-      
       ]

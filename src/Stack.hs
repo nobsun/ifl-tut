@@ -41,6 +41,13 @@ pop stk = bool (list undefined phi stk.stkItems)
     where
         phi x xs = (x, stk { curDepth = pred stk.curDepth, stkItems = xs })
 
+npop :: Int -> Stack a -> ([a], Stack a)
+npop n stack = case n of
+    0 -> ([], stack)
+    _ -> case pop stack of
+        (a, stack') -> case npop (pred n) stack' of
+            (as, stack'') -> (a:as, stack'')
+
 discard :: Int -> Stack a -> Stack a
 discard 0 stk = stk
 discard n stk = stk { curDepth = subtract n stk.curDepth `max` 0

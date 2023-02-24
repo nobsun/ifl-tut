@@ -4,7 +4,7 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-module Gmachine.Mark5.Machine
+module Gmachine.Mark6.Machine
     where
 
 import Data.Char
@@ -12,15 +12,15 @@ import Data.List
 
 import Language
 import Heap
-import qualified Stack as Stk (push, pop, discard)
+import qualified Stack as Stk (push, pop, npop, discard)
 import Stack hiding (push, pop, discard)
 import Utils
 import Iseq
 
-import Gmachine.Mark5.Code ( GmCode, Instruction(..) )
-import Gmachine.Mark5.Node
-import Gmachine.Mark5.PPrint
-import Gmachine.Mark5.State
+import Gmachine.Mark6.Code ( GmCode, Instruction(..) )
+import Gmachine.Mark6.Node
+import Gmachine.Mark6.PPrint
+import Gmachine.Mark6.State
 
 import Debug.Trace qualified as Deb
 
@@ -88,21 +88,25 @@ dispatch (Slide n)      = slide n
 dispatch (Push n)       = push n
 dispatch (Update n)     = update n
 dispatch (Pop n)        = pop n
-dispatch Unwind         = unwind
-dispatch (Alloc n)      = alloc n
-dispatch Add            = arithmetic2 (+)
-dispatch Sub            = arithmetic2 (-)
-dispatch Mul            = arithmetic2 (*)
-dispatch Div            = arithmetic2 div
-dispatch Neg            = arithmetic1 negate
-dispatch Eq             = comparison (==)
-dispatch Ne             = comparison (/=)
-dispatch Lt             = comparison (<)
-dispatch Le             = comparison (<=)
-dispatch Gt             = comparison (>)
-dispatch Ge             = comparison (>=)
-dispatch Eval           = evalop
-dispatch (Cond i1 i2)   = cond i1 i2
+dispatch Unwind          = unwind
+dispatch (Alloc n)       = alloc n
+dispatch Add             = arithmetic2 (+)
+dispatch Sub             = arithmetic2 (-)
+dispatch Mul             = arithmetic2 (*)
+dispatch Div             = arithmetic2 div
+dispatch Neg             = arithmetic1 negate
+dispatch Eq              = comparison (==)
+dispatch Ne              = comparison (/=)
+dispatch Lt              = comparison (<)
+dispatch Le              = comparison (<=)
+dispatch Gt              = comparison (>)
+dispatch Ge              = comparison (>=)
+dispatch Eval            = evalop
+dispatch (Cond i1 i2)    = cond i1 i2
+dispatch (Pack t a)      = pack t a
+dispatch (Casejump alts) = casejump alts
+dispatch (Split n)       = split n
+dispatch Print           = gmprint
 
 pushglobal :: Name -> GmState -> GmState
 pushglobal f state
@@ -172,7 +176,7 @@ slide n state
             , ruleid = 5 }
     where
         (a, stk) = Stk.pop state.stack
-        stack'   = Stk.push a (Stk.discard n stk)
+        stack' = Stk.push a (Stk.discard n stk)
 
 unwind :: GmState -> GmState
 unwind state
@@ -217,7 +221,16 @@ unwind state
                     (ak,_) = Stk.pop $ Stk.discard k state.stack
                     ((i',stk'), dump') = Stk.pop state.dump
                     phi a = case hLookup state.heap a of
-                                NAp _ a' -> Stk.push a' 
+                                NAp _ a' -> Stk.push a'
+            NConstr t as
+                -> state { code = i'
+                         , stack = Stk.push a stk'
+                         , dump  = dump'
+                         , ruleid = 35
+                         }
+                where
+                    (a,_)              = Stk.pop state.stack
+                    ((i',stk'), dump') = Stk.pop state.dump 
 
 rearrange :: Int -> GmHeap -> GmStack -> GmStack
 rearrange n heap stk
@@ -320,6 +333,67 @@ cond i1 i2 state = case hLookup state.heap a of
     where
         (a, stack') = Stk.pop state.stack
 
+pack :: Tag -> Arity -> GmState -> GmState
+pack t n state
+    = state { stack = stack'
+            , heap  = heap'
+            , ruleid = 30
+            }
+    where
+        (as, stack') = Stk.npop n state.stack
+        (heap', a)   = hAlloc state.heap (NConstr t as)
+
+casejump :: [(Int, GmCode)] -> GmState -> GmState
+casejump alts state
+    = state { code   = i ++ state.code
+            , ruleid = 31
+            }
+    where
+        (a, _) = Stk.pop state.stack
+        i = case hLookup state.heap a of
+            NConstr t as
+                -> aLookup alts t (error $ "No case for constructor" ++ show t)
+            _   -> error "Not data structure"
+
+split :: Int -> GmState -> GmState
+split n state
+    = state { stack = stack' 
+            , ruleid = 32
+            }
+    where
+        (a, stk) = Stk.pop state.stack
+        stack' = case hLookup state.heap a of
+            NConstr t as
+                | n == length as -> foldr Stk.push stk as
+                | otherwise      -> error "Not saturated"
+            _                    -> error "Not data structure"
+
+gmprint :: GmState -> GmState
+gmprint state
+    = case hLookup state.heap a of
+        NNum n
+            -> state { output = show n
+                     , stack  = stk
+                     , ruleid = 33
+                     }
+        NConstr t as 
+            -> state { output = showconstr t as
+                     , code   = printcode (length as) ++ state.code
+                     , stack  = foldr Stk.push stk as
+                     , ruleid = 34
+                     }
+        _   -> error "gmprint: cannot print"
+    where
+        (a, stk) = Stk.pop state.stack
+        showconstr tag ary = "Pack{"
+                           ++ show tag
+                           ++ ","
+                           ++ show (length ary)
+                           ++ "}"
+
+printcode :: Int -> GmCode
+printcode n = take n $ cycle [Eval, Print]
+
 --
 
 defaultHeapSize :: Int
@@ -333,14 +407,15 @@ defaultThreshold = 50
 compile :: CoreProgram -> GmState
 compile program
     = GmState
-    { ctrl  = []
-    , code  = initialCode
-    , stack = emptyStack
-    , dump  = emptyStack
-    , heap  = heap'
+    { ctrl    = []
+    , output  = ""
+    , code    = initialCode
+    , stack   = emptyStack
+    , dump    = emptyStack
+    , heap    = heap'
     , globals = globals'
-    , stats = statInitial
-    , ruleid = 0
+    , stats   = statInitial
+    , ruleid  = 0
     }
     where
         (heap', globals') = let { ?sz = defaultHeapSize; ?th = defaultThreshold }
@@ -391,6 +466,7 @@ compileE expr env = case expr of
                     -> compileE e env ++ [Neg]
     EAp (EAp (EAp (EVar "if") e0) e1) e2
                     -> compileE e0 env ++ [Cond (compileE e1 env) (compileE e2 env)]
+    ECase e alts    -> compileE e env ++ [Casejump (compileAlts compileE' alts env)]
     _ -> compileC expr env ++ [Eval]
 
 builtInDyadic :: Assoc Name Instruction
@@ -411,6 +487,8 @@ compileC expr env = case expr of
     ELet recursive defs e
         | recursive -> compileLetrec compileC defs e env
         | otherwise -> compileLet compileC defs e env
+    ECase e as
+            -> compileE e env -- ++ [Casejump (compileAlts as env)]
     _       -> error "Not implemented"
 
 compileLet :: GmCompiler -> Assoc Name CoreExpr -> GmCompiler
@@ -463,3 +541,15 @@ compiledPrimitives
       , (">=", 2, [Push 1, Eval, Push 1, Eval, Ge, Update 2, Pop 2, Unwind])
       , ("if", 3, [Push 0, Eval, Cond [Push 1] [Push 2], Update 3, Pop 3, Unwind])
       ]
+
+compileAlts :: (Int -> GmCompiler)
+            -> [CoreAlter]
+            -> GmEnvironment
+            -> [(Int, GmCode)]
+compileAlts comp alts env
+    = [ (tag, comp len body (zip names [0 ..] ++ argOffset len env))
+      | (tag, names, body) <- alts, let len = length names ]
+
+compileE' :: Int -> GmCompiler
+compileE' offset expr env
+    = [Split offset] ++ compileE expr env ++ [Slide offset]
