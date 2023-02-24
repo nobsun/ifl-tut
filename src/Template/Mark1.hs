@@ -231,7 +231,7 @@ instantiateAp heap env a b = hAlloc heap2 (NAp a1 a2)
 instantiateLet :: TiHeap -> Assoc Name Addr -> IsRec -> Assoc Name CoreExpr -> CoreExpr -> (TiHeap, Addr)
 instantiateLet _heap _env _isrec _bindings _body = error "Cannot instatiate let(rec) yet"
 
-instantiateCase :: TiHeap -> Assoc Name Addr -> CoreExpr -> [CoreAlter] -> (TiHeap, Addr)
+instantiateCase :: TiHeap -> Assoc Name Addr -> CoreExpr -> [CoreAlt] -> (TiHeap, Addr)
 instantiateCase _heap _env _expr _alters = error "Cannot instatiate case"
 
 instantiateLam :: TiHeap -> Assoc Name Addr -> [Name] -> CoreExpr -> (TiHeap, Addr)

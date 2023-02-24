@@ -240,7 +240,7 @@ instantiateLet heap env isrec defs body = instantiate body heap' env'
             where
                 (heap1, addr) = instantiate rhs heap'' rhsEnv
 
-instantiateCase :: TiHeap -> Assoc Name Addr -> CoreExpr -> [CoreAlter] -> (TiHeap, Addr)
+instantiateCase :: TiHeap -> Assoc Name Addr -> CoreExpr -> [CoreAlt] -> (TiHeap, Addr)
 instantiateCase _heap _env _expr _alters = error "Cannot instatiate case"
 
 instantiateLam :: TiHeap -> Assoc Name Addr -> [Name] -> CoreExpr -> (TiHeap, Addr)

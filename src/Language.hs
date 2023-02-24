@@ -37,7 +37,7 @@ dispatchCoreExpr :: (Name -> a)
                  -> (Tag -> Arity -> a)
                  -> (CoreExpr -> CoreExpr -> a)
                  -> (IsRec -> Assoc Name CoreExpr -> CoreExpr -> a)
-                 -> (CoreExpr -> [CoreAlter] -> a)
+                 -> (CoreExpr -> [CoreAlt] -> a)
                  -> ([Name] -> CoreExpr -> a)
                  -> CoreExpr -> a
 dispatchCoreExpr contEVar contENum contEConstr contEAp contELet contECase contELam expr
@@ -78,7 +78,7 @@ type Alter a
     , [a]      -- 変数名リスト
     , Expr a   -- 選択肢本体
     ) 
-type CoreAlter = Alter Name
+type CoreAlt = Alter Name
 
 {- アトミック式の判別 -}
 
@@ -357,10 +357,10 @@ pDefn = (,) <$$> pVar <** pLit "=" <**> pExpr
 pECase :: Parser CoreExpr
 pECase = ECase <$$ pLit "case" <**> pExpr <** pLit "of" <**> pAlters
 
-pAlters :: Parser [CoreAlter]
+pAlters :: Parser [CoreAlt]
 pAlters = pOneOrMoreWithSep pAlter (pLit ";")
 
-pAlter :: Parser CoreAlter
+pAlter :: Parser CoreAlt
 pAlter = (,,) <$$> pTag <**> pMunch pVar <** pLit "->" <**> pExpr
 
 pTag :: Parser Tag

@@ -353,7 +353,7 @@ casejump alts state
     where
         (a, _) = Stk.pop state.stack
         i = case hLookup state.heap a of
-            NConstr t _as
+            NConstr t _ss
                 -> aLookup alts t (error $ "No case for constructor" ++ show t)
             _   -> error "Not data structure"
 
@@ -545,7 +545,7 @@ compiledPrimitives
       ]
 
 compileAlts :: (Int -> GmCompiler)
-            -> [CoreAlter]
+            -> [CoreAlt]
             -> GmEnvironment
             -> [(Int, GmCode)]
 compileAlts comp alts env
