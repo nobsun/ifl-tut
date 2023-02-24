@@ -288,6 +288,7 @@ pprDefn (name, expr)
 
 clex :: Loc -> String -> [Token]
 clex i ('-' : '-' : cs) = clex i (dropWhile ('\n' /=) cs)
+clex i ('-' : '>' : cs) = (i, "->") : clex i cs
 clex i (c1 : c2 : cs)
   | isJust (lookup [c1,c2] binOps) = (i,[c1,c2]) : clex i cs
 clex i ('\n' : cs) = clex (succ i) cs
@@ -325,7 +326,7 @@ takeFirstParse res = case res of
     -> case ps of
       _ : _ -> takeFirstParse ps
       []    -> error $ "syntax error at line " ++ show i
-  _ -> error  $ "syntax error at line 1: "
+  _ -> error  $ "syntax error at line 1: " ++ show res
 
 pProgram :: Parser CoreProgram
 pProgram = pOneOrMoreWithSep pSc (pLit ";")
