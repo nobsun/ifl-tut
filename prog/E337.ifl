@@ -1,1 +1,2 @@
-fac n
+main = fac 5 ;
+fac n = if (n == 0) 1 (n * fac (n -1))

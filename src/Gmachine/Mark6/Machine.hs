@@ -40,18 +40,7 @@ run prog inputs = showResults
     $ eval 
     $ setControl inputs
     $ compile 
-    $ parse (extraPrelude ++ prog)
-
-extraPrelude :: String
-extraPrelude = unlines
-    [ "False = Pack{1,0} ;"
-    , "True  = Pack{2,0} ;"
-    , "if c t f = case c of"
-    , "                <1> -> f ;"
-    , "                <2> -> t ;"
-    , "nil = Pack{1,0} ;"
-    , "cons x xs = Pack{2,2} x xs ;"
-    ]
+    $ parse prog
 
 setControl :: [String] -> GmState -> GmState
 setControl ctrl state = state { ctrl = ctrl }
@@ -159,7 +148,7 @@ push n state
     = state { stack = Stk.push an state.stack
             , ruleid = 18 }
         where
-            an = state.stack.stkItems !! n
+            an = traceShow (length state.stack.stkItems) state.stack.stkItems !! n
 
 getArg :: Node -> Addr
 getArg (NAp _ a2) = a2
@@ -346,13 +335,13 @@ cond i1 i2 state = case hLookup state.heap a of
 
 pack :: Tag -> Arity -> GmState -> GmState
 pack t n state
-    = state { stack = stack'
+    = state { stack = Stk.push a stack'
             , heap  = heap'
             , ruleid = 30
             }
     where
         (as, stack') = Stk.npop n state.stack
-        (heap', _a)   = hAlloc state.heap (NConstr t as)
+        (heap', a)   = hAlloc state.heap (NConstr t as)
 
 casejump :: [(Int, GmCode)] -> GmState -> GmState
 casejump alts state
@@ -437,7 +426,24 @@ buildInitialHeap program
     = mapAccumL allocateSc hInitial compiled
     where
         compiled :: [GmCompiledSC]
-        compiled = map compileSc (preludeDefs ++ program) ++ compiledPrimitives
+        compiled 
+            = map compileSc 
+                (preludeDefs ++ extraPreludeDefs ++ program)
+            ++ compiledPrimitives
+
+extraPreludeDefs :: [CoreScDefn]
+extraPreludeDefs = parse extraPrelude
+
+extraPrelude :: String
+extraPrelude = unlines
+    [ "False = Pack{1,0} ;"
+    , "True  = Pack{2,0} ;"
+    , "if c t f = case c of"
+    , "                <1> -> f ;"
+    , "                <2> -> t ;"
+    , "nil = Pack{1,0} ;"
+    , "cons x xs = Pack{2,2} x xs"
+    ]
 
 type GmCompiledSC = (Name, Arity, GmCode)
 
