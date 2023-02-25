@@ -101,4 +101,10 @@ ruleTable
       , (27, "rule (3.27): Cond for True")
       , (28, "rule (3.28): Cond for False")
       , (29, "rule (3.29): Unwind for Eval any object to WHNF")
+      , (30, "rule (3.30): Pack")
+      , (31, "rule (3.31): Casejump")
+      , (32, "rule (3.32): Split")
+      , (33, "rule (3.33): Print for NNum")
+      , (34, "rule (3.34): Print for NConstr")
+      , (35, "rule (3.35): Unwind NConstr")
       ]

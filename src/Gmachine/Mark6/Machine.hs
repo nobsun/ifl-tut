@@ -40,7 +40,18 @@ run prog inputs = showResults
     $ eval 
     $ setControl inputs
     $ compile 
-    $ parse prog
+    $ parse (extraPrelude ++ prog)
+
+extraPrelude :: String
+extraPrelude = unlines
+    [ "False = Pack{1,0} ;"
+    , "True  = Pack{2,0} ;"
+    , "if c t f = case c of"
+    , "                <1> -> f ;"
+    , "                <2> -> t ;"
+    , "nil = Pack{1,0} ;"
+    , "cons x xs = Pack{2,2} x xs ;"
+    ]
 
 setControl :: [String] -> GmState -> GmState
 setControl ctrl state = state { ctrl = ctrl }
@@ -220,8 +231,6 @@ unwind state
                     k      = stk.curDepth
                     (ak,_) = Stk.pop $ Stk.discard k state.stack
                     ((i',stk'), dump') = Stk.pop state.dump
-                    -- phi a = case hLookup state.heap a of
-                    --             NAp _ a' -> Stk.push a'
             NConstr _t _as
                 -> state { code = i'
                          , stack = Stk.push a' stk'
@@ -439,7 +448,7 @@ allocateSc heap (name, arity, instrs)
         (heap', addr) = hAlloc heap (NGlobal arity instrs)
 
 initialCode :: GmCode
-initialCode = [Pushglobal "main", Eval]
+initialCode = [Pushglobal "main", Eval, Print]
 
 oldInitialCode :: GmCode
 oldInitialCode = [Pushglobal "main", Unwind]
@@ -491,7 +500,7 @@ compileC expr env = case expr of
         | otherwise -> compileLet compileC defs e env
     ECase e _as
             -> compileE e env -- ++ [Casejump (compileAlts as env)]
-    _       -> error "Not implemented"
+    _       -> error $ "Not implemented" ++ show expr
 
 compileLet :: GmCompiler -> Assoc Name CoreExpr -> GmCompiler
 compileLet comp defs expr env
@@ -541,7 +550,7 @@ compiledPrimitives
       , ("<=", 2, [Push 1, Eval, Push 1, Eval, Le, Update 2, Pop 2, Unwind])
       , (">", 2, [Push 1, Eval, Push 1, Eval, Gt, Update 2, Pop 2, Unwind])
       , (">=", 2, [Push 1, Eval, Push 1, Eval, Ge, Update 2, Pop 2, Unwind])
-      , ("if", 3, [Push 0, Eval, Cond [Push 1] [Push 2], Update 3, Pop 3, Unwind])
+    --   , ("if", 3, [Push 0, Eval, Cond [Push 1] [Push 2], Update 3, Pop 3, Unwind])
       ]
 
 compileAlts :: (Int -> GmCompiler)
