@@ -493,14 +493,31 @@ compileC expr env = case expr of
         where
             a = aLookup env v (error "compileC: Cannot happen")
     ENum n  -> [Pushint n]
-    EAp e1 e2
-            -> compileC e2 env ++ compileC e1 (argOffset 1 env) ++ [Mkap]
+    EAp e1 e2 -> case spines expr of
+        [] -> compileC e2 env ++ compileC e1 (argOffset 1 env) ++ [Mkap]
+        ss -> compileCS ss env
+        where
+            spines = iter 0 []
+            iter a ss e = case e of
+                EAp e1' e2'        -> iter (succ a) (e2':ss) e1'
+                EConstr _ arity  
+                    | a == arity -> reverse (e : ss)
+                _                -> []
     ELet recflg defs e
         | recflg    -> compileLetrec compileC defs e env
         | otherwise -> compileLet compileC defs e env
     ECase e _as
             -> compileE e env -- ++ [Casejump (compileAlts as env)]
+    EConstr tag 0
+            -> [Pack tag 0]
     _       -> error $ "Not implemented" ++ show expr
+                               
+compileCS :: [CoreExpr] -> GmEnvironment -> [Instruction]
+compileCS exprs env = case exprs of
+    [EConstr tag arity] -> [Pack tag arity]
+    e : es              -> compileC e env ++ compileCS es (argOffset 1 env)
+    []                  -> error "compileCS: empty exprs"
+
 
 compileLet :: GmCompiler -> Assoc Name CoreExpr -> GmCompiler
 compileLet comp defs expr env
@@ -550,7 +567,6 @@ compiledPrimitives
       , ("<=", 2, [Push 1, Eval, Push 1, Eval, Le, Update 2, Pop 2, Unwind])
       , (">", 2, [Push 1, Eval, Push 1, Eval, Gt, Update 2, Pop 2, Unwind])
       , (">=", 2, [Push 1, Eval, Push 1, Eval, Ge, Update 2, Pop 2, Unwind])
-    --   , ("if", 3, [Push 0, Eval, Cond [Push 1] [Push 2], Update 3, Pop 3, Unwind])
       ]
 
 compileAlts :: (Int -> GmCompiler)
