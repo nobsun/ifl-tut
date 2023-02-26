@@ -1,0 +1,4 @@
+nil = Pack{1,0} ;
+cons = Pack{2,2} ;
+f x = cons (case x of <1> -> 1 ; <2> -> 2) nil ;
+main = f nil

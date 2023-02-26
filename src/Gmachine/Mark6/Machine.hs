@@ -9,6 +9,7 @@ module Gmachine.Mark6.Machine
 
 import Data.Char
 import Data.List
+-- import Text.ParserCombinators.ReadP
 
 import Language
 import Heap
@@ -109,12 +110,31 @@ dispatch (Split n)       = split n
 dispatch Print           = gmprint
 
 pushglobal :: Name -> GmState -> GmState
-pushglobal f state
-    = state { stack = Stk.push a state.stack
-            , ruleid = 5
-            }
-    where
-        a = aLookup state.globals f (error $ "Undeclared global " ++f)
+pushglobal f state = case readsPack f of
+    EConstr tag arity : _
+        | f `elem` aDomain state.globals
+            -> state { stack = Stk.push a state.stack
+                     , ruleid = 37
+                     }
+        | otherwise
+            -> state { stack = Stk.push a state.stack
+                     , heap = heap'
+                     , globals = aInsert state.globals (showconstr tag arity) a
+                     , ruleid = 38
+                     }
+            where
+                node = NGlobal arity [Pack tag arity, Update 0, Unwind]
+                (heap', a') = hAlloc state.heap node
+                a = aLookup state.globals f a'
+    _   -> state { stack = Stk.push a state.stack
+                 , ruleid = 5
+                 }
+        where
+            a = aLookup state.globals f (error $ "pushglobal: undeclared global: " ++ f)
+
+readsPack :: Name -> [CoreExpr]
+readsPack = map fst . filter (null . snd) . pEConstr . clex 0
+
 
 pushint :: Int -> GmState -> GmState
 pushint n state
@@ -378,7 +398,7 @@ gmprint state
                      , ruleid = 33
                      }
         NConstr t as 
-            -> state { output = showconstr t as
+            -> state { output = showconstr t (length as)
                      , code   = printcode (length as) ++ state.code
                      , stack  = foldr Stk.push stk as
                      , ruleid = 34
@@ -386,11 +406,10 @@ gmprint state
         _   -> error "gmprint: cannot print"
     where
         (a, stk) = Stk.pop state.stack
-        showconstr tag ary = "Pack{"
-                           ++ show tag
-                           ++ ","
-                           ++ show (length ary)
-                           ++ "}"
+
+showconstr :: Tag -> Arity -> String
+showconstr tag arity
+    = "Pack{" ++ show tag ++ "," ++ show arity ++ "}"
 
 printcode :: Int -> GmCode
 printcode n = concat $ take n $ cycle [[Eval, Print]]
@@ -511,7 +530,9 @@ compileC expr env = case expr of
             -> compileE e env -- ++ [Casejump (compileAlts as env)]
     EConstr tag 0
             -> [Pack tag 0]
-    _       -> error $ "Not implemented" ++ show expr
+    EConstr tag a
+            -> [Pushglobal (showconstr tag a)]
+    _       -> error $ "compileC: Not implemented for: " ++ show expr
                                
 compileCS :: [CoreExpr] -> GmEnvironment -> [Instruction]
 compileCS exprs env = case exprs of
