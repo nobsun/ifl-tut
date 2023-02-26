@@ -41,10 +41,10 @@ showInstructions is
 
 showInstruction :: Instruction -> IseqRep
 showInstruction i = case i of
-    Slide n      -> iStr "Slide"       `iAppend` iNum n
-    Alloc n      -> iStr "Alloc"       `iAppend` iNum n
-    Update n     -> iStr "Update"      `iAppend` iNum n
-    Pop n        -> iStr "Pop"         `iAppend` iNum n
+    Slide n      -> iStr "Slide "      `iAppend` iNum n
+    Alloc n      -> iStr "Alloc "      `iAppend` iNum n
+    Update n     -> iStr "Update "     `iAppend` iNum n
+    Pop n        -> iStr "Pop "        `iAppend` iNum n
     Unwind       -> iStr "Unwind"
     Pushglobal f -> iStr "Pushglobal " `iAppend` iStr f
     Pushint n    -> iStr "Pushint "    `iAppend` iNum n
