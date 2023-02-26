@@ -303,9 +303,9 @@ boxBoolean b state
     = state { stack = Stk.push addr state.stack 
             , heap  = heap' }
     where
-        (heap', addr) = hAlloc state.heap (NNum b')
-        b' | b         = 1
-           | otherwise = 0
+        (heap', addr) = hAlloc state.heap (NConstr tag [])
+        tag | b         = 2
+            | otherwise = 1
 
 evalop :: GmState -> GmState
 evalop state
@@ -353,7 +353,8 @@ casejump alts state
         i = case hLookup state.heap a of
             NConstr t _ss
                 -> aLookup alts t (error $ "No case for constructor" ++ show t)
-            _   -> error "Not data structure"
+            n   -> error $ "casejump: Not data structure: "
+                        ++ show n
 
 split :: Int -> GmState -> GmState
 split n state
@@ -392,7 +393,7 @@ gmprint state
                            ++ "}"
 
 printcode :: Int -> GmCode
-printcode n = take n $ cycle [Eval, Print]
+printcode n = concat $ take n $ cycle [[Eval, Print]]
 
 --
 
@@ -436,13 +437,9 @@ extraPreludeDefs = parse extraPrelude
 
 extraPrelude :: String
 extraPrelude = unlines
-    [ "False = Pack{1,0} ;"
-    , "True  = Pack{2,0} ;"
-    , "if c t f = case c of"
-    , "                <1> -> f ;"
-    , "                <2> -> t ;"
-    , "nil = Pack{1,0} ;"
-    , "cons x xs = Pack{2,2} x xs"
+    [ "if c t f = case c of"
+    , "             <1> -> f ;"
+    , "             <2> -> t"
     ]
 
 type GmCompiledSC = (Name, Arity, GmCode)
@@ -481,8 +478,6 @@ compileE expr env = case expr of
                 dyadic = aLookup builtInDyadic name (error "Invalid dyadic operator" )
     EAp (EVar "negate") e
                     -> compileE e env ++ [Neg]
-    EAp (EAp (EAp (EVar "if") e0) e1) e2
-                    -> compileE e0 env ++ [Cond (compileE e1 env) (compileE e2 env)]
     ECase e alts    -> compileE e env ++ [Casejump (compileAlts compileE' alts env)]
     _ -> compileC expr env ++ [Eval]
 
