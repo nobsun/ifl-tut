@@ -85,7 +85,7 @@
 
 ## コードについて
 
-この main ブランチのコードは ghc-9.2.1 で導入された言語拡張 'OverloadedDotSyntax' を使用しています。
+この main ブランチのコードは ghc-9.2.0 で導入された言語拡張 'OverloadedRecordDot' を使用しています。
 
 ## 起動
 
