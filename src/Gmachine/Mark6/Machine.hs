@@ -78,7 +78,7 @@ step state = case map toLower $ head state.ctrl of
       | otherwise     -> state' { ctrl = tail state.ctrl }
     where
         state' = case state.code of
-            i:is -> dispatch i (state { code = is })
+            i:is -> dispatch i (state { code = is, output = ""})
             []   -> error "already final state"
 
 dispatch :: Instruction -> GmState -> GmState
