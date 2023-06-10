@@ -22,6 +22,7 @@ data GmState
     , code    :: GmCode
     , stack   :: GmStack
     , dump    :: GmDump
+    , vstack  :: GmVStack
     , heap    :: GmHeap
     , globals :: GmGlobals
     , stats   :: GmStats
@@ -40,6 +41,10 @@ type GmStack = Stack Addr
 
 type GmDump = Stack GmDumpItem
 type GmDumpItem = (GmCode, GmStack)
+
+--
+
+type GmVStack = Stack Int
 
 --
 

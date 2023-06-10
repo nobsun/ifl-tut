@@ -98,6 +98,7 @@ showState s = iConcat
     [ showOutput s           , iNewline
     , showStack s            , iNewline
     , showDump s             , iNewline
+    , showVStack s           , iNewline
     , showInstructions s.code
     ]
 
@@ -166,6 +167,12 @@ shortShowStack stack
     , iInterleave (iStr ", ") (map showAddr stack.stkItems)
     , iStr "]"
     ]
+
+showVStack :: GmState -> IseqRep
+showVStack s = iConcat
+             [ iStr "  VStack:[ "
+             , iIndent (iInterleave (iStr ", ") (map iNum s.vstack.stkItems))
+             ]
 
 showStats :: GmState -> IseqRep
 showStats s

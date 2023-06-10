@@ -432,6 +432,7 @@ compile program
     , code    = initialCode
     , stack   = emptyStack
     , dump    = emptyStack
+    , vstack  = emptyStack
     , heap    = heap'
     , globals = globals'
     , stats   = statInitial
