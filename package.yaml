@@ -156,6 +156,12 @@ executables:
     dependencies:
     - ifl-tut
 
+  gm7:
+    main:                Main.hs
+    source-dirs:         app/gm7
+    dependencies:
+    - ifl-tut
+
 tests:
   ifl-tut-doctest:
     main:                doctests.hs
