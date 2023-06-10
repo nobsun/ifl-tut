@@ -13,8 +13,11 @@ data Instruction
     | Unwind
     | PushGlobal Name
     | PushInt Int
+    | PushBasic Int
     | Push Int
-    | Mkap
+    | MkInt
+    | MkBool
+    | MkAp
     | Eval
     | Add | Sub | Mul | Div
     | Neg
@@ -24,4 +27,5 @@ data Instruction
     | CaseJump [(Tag, GmCode)]
     | Split Arity
     | Print
+    | Get
     deriving (Eq, Show)

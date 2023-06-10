@@ -84,7 +84,10 @@ step state = case map toLower $ head state.ctrl of
 dispatch :: Instruction -> GmState -> GmState
 dispatch (PushGlobal f) = pushglobal f
 dispatch (PushInt n)    = pushint n
-dispatch Mkap           = mkap
+dispatch (PushBasic n)  = pushbasic n
+dispatch MkInt          = mkint
+dispatch MkBool         = mkbool
+dispatch MkAp           = mkap
 dispatch (Slide n)      = slide n
 dispatch (Push n)       = push n
 dispatch (Update n)     = update n
@@ -108,6 +111,7 @@ dispatch (Pack t a)      = pack t a
 dispatch (CaseJump alts) = casejump alts
 dispatch (Split n)       = split n
 dispatch Print           = gmprint
+dispatch Get             = gmget
 
 pushglobal :: Name -> GmState -> GmState
 pushglobal f state = case readsPack f of
@@ -151,6 +155,51 @@ pushint n state
         name = show n
         node = NNum n
         (heap', a) = hAlloc state.heap node
+
+pushbasic :: Int -> GmState -> GmState
+pushbasic n state
+    = state
+    { vstack = Stk.push n state.vstack
+    , ruleid = 41
+    }
+
+mkint :: GmState -> GmState
+mkint state
+    = state
+    { stack  = Stk.push a state.stack
+    , vstack = vstack'
+    , heap   = heap'
+    , ruleid = 43
+    }
+    where
+        (n, vstack') = Stk.pop state.vstack
+        (heap', a)   = hAlloc state.heap (NNum n)
+
+mkbool :: GmState -> GmState
+mkbool state
+    = state
+    { stack  = Stk.push a state.stack
+    , vstack = vstack'
+    , heap   = heap'
+    , ruleid = 42
+    }
+    where
+        (t, vstack') = Stk.pop state.vstack
+        (heap', a)   = hAlloc state.heap (NConstr t [])
+
+gmget :: GmState -> GmState
+gmget state
+    = state
+    { stack  = stack'
+    , vstack = Stk.push m state.vstack
+    , ruleid = rid
+    }
+    where
+        (a, stack') = Stk.pop state.stack
+        (m, rid) = case hLookup state.heap a of
+            NNum n       -> (n, 45)
+            NConstr t [] -> (t, 44)
+            _            -> error ("gmget: invalid node")
 
 mkap :: GmState -> GmState
 mkap state
@@ -275,57 +324,30 @@ allocNodes (n+1) heap = (heap2, a:as)
 allocNodes _ _ = error "allocNodes: negative number"
 
 arithmetic1 :: (Int -> Int) -> GmState -> GmState
-arithmetic1 = primitive1 boxInteger unboxInteger
+arithmetic1 op state
+    = state
+    { vstack = case Stk.pop state.vstack of
+        (n, vs) -> Stk.push (op n) vs
+    , ruleid = 40
+    }
+
 
 arithmetic2 :: (Int -> Int -> Int) -> GmState -> GmState
-arithmetic2 = primitive2 boxInteger unboxInteger
+arithmetic2 op state
+    = state
+    { vstack = case Stk.npop 2 state.vstack of
+        ([n0, n1], vs) -> Stk.push (n0 `op` n1) vs
+        _              -> error "arithmetic2: too short vstack"
+    , ruleid = 39
+    }
 
 comparison :: (Int -> Int -> Bool) -> GmState -> GmState
-comparison = primitive2 boxBoolean unboxInteger
-
-boxInteger :: Int -> GmState -> GmState
-boxInteger n state
-    = state { stack = Stk.push addr state.stack
-            , heap  = heap'
-            }
-    where
-        (heap', addr) = hAlloc state.heap (NNum n)
-
-unboxInteger :: Addr -> GmState -> Int
-unboxInteger a state
-    = ub (hLookup state.heap a)
-    where
-        ub node = case node of
-            NNum i -> i
-            _      -> error "unboxInteger: Unboxing a non-integer"
-
-primitive1 :: (b -> GmState -> GmState) -- ^ boxing function
-           -> (Addr -> GmState -> a)    -- ^ unboxing function
-           -> (a -> b)                  -- ^ operator
-           -> (GmState -> GmState)      -- ^ state transition
-primitive1 box unbox op state
-    = box (op (unbox a state)) (state { stack = stack', ruleid = 25})
-    where
-        (a, stack') = Stk.pop state.stack
-
-primitive2 :: (b -> GmState -> GmState) -- ^ boxing function
-           -> (Addr -> GmState -> a)    -- ^ unboxing function
-           -> (a -> a -> b)             -- ^ operator
-           -> (GmState -> GmState)      -- ^ state transition
-primitive2 box unbox op state
-    = box (op (unbox a0 state) (unbox a1 state)) (state { stack = stack'', ruleid = 24})
-    where
-        (a0, stack')  = Stk.pop state.stack
-        (a1, stack'') = Stk.pop stack'
-
-boxBoolean :: Bool -> GmState -> GmState
-boxBoolean b state
-    = state { stack = Stk.push addr state.stack 
-            , heap  = heap' }
-    where
-        (heap', addr) = hAlloc state.heap (NConstr tag [])
-        tag | b         = 2
-            | otherwise = 1
+comparison cmp state
+    = state
+    { vstack = case Stk.npop 2 state.vstack of
+        ([n0, n1], vs) -> Stk.push (fromEnum (n0 `cmp` n1)) vs
+        _              -> error "comparison: too short vstack"        
+    }
 
 evalop :: GmState -> GmState
 evalop state
@@ -340,18 +362,18 @@ evalop state
         dump' = Stk.push (state.code, stack') state.dump
 
 cond :: GmCode -> GmCode -> GmState -> GmState
-cond i1 i2 state = case hLookup state.heap a of
-    NNum 1 -> state { code = i1 ++ state.code
-                    , stack = stack'
-                    , ruleid = 21
-                    }
-    NNum 0 -> state { code = i2 ++ state.code
-                    , stack = stack'
-                    , ruleid = 22
-                    }
-    _ -> error "cond: invalid node"
+cond i1 i2 state
+    | v == fromEnum True  = state { code = i1 ++ state.code
+                                   , vstack = vstack'
+                                   , ruleid = 46
+                                   }
+    | v == fromEnum False = state { code = i2 ++ state.code
+                                   , vstack = vstack'
+                                   , ruleid = 47
+                                   }
+    | otherwise           = error "cond: invalid node"
     where
-        (a, stack') = Stk.pop state.stack
+        (v, vstack') = Stk.pop state.vstack
 
 pack :: Tag -> Arity -> GmState -> GmState
 pack t n state
@@ -458,9 +480,15 @@ extraPreludeDefs = parse extraPrelude
 extraPrelude :: String
 extraPrelude = unlines
     [ "if c t f = case c of"
-    , "             <1> -> f ;"
-    , "             <2> -> t"
+    , "             <0> -> f ;"
+    , "             <1> -> t"
     ]
+
+primitives :: [CoreScDefn]
+primitives
+    = [ ("False", [], EConstr (fromEnum False) 0)
+      , ("True" , [], EConstr (fromEnum True)  0)
+      ]
 
 type GmCompiledSC = (Name, Arity, GmCode)
 
@@ -515,7 +543,7 @@ compileC expr env = case expr of
             a = aLookup env v (error "compileC: Cannot happen")
     ENum n  -> [PushInt n]
     EAp e1 e2 -> case spines expr of
-        [] -> compileC e2 env ++ compileC e1 (argOffset 1 env) ++ [Mkap]
+        [] -> compileC e2 env ++ compileC e1 (argOffset 1 env) ++ [MkAp]
         ss -> compileCS ss env
         where
             spines = iter 0 []

@@ -48,8 +48,11 @@ showInstruction i = case i of
     Unwind       -> iStr "Unwind"
     PushGlobal f -> iStr "PushGlobal " `iAppend` iStr f
     PushInt n    -> iStr "PushInt "    `iAppend` iNum n
+    PushBasic n  -> iStr "PushBasic"   `iAppend` iNum n
     Push n       -> iStr "Push "       `iAppend` iNum n
-    Mkap         -> iStr "Mkap"
+    MkInt        -> iStr "MkInt"
+    MkBool       -> iStr "MkBool"
+    MkAp         -> iStr "MkAp"
     Eval         -> iStr "Eval"
     Add          -> iStr "Add"
     Sub          -> iStr "Sub"
@@ -78,6 +81,7 @@ showInstruction i = case i of
          [ iStr "Split ", iNum n]
     Print
         -> iStr "Print"
+    Get -> iStr "Get"
 
 showAlts :: [(Int, GmCode)] -> IseqRep
 showAlts nis
@@ -107,7 +111,7 @@ showOutput s = iConcat [iStr "Output: \"", iStr s.output, iStr "\""]
 
 showStack :: GmState -> IseqRep
 showStack s = iConcat
-    [ iStr " Stack:[ "
+    [ iStr "  Stack:[ "
     , iIndent (iInterleave iNewline (map (showStackItem s) (reverse s.stack.stkItems)))
     , iStr " ]"
     ]
@@ -169,10 +173,12 @@ shortShowStack stack
     ]
 
 showVStack :: GmState -> IseqRep
-showVStack s = iConcat
-             [ iStr "  VStack:[ "
-             , iIndent (iInterleave (iStr ", ") (map iNum s.vstack.stkItems))
-             ]
+showVStack s 
+    = iConcat
+    [ iStr "  VStack:[ "
+    , iIndent (iInterleave (iStr ", ") (map iNum s.vstack.stkItems))
+    , iStr " ]"
+    ]
 
 showStats :: GmState -> IseqRep
 showStats s
