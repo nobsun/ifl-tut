@@ -82,8 +82,8 @@ step state = case map toLower $ head state.ctrl of
             []   -> error "already final state"
 
 dispatch :: Instruction -> GmState -> GmState
-dispatch (Pushglobal f) = pushglobal f
-dispatch (Pushint n)    = pushint n
+dispatch (PushGlobal f) = pushglobal f
+dispatch (PushInt n)    = pushint n
 dispatch Mkap           = mkap
 dispatch (Slide n)      = slide n
 dispatch (Push n)       = push n
@@ -105,7 +105,7 @@ dispatch Ge              = comparison (>=)
 dispatch Eval            = evalop
 dispatch (Cond i1 i2)    = cond i1 i2
 dispatch (Pack t a)      = pack t a
-dispatch (Casejump alts) = casejump alts
+dispatch (CaseJump alts) = casejump alts
 dispatch (Split n)       = split n
 dispatch Print           = gmprint
 
@@ -470,10 +470,10 @@ allocateSc heap (name, arity, instrs)
         (heap', addr) = hAlloc heap (NGlobal arity instrs)
 
 initialCode :: GmCode
-initialCode = [Pushglobal "main", Eval, Print]
+initialCode = [PushGlobal "main", Eval, Print]
 
 oldInitialCode :: GmCode
-oldInitialCode = [Pushglobal "main", Unwind]
+oldInitialCode = [PushGlobal "main", Unwind]
 
 compileSc :: CoreScDefn -> GmCompiledSC
 compileSc (name, args, body)
@@ -486,7 +486,7 @@ compileR e args = compileE e args ++ [Update n, Pop n, Unwind]
 
 compileE :: GmCompiler
 compileE expr env = case expr of
-    ENum n -> [Pushint n]
+    ENum n -> [PushInt n]
     ELet isRec defs e
         | isRec     -> compileLetrec compileE defs e env
         | otherwise -> compileLet    compileE defs e env
@@ -497,7 +497,7 @@ compileE expr env = case expr of
                 dyadic = aLookup builtInDyadic name (error "Invalid dyadic operator" )
     EAp (EVar "negate") e
                     -> compileE e env ++ [Neg]
-    ECase e alts    -> compileE e env ++ [Casejump (compileAlts compileE' alts env)]
+    ECase e alts    -> compileE e env ++ [CaseJump (compileAlts compileE' alts env)]
     _ -> compileC expr env ++ [Eval]
 
 builtInDyadic :: Assoc Name Instruction
@@ -509,10 +509,10 @@ compileC :: GmCompiler
 compileC expr env = case expr of
     EVar v
         | v `elem` aDomain env -> [Push a]
-        | otherwise            -> [Pushglobal v]
+        | otherwise            -> [PushGlobal v]
         where
             a = aLookup env v (error "compileC: Cannot happen")
-    ENum n  -> [Pushint n]
+    ENum n  -> [PushInt n]
     EAp e1 e2 -> case spines expr of
         [] -> compileC e2 env ++ compileC e1 (argOffset 1 env) ++ [Mkap]
         ss -> compileCS ss env
@@ -531,7 +531,7 @@ compileC expr env = case expr of
     EConstr tag 0
             -> [Pack tag 0]
     EConstr tag a
-            -> [Pushglobal (showconstr tag a)]
+            -> [PushGlobal (showconstr tag a)]
     _       -> error $ "compileC: Not implemented for: " ++ show expr
                                
 compileCS :: [CoreExpr] -> GmEnvironment -> [Instruction]

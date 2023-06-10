@@ -11,8 +11,8 @@ data Instruction
     | Update Int
     | Pop Int
     | Unwind
-    | Pushglobal Name
-    | Pushint Int
+    | PushGlobal Name
+    | PushInt Int
     | Push Int
     | Mkap
     | Eval
@@ -21,7 +21,7 @@ data Instruction
     | Eq | Ne | Lt | Le | Gt | Ge
     | Cond GmCode GmCode
     | Pack Int Int
-    | Casejump [(Tag, GmCode)]
+    | CaseJump [(Tag, GmCode)]
     | Split Arity
     | Print
     deriving (Eq, Show)

@@ -46,8 +46,8 @@ showInstruction i = case i of
     Update n     -> iStr "Update "     `iAppend` iNum n
     Pop n        -> iStr "Pop "        `iAppend` iNum n
     Unwind       -> iStr "Unwind"
-    Pushglobal f -> iStr "Pushglobal " `iAppend` iStr f
-    Pushint n    -> iStr "Pushint "    `iAppend` iNum n
+    PushGlobal f -> iStr "PushGlobal " `iAppend` iStr f
+    PushInt n    -> iStr "PushInt "    `iAppend` iNum n
     Push n       -> iStr "Push "       `iAppend` iNum n
     Mkap         -> iStr "Mkap"
     Eval         -> iStr "Eval"
@@ -70,9 +70,9 @@ showInstruction i = case i of
     Pack t a     
         -> iConcat
          [ iStr "Pack ", iNum t, iNum a ]
-    Casejump nis
+    CaseJump nis
         -> iConcat
-         [ iStr "Casejump ", showAlts nis ]
+         [ iStr "CaseJump ", showAlts nis ]
     Split n 
         -> iConcat
          [ iStr "Split ", iNum n]
