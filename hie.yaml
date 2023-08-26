@@ -54,3 +54,6 @@ cradle:
     - path: "./app/gm6/Main.hs"
     component: "ifl-tut:exe:gm6"
 
+    - path: "./app/tim1/Main.hs"
+    component: "ifl-tut:exe:tim1"
+
