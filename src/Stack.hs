@@ -53,3 +53,20 @@ discard 0 stk = stk
 discard n stk = stk { curDepth = subtract n stk.curDepth `max` 0
                     , stkItems = drop n stk.stkItems
                     }
+
+empty :: Stack a -> Stack a
+empty stk = stk
+    { curDepth = 0
+    , stkItems = []
+    }
+
+saveStack :: (Stack a, Stack (Stack a)) -> (Stack a, Stack (Stack a))
+saveStack (stk, dump) = case push stk dump of
+    dump' -> case empty stk of
+        stk' -> (stk', dump')
+
+restoreStack :: (Stack a, Stack (Stack a)) -> (Stack a, Stack (Stack a))
+restoreStack (stk, dump) = case pop dump of
+    (stk', dump') -> (stk'', dump')
+        where
+            stk'' = stk' { maxDepth = stk.maxDepth `max` stk'.maxDepth }
