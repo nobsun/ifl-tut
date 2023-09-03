@@ -137,7 +137,7 @@ step state = case state'.code of
                       , heap = heap' 
                       }
         | otherwise 
-            -> error ("step: Too few args for Take instruction")
+            -> error "step: Too few args for Take instruction"
         where
             stack' = Stk.discard n state'.stack
             (heap', fptr') = fAlloc state'.heap (take n state'.stack.stkItems)
