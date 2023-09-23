@@ -12,7 +12,8 @@ type Addr = Int
 {- | ヒープ
 -}
 data Heap a = Heap
-    { maxAllocs :: Int
+    { numAllocs :: Int
+    , maxAllocs :: Int
     , curAllocs :: Int
     , threshold :: Int
     , frees     :: [Addr]
@@ -28,7 +29,8 @@ hAddresses :: Heap a -> [Addr]
 hNull      :: Addr -- Null pointer
 
 hInitial = Heap 
-    { maxAllocs = 0
+    { numAllocs = 0
+    , maxAllocs = 0
     , curAllocs = 0
     , threshold = ?th
     , frees     = [1 .. ?sz]
@@ -37,7 +39,8 @@ hInitial = Heap
 
 hAlloc heap node = case heap.frees of
     []   -> error "hAlloc: no space"
-    a:rs -> (heap { maxAllocs = succ heap.maxAllocs
+    a:rs -> (heap { numAllocs = succ heap.numAllocs
+                  , maxAllocs = heap.maxAllocs `max` succ heap.curAllocs
                   , curAllocs = succ heap.curAllocs
                   , frees     = rs
                   , assocs    = (a, node) : heap.assocs
