@@ -90,7 +90,8 @@ type TimCompilerEnv = Assoc Name TimAMode
 
 compileSC :: TimCompilerEnv -> CoreScDefn -> (Name, Code)
 compileSC env (name, args, body)
-    = (name, Take (length args) : code)
+    | null args = (name, code)
+    | otherwise = (name, Take (length args) : code)
     where
         code = compileR body newEnv
         newEnv = zip args (map Arg [1 ..]) ++ env
@@ -126,12 +127,19 @@ timFinal state = null state.code || null state.ctrl
 applyToStats :: (TimStats -> TimStats) -> (TimState -> TimState)
 applyToStats f state = state { stats = f state.stats }
 
+countUpExtime :: TimState -> TimState
+countUpExtime = applyToStats statIncExtime
+
+countUpHpAllocs :: Int -> TimState -> TimState
+countUpHpAllocs n = applyToStats (statIncHpAllocs (n+1))
+
 step :: TimState -> TimState
 step state = case state'.code of
     []  -> error "step: the state is already final"
     Take n : instr
         | state.stack.curDepth >= n 
-            -> state' { code = instr
+            -> countUpHpAllocs n
+            $  state' { code = instr
                       , frPtr = fptr'
                       , stack = stack'
                       , heap = heap' 
@@ -142,14 +150,16 @@ step state = case state'.code of
             stack' = Stk.discard n state'.stack
             (heap', fptr') = fAlloc state'.heap (take n state'.stack.stkItems)
     Enter am : instr -> case instr of
-        []  -> state' { code = instr'
+        []  -> countUpExtime
+            $  state' { code = instr'
                       , frPtr = fptr'
                       }
         _   -> error "step: invalid code sequence"
         where
             (instr', fptr') = amToClosure am state'.frPtr state'.heap state'.codestore
     Push am : instr
-        -> state' { code = instr
+        -> countUpExtime
+        $  state' { code = instr
                   , stack = Stk.push clos state'.stack
                   }
         where

@@ -60,12 +60,21 @@ fList :: Frame -> [Closure]
 fList = id
 
 data TimStats = TimStats
-    { steps :: Int }
+    { steps  :: Int
+    , extime :: Int
+    , hpallocs :: Int
+    }
 
 statInitial  :: TimStats
-statInitial = TimStats { steps = 0 }
+statInitial = TimStats { steps = 0 , extime = 0, hpallocs = 0 }
 
 statIncSteps :: TimStats -> TimStats
 statIncSteps s = s { steps = succ s.steps }
+
+statIncExtime :: TimStats -> TimStats
+statIncExtime s = s { extime = succ s.extime }
+
+statIncHpAllocs :: Int -> TimStats -> TimStats
+statIncHpAllocs n s = s { hpallocs = n + s.hpallocs }
 
 type RuleId = Int

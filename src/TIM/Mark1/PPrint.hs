@@ -90,8 +90,10 @@ showStats :: TimState -> IseqRep
 showStats state
     = iConcat
     [ iStr "Steps take = ", iNum state.stats.steps, iNewline
-    , iStr "No. of frames allocated = ", iNum state.heap.curAllocs
-    , iNewline
+    , iStr "Execution time = ", iNum state.stats.extime, iNewline
+    , iStr "Number of frames allocated = ", iNum state.heap.maxAllocs, iNewline
+    , iStr "Heap usage = ", iNum state.stats.hpallocs, iNewline
+    , iStr "Max depth of stack = ", iNum state.stack.maxDepth, iNewline
     ]
 
 data HowMuchToPrint
