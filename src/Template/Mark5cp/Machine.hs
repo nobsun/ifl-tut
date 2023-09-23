@@ -333,7 +333,7 @@ instUpdELam _updAddr _heap _env _vars _body = error "not implemented"
 test :: (?sz :: Int, ?th :: Int) => String -> IO ()
 test = interact . drive . run 
 
--- Gabage Collector (Mark-scan)
+-- Gabage Collector (two-space)
 
 gc :: (?sz :: Int, ?th :: Int) => TiState -> TiState
 gc state = case evacuateStack state.heap hInitial state.stack of
