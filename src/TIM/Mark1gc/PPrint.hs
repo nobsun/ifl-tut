@@ -46,6 +46,7 @@ showState state
     , showStack state.stack
     , showValueStack state.vstack
     , showDump state.dump
+    , showHeap state.heap
     , iNewline
     ]
 
@@ -73,6 +74,30 @@ showValueStack _vstack = iNil
 
 showDump :: TimDump -> IseqRep
 showDump _dump = iNil
+
+showHeap :: TimHeap -> IseqRep
+showHeap heap
+    = iConcat
+    [ iStr "Heap: ["
+    , iIndent (iInterleave iNewline (map showHeapEntry heap.assocs))
+    , iNewline, iStr "]"
+    ]
+
+showHeapEntry :: (Addr, Frame) -> IseqRep
+showHeapEntry (a, f)
+    = iConcat
+    [ iStr "#", iNum a, showFrame' f
+    ]
+    where
+        showFrame' frame
+            = case frame of
+                Frame clos -> iIndent $ iConcat
+                    [ iStr "<"
+                    , iIndent (iInterleave iNewline
+                                (map showClosure clos) `iAppend` iNewline)
+                    , iStr ">"
+                    ]
+                Forward addr -> iConcat [ iStr "forwarded to #", iNum addr ]
 
 showClosure :: Closure -> IseqRep
 showClosure (i, f)

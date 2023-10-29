@@ -204,10 +204,18 @@ evacuateFrom :: (TimHeap, TimHeap) -> FramePtr -> ((TimHeap, TimHeap), FramePtr)
 evacuateFrom (from, to) fp = case fp of
     FrameAddr a    -> case hLookup from a of
         Frame clos      -> case mapAccumL evacuateFrom (from, to) (map snd clos) of
-            ((from', to'), fps') -> case fAlloc to' (Frame (zip (map fst clos) fps')) of
-                (to'', fp'')          -> ((from', to''), fp'')
+            ((from', to'), fps') -> case fAlloc to' newFrame of
+                (to'', fp'')          -> case fp'' of
+                    FrameAddr a''       -> trace "FORWARD" ((hUpdate from' a (Forward a''), to''), fp'')
+                    _                   -> ((from', to''), fp'')
+                where
+                    newFrame = Frame (zip (map fst clos) fps')
         Forward _       -> ((from, to), fp)
     _              -> ((from, to), fp)
 
 scavenge :: TimHeap -> TimHeap -> TimHeap
-scavenge from to = to
+scavenge _from to = foldl' phi to to.assocs
+    where
+        phi t (a, f) = case f of
+            Forward a' -> trace "UPDATE" hUpdate t a (hLookup t a')
+            _          -> t
