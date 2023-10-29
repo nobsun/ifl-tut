@@ -56,7 +56,7 @@ compile :: CoreProgram -> TimState
 compile program = TimState
     { ctrl      = []
     , code      = [Enter (Label "main")]
-    , frPtr     = FrameNull
+    , frame     = FrameNull
     , stack     = initialArgStack
     , vstack    = initialValueStack
     , dump      = initialDump
@@ -140,7 +140,7 @@ step state = case state'.code of
         | state.stack.curDepth >= n 
             -> countUpHpAllocs n
             $  state' { code = instr
-                      , frPtr = fptr'
+                      , frame = fptr'
                       , stack = stack'
                       , heap = heap' 
                       }
@@ -152,18 +152,18 @@ step state = case state'.code of
     Enter am : instr -> case instr of
         []  -> countUpExtime
             $  state' { code = instr'
-                      , frPtr = fptr'
+                      , frame = fptr'
                       }
         _   -> error "step: invalid code sequence"
         where
-            (instr', fptr') = amToClosure am state'.frPtr state'.heap state'.codestore
+            (instr', fptr') = amToClosure am state'.frame state'.heap state'.codestore
     Push am : instr
         -> countUpExtime
         $  state' { code = instr
                   , stack = Stk.push clos state'.stack
                   }
         where
-            clos = amToClosure am state'.frPtr state'.heap state'.codestore
+            clos = amToClosure am state'.frame state'.heap state'.codestore
     where
         state' = ctrlStep state
 
@@ -187,35 +187,12 @@ amToClosure amode fptr heap cstore = case amode of
 intCode :: Code
 intCode = []
 
-gc :: (?sz :: Int, ?th :: Int) => TimState -> TimState
-gc state = case evacuate state.heap hInitial state.frPtr state.stack of
-    ((from', to'), frptr', stack') -> case scavenge from' to' of
-        heap' -> state { frPtr = frptr'
-                       , stack = stack'
-                       , heap = heap'
-                       }
+{-
+type TimStack = Stack Closure
+type TimHeap  = Heap Frame
+type Frame    = [Closure]
+type Closure  = (Code, FramePtr)
+type Code     = [Instruction]
+-}
 
-evacuate :: TimHeap -> TimHeap -> FramePtr -> TimStack -> ((TimHeap, TimHeap), FramePtr, TimStack)
-evacuate from to fp stack = case mapAccumL evacuateFrom (from, to) (fp : map snd stack.stkItems) of
-    (heaps', fp':fps') -> (heaps', fp', stack { stkItems = zip (map fst stack.stkItems) fps'})
-    _                  -> error "evacuate: invalid new frame pointers"
-
-evacuateFrom :: (TimHeap, TimHeap) -> FramePtr -> ((TimHeap, TimHeap), FramePtr)
-evacuateFrom (from, to) fp = case fp of
-    FrameAddr a    -> case hLookup from a of
-        Frame clos      -> case mapAccumL evacuateFrom (from, to) (map snd clos) of
-            ((from', to'), fps') -> case fAlloc to' newFrame of
-                (to'', fp'')          -> case fp'' of
-                    FrameAddr a''       -> trace "FORWARD" ((hUpdate from' a (Forward a''), to''), fp'')
-                    _                   -> ((from', to''), fp'')
-                where
-                    newFrame = Frame (zip (map fst clos) fps')
-        Forward _       -> ((from, to), fp)
-    _              -> ((from, to), fp)
-
-scavenge :: TimHeap -> TimHeap -> TimHeap
-scavenge _from to = foldl' phi to to.assocs
-    where
-        phi t (a, f) = case f of
-            Forward a' -> trace "UPDATE" hUpdate t a (hLookup t a')
-            _          -> t
+gc = undefined

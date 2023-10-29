@@ -56,7 +56,7 @@ compile :: CoreProgram -> TimState
 compile program = TimState
     { ctrl      = []
     , code      = [Enter (Label "main")]
-    , frPtr     = FrameNull
+    , frame     = FrameNull
     , stack     = initialArgStack
     , vstack    = initialValueStack
     , dump      = initialDump
@@ -140,7 +140,7 @@ step state = case state'.code of
         | state.stack.curDepth >= n 
             -> countUpHpAllocs n
             $  state' { code = instr
-                      , frPtr = fptr'
+                      , frame = fptr'
                       , stack = stack'
                       , heap = heap' 
                       }
@@ -152,18 +152,18 @@ step state = case state'.code of
     Enter am : instr -> case instr of
         []  -> countUpExtime
             $  state' { code = instr'
-                      , frPtr = fptr'
+                      , frame = fptr'
                       }
         _   -> error "step: invalid code sequence"
         where
-            (instr', fptr') = amToClosure am state'.frPtr state'.heap state'.codestore
+            (instr', fptr') = amToClosure am state'.frame state'.heap state'.codestore
     Push am : instr
         -> countUpExtime
         $  state' { code = instr
                   , stack = Stk.push clos state'.stack
                   }
         where
-            clos = amToClosure am state'.frPtr state'.heap state'.codestore
+            clos = amToClosure am state'.frame state'.heap state'.codestore
     where
         state' = ctrlStep state
 

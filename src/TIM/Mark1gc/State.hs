@@ -23,7 +23,7 @@ data TimState
     = TimState
     { ctrl      :: [String]      -- ^ Interactive control sequences
     , code      :: Code          -- ^ The current instruction stream
-    , frPtr     :: FramePtr      -- ^ Address of current frame
+    , frame     :: FramePtr      -- ^ Address of current frame
     , stack     :: TimStack      -- ^ Stack of arguments
     , vstack    :: TimValueStack -- ^ Value stack
     , dump      :: TimDump       -- ^ Dump

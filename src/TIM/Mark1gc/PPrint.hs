@@ -42,7 +42,7 @@ showState state
     = iConcat
 --    [ iStr "Code:  ", showInstructions Terse state.code, iNewline
     [ iStr "Code:  ", showInstructions Full state.code, iNewline
-    , showFrame state.heap state.frPtr
+    , showFrame state.heap state.frame
     , showStack state.stack
     , showValueStack state.vstack
     , showDump state.dump
