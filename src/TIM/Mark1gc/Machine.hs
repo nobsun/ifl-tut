@@ -31,7 +31,7 @@ traceShow | debug     = Deb.traceShow
 
 --
 
-run :: String -> ([String] -> [String])
+run :: (?sz :: Int, ?th :: Int) => String -> ([String] -> [String])
 run prog inputs
     = showResults 
     $ eval 
@@ -111,15 +111,15 @@ compileA e env = case e of
 
 --
 
-eval :: TimState -> [TimState]
+eval :: (?sz :: Int, ?th :: Int) => TimState -> [TimState]
 eval state = state : rests
     where
         rests | timFinal state = []
               | otherwise      = eval state'
         state' = doAdmin (step state)
 
-doAdmin :: TimState -> TimState
-doAdmin = applyToStats statIncSteps
+doAdmin :: (?sz :: Int, ?th :: Int) => TimState -> TimState
+doAdmin = gc . applyToStats statIncSteps
 
 timFinal :: TimState -> Bool
 timFinal state = null state.code || null state.ctrl
@@ -148,7 +148,7 @@ step state = case state'.code of
             -> error "step: Too few args for Take instruction"
         where
             stack' = Stk.discard n state'.stack
-            (heap', fptr') = fAlloc state'.heap (take n state'.stack.stkItems)
+            (heap', fptr') = fAlloc state'.heap (Frame $ take n state'.stack.stkItems)
     Enter am : instr -> case instr of
         []  -> countUpExtime
             $  state' { code = instr'
@@ -187,4 +187,27 @@ amToClosure amode fptr heap cstore = case amode of
 intCode :: Code
 intCode = []
 
-    
+gc :: (?sz :: Int, ?th :: Int) => TimState -> TimState
+gc state = case evacuate state.heap hInitial state.frPtr state.stack of
+    ((from', to'), frptr', stack') -> case scavenge from' to' of
+        heap' -> state { frPtr = frptr'
+                       , stack = stack'
+                       , heap = heap'
+                       }
+
+evacuate :: TimHeap -> TimHeap -> FramePtr -> TimStack -> ((TimHeap, TimHeap), FramePtr, TimStack)
+evacuate from to fp stack = case mapAccumL evacuateFrom (from, to) (fp : map snd stack.stkItems) of
+    (heaps', fp':fps') -> (heaps', fp', stack { stkItems = zip (map fst stack.stkItems) fps'})
+    _                  -> error "evacuate: invalid new frame pointers"
+
+evacuateFrom :: (TimHeap, TimHeap) -> FramePtr -> ((TimHeap, TimHeap), FramePtr)
+evacuateFrom (from, to) fp = case fp of
+    FrameAddr a    -> case hLookup from a of
+        Frame clos      -> case mapAccumL evacuateFrom (from, to) (map snd clos) of
+            ((from', to'), fps') -> case fAlloc to' (Frame (zip (map fst clos) fps')) of
+                (to'', fp'')          -> ((from', to''), fp'')
+        Forward _       -> ((from, to), fp)
+    _              -> ((from, to), fp)
+
+scavenge :: TimHeap -> TimHeap -> TimHeap
+scavenge from to = to

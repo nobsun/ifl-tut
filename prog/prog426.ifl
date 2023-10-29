@@ -1,0 +1,2 @@
+main = compose2 (S K K) K 4 ;
+compose2 f g x = f (g x x)

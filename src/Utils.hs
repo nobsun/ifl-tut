@@ -36,3 +36,6 @@ aRange as = [ v | (_, v) <- as ]
 
 aEmpty :: Assoc a b
 aEmpty = []
+
+aAssocs :: Assoc a b -> [(a, b)]
+aAssocs = id

@@ -40,7 +40,8 @@ showSC (name, il)
 showState :: TimState -> IseqRep
 showState state
     = iConcat
-    [ iStr "Code:  ", showInstructions Terse state.code, iNewline
+--    [ iStr "Code:  ", showInstructions Terse state.code, iNewline
+    [ iStr "Code:  ", showInstructions Full state.code, iNewline
     , showFrame state.heap state.frPtr
     , showStack state.stack
     , showValueStack state.vstack
@@ -76,7 +77,8 @@ showDump _dump = iNil
 showClosure :: Closure -> IseqRep
 showClosure (i, f)
     = iConcat
-    [ iStr "(", showInstructions Terse i, iStr ", "
+    -- [ iStr "(", showInstructions Terse i, iStr ", "
+    [ iStr "(", showInstructions Full i, iStr ", "
     , showFramePtr f, iStr ")"
     ]
 
@@ -104,7 +106,7 @@ data HowMuchToPrint
 showInstructions :: HowMuchToPrint -> [Instruction] -> IseqRep
 showInstructions d il = case d of
     None  -> iStr "{..}"
-    Terse -> iConcat [iStr "{", iIndent (iInterleave (iStr ", ") body), iStr "}"]
+    Terse -> iConcat [iStr "{ ", iIndent (iInterleave (iStr ", ") body), iStr " }"]
         where
             instrs = map (showInstruction None) il
             body | length il <= nTerse = instrs

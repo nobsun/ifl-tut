@@ -160,6 +160,12 @@ executables:
     dependencies:
     - ifl-tut
 
+  tim1gc:
+    main:                Main.hs
+    source-dirs:         app/tim1gc
+    dependencies:
+    - ifl-tut
+
 tests:
   ifl-tut-doctest:
     main:                doctests.hs
