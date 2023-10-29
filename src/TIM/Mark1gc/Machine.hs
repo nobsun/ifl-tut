@@ -195,4 +195,25 @@ type Closure  = (Code, FramePtr)
 type Code     = [Instruction]
 -}
 
-gc = undefined
+gc :: (?sz :: Int, ?th :: Int) => TimState -> TimState
+gc state = case evacuateFromFramePtr state.heap hInitial (state.code, state.frame) of
+    ((from1, to1), fp') -> case evacuateFromStack from1 to1 state.stack of
+        ((from2, to2), stk') -> case evacuateFromDump from2 to2 state.dump of
+            ((from3, to3), dmp') -> state
+                { frame = fp'
+                , stack = stk'
+                , dump  = dmp'
+                , heap  = scavenge from3 to3
+                }
+
+evacuateFromFramePtr :: (?sz :: Int, ?th :: Int) => TimHeap -> TimHeap -> Closure -> ((TimHeap, TimHeap), FramePtr)
+evacuateFromFramePtr from to (cs,fp) = undefined
+
+evacuateFromStack :: (?sz :: Int, ?th :: Int) => TimHeap -> TimHeap -> TimStack -> ((TimHeap, TimHeap), TimStack)
+evacuateFromStack from to stack = undefined
+
+evacuateFromDump :: (?sz :: Int, ?th :: Int) => TimHeap -> TimHeap -> TimDump -> ((TimHeap, TimHeap), TimDump)
+evacuateFromDump from to dump = ((from, to), dump)
+
+scavenge :: (?sz :: Int, ?th :: Int) => TimHeap -> TimHeap -> TimHeap
+scavenge _from to = to
