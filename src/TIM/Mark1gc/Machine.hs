@@ -3,6 +3,7 @@ module TIM.Mark1gc.Machine
 
 import Data.Char
 import Data.List
+import Data.Maybe
 
 import Language
 import Heap
@@ -15,21 +16,7 @@ import TIM.Mark1gc.Code
 import TIM.Mark1gc.Frame
 import TIM.Mark1gc.PPrint
 import TIM.Mark1gc.State
-
-import Debug.Trace qualified as Deb
-
-debug :: Bool
-debug = True
-
-trace :: String -> a -> a
-trace | debug     = Deb.trace
-      | otherwise = const id
-
-traceShow :: Show a => a -> b -> b
-traceShow | debug     = Deb.traceShow
-          | otherwise = const id
-
---
+import TIM.Mark1gc.GC
 
 run :: (?sz :: Int, ?th :: Int) => String -> ([String] -> [String])
 run prog inputs
@@ -156,14 +143,14 @@ step state = case state'.code of
                       }
         _   -> error "step: invalid code sequence"
         where
-            (instr', fptr') = amToClosure am state'.frame state'.heap state'.codestore
+            (instr', fptr') = trace "L159" amToClosure am state'.frame state'.heap state'.codestore
     Push am : instr
         -> countUpExtime
         $  state' { code = instr
                   , stack = Stk.push clos state'.stack
                   }
         where
-            clos = amToClosure am state'.frame state'.heap state'.codestore
+            clos = trace "L166" amToClosure am state'.frame state'.heap state'.codestore
     where
         state' = ctrlStep state
 
@@ -178,7 +165,7 @@ ctrlStep state = case state.ctrl of
 
         
 amToClosure :: TimAMode -> FramePtr -> TimHeap -> CodeStore -> Closure
-amToClosure amode fptr heap cstore = case amode of
+amToClosure amode fptr heap cstore = trace (">>>" ++ show amode) $ case amode of
     Arg n      -> fGet heap fptr n
     Code il    -> (il, fptr)
     Label l    -> (codeLookup cstore l, fptr)
@@ -194,26 +181,3 @@ type Frame    = [Closure]
 type Closure  = (Code, FramePtr)
 type Code     = [Instruction]
 -}
-
-gc :: (?sz :: Int, ?th :: Int) => TimState -> TimState
-gc state = case evacuateFromFramePtr state.heap hInitial (state.code, state.frame) of
-    ((from1, to1), fp') -> case evacuateFromStack from1 to1 state.stack of
-        ((from2, to2), stk') -> case evacuateFromDump from2 to2 state.dump of
-            ((from3, to3), dmp') -> state
-                { frame = fp'
-                , stack = stk'
-                , dump  = dmp'
-                , heap  = scavenge from3 to3
-                }
-
-evacuateFromFramePtr :: (?sz :: Int, ?th :: Int) => TimHeap -> TimHeap -> Closure -> ((TimHeap, TimHeap), FramePtr)
-evacuateFromFramePtr from to (cs,fp) = undefined
-
-evacuateFromStack :: (?sz :: Int, ?th :: Int) => TimHeap -> TimHeap -> TimStack -> ((TimHeap, TimHeap), TimStack)
-evacuateFromStack from to stack = undefined
-
-evacuateFromDump :: (?sz :: Int, ?th :: Int) => TimHeap -> TimHeap -> TimDump -> ((TimHeap, TimHeap), TimDump)
-evacuateFromDump from to dump = ((from, to), dump)
-
-scavenge :: (?sz :: Int, ?th :: Int) => TimHeap -> TimHeap -> TimHeap
-scavenge _from to = to

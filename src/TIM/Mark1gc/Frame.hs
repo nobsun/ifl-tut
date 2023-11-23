@@ -2,6 +2,7 @@ module TIM.Mark1gc.Frame
     where
 
 import Heap
+import Utils
 import TIM.Mark1gc.Code
 
 data FramePtr
@@ -16,3 +17,8 @@ data Frame
     = Frame [Closure]
     | Forward Addr
     deriving (Eq, Show)
+
+codes :: Frame -> [Code]
+codes f = case f of
+    Frame cs -> aDomain cs
+    _        -> []

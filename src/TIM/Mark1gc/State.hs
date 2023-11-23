@@ -15,7 +15,21 @@ import Utils
 import TIM.Mark1gc.Code
 import TIM.Mark1gc.Frame
 
-import qualified Debug.Trace as Deb
+import Debug.Trace qualified as Deb
+
+debug :: Bool
+debug = True
+
+trace :: String -> a -> a
+trace | debug     = Deb.trace
+      | otherwise = const id
+
+traceShow :: Show a => a -> b -> b
+traceShow | debug     = Deb.traceShow
+          | otherwise = const id
+
+gcFlag :: Bool
+gcFlag = False
 
 --
 
@@ -47,7 +61,7 @@ fAlloc heap frame =  second FrameAddr (hAlloc heap frame)
 fGet   :: TimHeap -> FramePtr -> Int -> Closure
 fGet heap fptr n = case fptr of
     FrameAddr addr -> case hLookup heap addr of
-        Frame cs     -> cs !! (n - 1)
+        Frame cs     -> trace (show cs) cs !! trace (show (n - 1)) (n - 1)
         _            -> error "fGet: invalid frame"
     _              -> error "fGet: invalid frame pointer"
 
@@ -59,11 +73,10 @@ fUpdate heap fptr n clos = case fptr of
             newFrame = take (n - 1) (fList frame) ++ clos : drop n (fList frame)
     _              -> error "fUpdate: invalid frame pointer"
 
-
 fList :: Frame -> [Closure]
 fList fr = case fr of
     Frame clos -> clos
-    _          -> error "fList: invalid frame"
+    _          -> []
 
 data TimStats = TimStats
     { steps  :: Int
