@@ -40,8 +40,8 @@ evacuateAddr from to a = case hLookup from a of
     Forward a' -> ((from, to), a')
     Frame cs   -> ((from1, to1), a')
         where
-            (from1, to1) -> undefined
-            
+            (from1, to1) = undefined
+            a' = undefined
 
 evacuateFromFramePtr :: (?sz :: Int, ?th :: Int)
                      => TimHeap -> TimHeap -> Closure -> ((TimHeap, TimHeap), FramePtr)
