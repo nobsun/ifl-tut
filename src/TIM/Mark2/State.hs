@@ -2,7 +2,7 @@
 {-# LANGUAGE NoFieldSelectors #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedRecordDot #-}
-module TIM.Mark1.State
+module TIM.Mark2.State
     where
 
 import Control.Arrow
@@ -12,8 +12,8 @@ import Heap
 import Stack
 import Utils
 
-import TIM.Mark1.Code
-import TIM.Mark1.Frame
+import TIM.Mark2.Code
+import TIM.Mark2.Frame
 
 --
 
@@ -33,7 +33,7 @@ data TimState
 
 type TimStack = Stack Closure
 
-data TimValueStack = DummyTimValueStack
+type TimValueStack = Stack Int
 
 data TimDump = DummyTimDump
 

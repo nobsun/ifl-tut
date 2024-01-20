@@ -1,4 +1,4 @@
-module TIM.Mark1.Machine
+module TIM.Mark2.Machine
     where
 
 import Data.Char
@@ -6,15 +6,15 @@ import Data.List
 
 import Language
 import Heap
-import qualified Stack as Stk (push, pop, npop, discard)
+import qualified Stack as Stk (push, pop, npop, discard, emptyStack)
 import Stack hiding (push, pop, npop, discard)
 import Utils
 import Iseq
 
-import TIM.Mark1.Code
-import TIM.Mark1.Frame
-import TIM.Mark1.PPrint
-import TIM.Mark1.State
+import TIM.Mark2.Code
+import TIM.Mark2.Frame
+import TIM.Mark2.PPrint
+import TIM.Mark2.State
 
 import Debug.Trace qualified as Deb
 
@@ -78,7 +78,7 @@ initialArgStack :: TimStack
 initialArgStack = emptyStack
 
 initialValueStack :: TimValueStack
-initialValueStack = DummyTimValueStack
+initialValueStack = Stk.emptyStack
 
 initialDump :: TimDump
 initialDump = DummyTimDump
@@ -164,6 +164,13 @@ step state = case state'.code of
                   }
         where
             clos = amToClosure am state'.frame state'.heap state'.codestore
+    Op Add : instr
+        -> countUpExtime
+        $  state' { code   = instr
+                  , vstack = Stk.push (n1-n2) vstack'
+                  }
+        where
+            ([n1,n2],vstack') = Stk.npop 2 state'.vstack
     where
         state' = ctrlStep state
 

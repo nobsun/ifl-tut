@@ -1,8 +1,8 @@
-module TIM.Mark1.Frame
+module TIM.Mark2.Frame
     where
 
 import Heap
-import TIM.Mark1.Code
+import TIM.Mark2.Code
 
 data FramePtr
     = FrameAddr Addr  -- ^ The address of frame

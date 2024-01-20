@@ -1,7 +1,7 @@
 {-# LANGUAGE NoFieldSelectors #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedRecordDot #-}
-module TIM.Mark1.PPrint
+module TIM.Mark2.PPrint
     where
 
 import Language
@@ -10,9 +10,9 @@ import Heap
 import Stack
 import Utils
 
-import TIM.Mark1.Code
-import TIM.Mark1.Frame
-import TIM.Mark1.State
+import TIM.Mark2.Code
+import TIM.Mark2.Frame
+import TIM.Mark2.State
 
 showFullResults :: [TimState] -> String
 showFullResults = unlines . showResults

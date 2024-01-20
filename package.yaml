@@ -166,6 +166,14 @@ executables:
     dependencies:
     - ifl-tut
 
+  tim2:
+    main:            Main.hs
+    source-dirs:     app/tim2
+    ghc-options:
+    - -rtsopts
+    dependencies:
+    - ifl-tut
+
 tests:
   ifl-tut-doctest:
     main:                doctests.hs

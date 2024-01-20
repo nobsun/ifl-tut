@@ -1,4 +1,4 @@
-module TIM.Mark1.Code
+module TIM.Mark2.Code
     where
 
 import Language
@@ -8,9 +8,18 @@ type Code = [Instruction]
 
 data Instruction
     = Take Int
-    | Enter TimAMode
     | Push TimAMode
+    | PushV ValueAMode
+    | Enter TimAMode
+    | Return
+    | Op Op
+    | Cond [Instruction] [Instruction]
     deriving (Eq)
+
+data Op
+    = Add | Sub | Mul | Div | Neg
+    | Gr | GrEq | Lt | LtEq | Eq | NotEq
+    deriving (Eq, Show)
 
 data TimAMode
     = Arg Int
@@ -18,6 +27,11 @@ data TimAMode
     | Code [Instruction]
     | IntConst Int
     deriving (Eq)
+
+data ValueAMode
+    = FramePtr
+    | IntVConst Int
+    deriving (Eq, Show)
 
 type CodeStore = Assoc Name Code
 
