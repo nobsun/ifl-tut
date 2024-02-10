@@ -149,6 +149,12 @@ compileR :: CoreExpr -> TimCompilerEnv -> Code
 compileR e env = case e of
     EAp e1 e2
         | isBinOp e -> compileB e env [Return]
+        | isIf e    -> case e of
+            EAp (EAp (EAp (EVar _) cond) tclause) eclause
+                -> case compileR tclause env of
+                    itc -> case compileR eclause env of
+                        etc -> compileB cond env [Cond itc etc]
+            _       -> error "compileR: unexpected if-expression"
         | otherwise -> Push (compileA e2 env) : compileR e1 env
     EVar _v   -> [Enter (compileA e env)]
     ENum n    -> [PushV (IntVConst n), Return]
@@ -172,6 +178,11 @@ decompose :: CoreExpr -> (CoreExpr, Name, CoreExpr)
 decompose expr = case expr of
     EAp (EAp (EVar o) exp1) exp2 -> (exp1,o,exp2)
     _                            -> error "compileB: not binop"
+
+isIf :: CoreExpr -> Bool
+isIf e = case e of
+    EAp (EAp (EAp (EVar "if") _) _) _ -> True
+    _                                 -> False
 
 isBinOp :: CoreExpr -> Bool
 isBinOp e = case e of
