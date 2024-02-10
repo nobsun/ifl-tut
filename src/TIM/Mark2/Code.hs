@@ -13,12 +13,12 @@ data Instruction
     | Enter TimAMode
     | Return
     | Op Op
-    | Cond [Instruction] [Instruction]
-    deriving (Eq)
+    | Cond Code Code
+    deriving (Eq, Show)
 
 data Op
     = Add | Sub | Mul | Div | Neg
-    | Gr | GrEq | Lt | LtEq | Eq | NotEq
+    | Eq | Ne | Lt | Le | Gt | Ge
     deriving (Eq, Show)
 
 data TimAMode
@@ -26,7 +26,7 @@ data TimAMode
     | Label String
     | Code [Instruction]
     | IntConst Int
-    deriving (Eq)
+    deriving (Eq, Show)
 
 data ValueAMode
     = FramePtr

@@ -13,6 +13,7 @@ import Utils
 import TIM.Mark2.Code
 import TIM.Mark2.Frame
 import TIM.Mark2.State
+import qualified Stack as Stk
 
 showFullResults :: [TimState] -> String
 showFullResults = unlines . showResults
@@ -68,7 +69,8 @@ showStack stack
     ]
 
 showValueStack :: TimValueStack -> IseqRep
-showValueStack _vstack = iNil
+showValueStack vstack
+    = iStr "VStack: " `iAppend` iStr (show vstack.stkItems)
 
 showDump :: TimDump -> IseqRep
 showDump _dump = iNil
@@ -116,9 +118,15 @@ showInstructions d il = case d of
 
 showInstruction :: HowMuchToPrint -> Instruction -> IseqRep
 showInstruction d instr = case instr of
-    Take m  -> iStr "Take "  `iAppend` iNum m
-    Enter x -> iStr "Enter " `iAppend` showArg d x
-    Push x  -> iStr "Push "  `iAppend` showArg d x
+    Take m   -> iStr "Take "  `iAppend` iNum m
+    Enter x  -> iStr "Enter " `iAppend` showArg d x
+    Push x   -> iStr "Push "  `iAppend` showArg d x
+    PushV va -> iStr "PushV " `iAppend` showVArg va
+    Return   -> iStr "Return"
+    Op op    -> iStr (show op)
+    Cond i1 i2 -> iStr "Cond " `iAppend` showInstructions d i1
+                               `iAppend` showInstructions d i2
+
 
 showArg :: HowMuchToPrint -> TimAMode -> IseqRep
 showArg d am = case am of
@@ -130,6 +138,10 @@ showArg d am = case am of
 nTerse :: Int
 nTerse = 3
 
+showVArg :: ValueAMode -> IseqRep
+showVArg va = case va of
+    FramePtr    -> iStr "FramePtr"
+    IntVConst n -> iStr "IntVConst " `iAppend` iNum n
 
 -- showInstructions :: TimCode -> IseqRep
 -- showInstructions is

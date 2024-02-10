@@ -1,7 +1,7 @@
 module Main where
 
 import System.Environment
-import TIM.Mark1.Machine
+import TIM.Mark2.Machine
 
 main :: IO ()
 main = do

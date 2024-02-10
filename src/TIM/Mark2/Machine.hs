@@ -1,8 +1,10 @@
 module TIM.Mark2.Machine
     where
 
+import Data.Bool
 import Data.Char
 import Data.List
+import Data.Maybe
 
 import Language
 import Heap
@@ -75,7 +77,7 @@ compile program = TimState
                   ++ [(name, Label name) | (name, _code) <- compiledPrimitives ]
 
 initialArgStack :: TimStack
-initialArgStack = emptyStack
+initialArgStack = Stk.push ([], FrameNull) Stk.emptyStack
 
 initialValueStack :: TimValueStack
 initialValueStack = Stk.emptyStack
@@ -84,7 +86,54 @@ initialDump :: TimDump
 initialDump = DummyTimDump
 
 compiledPrimitives :: Assoc Name Code
-compiledPrimitives = []
+compiledPrimitives 
+    = [ ("+", [ Take 2
+              , Push (Code [ Push (Code [Op Add, Return])
+                           , Enter (Arg 1) ])
+              , Enter (Arg 2) ])
+      , ("-", [ Take 2
+              , Push (Code [ Push (Code [Op Add, Return])
+                           , Enter (Arg 1) ])
+              , Enter (Arg 2) ])
+      , ("*", [ Take 2
+              , Push (Code [ Push (Code [Op Add, Return])
+                           , Enter (Arg 1) ])
+              , Enter (Arg 2) ])
+      , ("/", [ Take 2
+              , Push (Code [ Push (Code [Op Add, Return])
+                           , Enter (Arg 1) ])
+              , Enter (Arg 2) ])
+      , ("negate", [ Take 1
+                   , Push (Code [Op Neg, Return])
+                   , Enter (Arg 1) ])
+      , (">", [ Take 2
+              , Push (Code [ Push (Code [Op Gt, Return])
+                           , Enter (Arg 1) ])
+              , Enter (Arg 2) ])
+      , (">=", [ Take 2
+               , Push (Code [ Push (Code [Op Ge, Return])
+                           , Enter (Arg 1) ])
+               , Enter (Arg 2) ])
+      , ("<", [ Take 2
+              , Push (Code [ Push (Code [Op Lt, Return])
+                           , Enter (Arg 1) ])
+              , Enter (Arg 2) ])
+      , ("<=", [ Take 2
+               , Push (Code [ Push (Code [Op Le, Return])
+                           , Enter (Arg 1) ])
+               , Enter (Arg 2) ])
+      , ("==", [ Take 2
+               , Push (Code [ Push (Code [Op Eq, Return])
+                           , Enter (Arg 1) ])
+               , Enter (Arg 2) ])
+      , ("/=", [ Take 2
+               , Push (Code [ Push (Code [Op Ne, Return])
+                           , Enter (Arg 1) ])
+               , Enter (Arg 2) ])
+      , ("if", [ Take 3
+               , Push (Code [Cond [Enter (Arg 2)] [Enter (Arg 3)]])
+               , Enter (Arg 1)])
+      ]
 
 type TimCompilerEnv = Assoc Name TimAMode
 
@@ -98,9 +147,11 @@ compileSC env (name, args, body)
 
 compileR :: CoreExpr -> TimCompilerEnv -> Code
 compileR e env = case e of
-    EAp e1 e2 -> Push (compileA e2 env) : compileR e1 env
+    EAp e1 e2
+        | isBinOp e -> compileB e env [Return]
+        | otherwise -> Push (compileA e2 env) : compileR e1 env
     EVar _v   -> [Enter (compileA e env)]
-    ENum _n   -> [Enter (compileA e env)]
+    ENum n    -> [PushV (IntVConst n), Return]
     _         -> error "compileR: can't do this yet"
 
 compileA :: CoreExpr -> TimCompilerEnv -> TimAMode
@@ -108,6 +159,47 @@ compileA e env = case e of
     EVar v -> aLookup env v (error ("compileA: unknown variable " ++ show v))
     ENum n -> IntConst n
     _      -> Code (compileR e env)
+
+compileB :: CoreExpr -> TimCompilerEnv -> Code -> Code
+compileB e env cont
+    = case e of
+        ENum n -> PushV (IntVConst n) : cont
+        EAp (EAp (EVar o) e1) e2
+            | isBinOpName o -> compileB e2 env (compileB e1 env (Op (nameToOp o) : cont))
+        _      -> Push (Code cont) : compileR e env
+
+decompose :: CoreExpr -> (CoreExpr, Name, CoreExpr)
+decompose expr = case expr of
+    EAp (EAp (EVar o) exp1) exp2 -> (exp1,o,exp2)
+    _                            -> error "compileB: not binop"
+
+isBinOp :: CoreExpr -> Bool
+isBinOp e = case e of
+    EAp (EAp (EVar v) _) _
+        | isBinOpName v -> True
+    _                   -> False
+
+isBinOpName :: Name -> Bool
+isBinOpName name = isJust (lookup name primitives)
+
+nameToOp :: Name -> Op
+nameToOp name = aLookup primitives name (error "nameToOp: no op")
+
+primitives :: Assoc Name Op
+primitives = [("+", Add)
+             ,("-", Sub)
+             ,("*", Mul)
+             ,("/", Div)
+             ,("==", Eq)
+             ,("/=", Ne)
+             ,("<", Lt)
+             ,("<=", Le)
+             ,(">", Gt)
+             ,(">=", Ge)
+             ,("negate",Neg)
+             ]
+
+             -- | Eq | Ne | Lt | Le | Gt | Ge
 
 --
 
@@ -167,10 +259,110 @@ step state = case state'.code of
     Op Add : instr
         -> countUpExtime
         $  state' { code   = instr
-                  , vstack = Stk.push (n1-n2) vstack'
+                  , vstack = Stk.push (n1 + n2) vstack'
                   }
         where
-            ([n1,n2],vstack') = Stk.npop 2 state'.vstack
+            (n1,n2)      = (vs !! 0, vs !! 1)
+            (vs,vstack') = Stk.npop 2 state'.vstack
+    Op Sub : instr
+        -> countUpExtime
+        $  state' { code   = instr
+                  , vstack = Stk.push (n1 - n2) vstack'
+                  }
+        where
+            (n1,n2)      = (vs !! 0, vs !! 1)
+            (vs,vstack') = Stk.npop 2 state'.vstack
+    Op Mul : instr
+        -> countUpExtime
+        $  state' { code   = instr
+                  , vstack = Stk.push (n1 * n2) vstack'
+                  }
+        where
+            (n1,n2)      = (vs !! 0, vs !! 1)
+            (vs,vstack') = Stk.npop 2 state'.vstack
+    Op Div : instr
+        -> countUpExtime
+        $  state' { code   = instr
+                  , vstack = Stk.push (n1 `div` n2) vstack'
+                  }
+        where
+            (n1,n2)      = (vs !! 0, vs !! 1)
+            (vs,vstack') = Stk.npop 2 state'.vstack
+    Op Eq : instr
+        -> countUpExtime
+        $ state' { code = instr
+                 , vstack = Stk.push (bool 1 0 (n1 == n2)) vstack'
+                 }
+        where
+            (n1,n2)      = (vs !! 0, vs !! 1)
+            (vs,vstack') = Stk.npop 2 state'.vstack
+    Op Ne : instr
+        -> countUpExtime
+        $ state' { code = instr
+                 , vstack = Stk.push (bool 1 0 (n1 /= n2)) vstack'
+                 }
+        where
+            (n1,n2)      = (vs !! 0, vs !! 1)
+            (vs,vstack') = Stk.npop 2 state'.vstack
+    Op Lt : instr
+        -> countUpExtime
+        $ state' { code = instr
+                 , vstack = Stk.push (bool 1 0 (n1 < n2)) vstack'
+                 }
+        where
+            (n1,n2)      = (vs !! 0, vs !! 1)
+            (vs,vstack') = Stk.npop 2 state'.vstack
+    Op Le : instr
+        -> countUpExtime
+        $ state' { code = instr
+                 , vstack = Stk.push (bool 1 0 (n1 <= n2)) vstack'
+                 }
+        where
+            (n1,n2)      = (vs !! 0, vs !! 1)
+            (vs,vstack') = Stk.npop 2 state'.vstack
+    Op Gt : instr
+        -> countUpExtime
+        $ state' { code = instr
+                 , vstack = Stk.push (bool 1 0 (n1 > n2)) vstack'
+                 }
+        where
+            (n1,n2)      = (vs !! 0, vs !! 1)
+            (vs,vstack') = Stk.npop 2 state'.vstack
+    Op Ge : instr
+        -> countUpExtime
+        $ state' { code = instr
+                 , vstack = Stk.push (bool 1 0 (n1 >= n2)) vstack'
+                 }
+        where
+            (n1,n2)      = (vs !! 0, vs !! 1)
+            (vs,vstack') = Stk.npop 2 state'.vstack
+    Return : []
+        -> state' { code = instr' 
+                  , frame = fptr'
+                  , stack = stack'
+                  }
+        where
+            ((instr',fptr'), stack') = Stk.pop state.stack
+    PushV FramePtr : instr
+        -> state' { code = instr
+                  , vstack = Stk.push n state.vstack
+                  }
+        where
+            n = case state.frame of
+                FrameInt m -> m
+                _          -> error "invalid frame pointer in the case"
+    PushV (IntVConst n) : instr
+        -> state' { code = instr
+                  , vstack = Stk.push n state.vstack
+                  }
+    Cond i1 i2 : []
+        -> countUpExtime
+        $  state' { code = if v == 0 then i1 else i2
+                  , vstack = vstack'
+                  }
+        where
+            (v,vstack') = Stk.pop state.vstack
+    c:_ -> trace (show c) undefined
     where
         state' = ctrlStep state
 
@@ -192,6 +384,5 @@ amToClosure amode fptr heap cstore = case amode of
     IntConst n -> (intCode, FrameInt n)
 
 intCode :: Code
-intCode = []
-
+intCode = [PushV FramePtr, Return]
     

@@ -1,0 +1,2 @@
+four = 2 * 2 ;
+main = four + four
