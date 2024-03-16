@@ -1,0 +1,3 @@
+multipleof3 x = ((x / 3) * 3) == x ;
+f y = if (multipleof3 y) 0 1 ;
+main = f 13

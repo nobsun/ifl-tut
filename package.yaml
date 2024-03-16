@@ -1,12 +1,12 @@
 name:                ifl-tut
-version:             4.2.5
+version:             4.4.2
 synopsis:           Implementing Fuctional Lanbuage -- a tutorial
 
 github:              "nobsun/ifl-tut"
 license:             BSD3
 author:              "Nobuo Yamashita"
 maintainer:          "nobsun@sampou.org"
-copyright:           "Copyright: (c) 2022-2023 Nobuo Yamashita"
+copyright:           "Copyright: (c) 2022-2024 Nobuo Yamashita"
 
 extra-source-files:
 - README.md
@@ -169,6 +169,14 @@ executables:
   tim2:
     main:            Main.hs
     source-dirs:     app/tim2
+    ghc-options:
+    - -rtsopts
+    dependencies:
+    - ifl-tut
+
+  tim3:
+    main:            Main.hs
+    source-dirs:     app/tim3
     ghc-options:
     - -rtsopts
     dependencies:

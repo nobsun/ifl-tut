@@ -1,0 +1,5 @@
+f x = letrec p = if (x == 0) 1 q ;
+             q = if (x == 0) p 2
+      in p+q ;
+main = f 1
+
