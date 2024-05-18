@@ -12,4 +12,7 @@ data FramePtr
 
 type Closure = (CCode, FramePtr)
 
-type Frame = [Closure]
+data Frame
+    = Frame   { closures :: [Closure] }
+    | Forward { forward  :: Addr }
+    deriving (Eq, Show)

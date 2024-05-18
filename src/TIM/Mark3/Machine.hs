@@ -280,7 +280,7 @@ step state = case state'.code of
             -> error "step: Too few args for Take instruction"
         where
             (cs, stack') = Stk.npop n state'.stack
-            (heap', fptr') = fAlloc state'.heap (cs ++ replicate (t - n) (CCode [] [], FrameNull))
+            (heap', fptr') = fAlloc state'.heap (Frame $ cs ++ replicate (t - n) (CCode [] [], FrameNull))
     CCode ss (Move n am : instr)
         -> countUpHpAllocs n
         $  state' { code = CCode ss instr

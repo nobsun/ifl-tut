@@ -44,20 +44,26 @@ fAlloc heap frame =  second FrameAddr (hAlloc heap frame)
 
 fGet   :: TimHeap -> FramePtr -> Int -> Closure
 fGet heap fptr n = case fptr of
-    FrameAddr addr -> hLookup heap addr !! (n - 1)
+    FrameAddr addr -> case hLookup heap addr of
+        Frame cls -> cls !! (n - 1)
+        Forward _ -> error "forwarded"
     _              -> error "fGet: invalid frame pointer"
 
 fUpdate :: TimHeap -> FramePtr -> Int -> Closure -> TimHeap
 fUpdate heap fptr n clos = case fptr of
     FrameAddr addr -> hUpdate heap addr newFrame
         where
-            frame = hLookup heap addr
-            newFrame = take (n - 1) frame ++ clos : drop n frame
+            frame = case hLookup heap addr of
+                Frame cls -> cls
+                Forward _ -> error "forwarded"
+            newFrame = Frame $ take (n - 1) frame ++ clos : drop n frame
     _              -> error "fUpdate: invalid frame pointer"
 
 
 fList :: Frame -> [Closure]
-fList = id
+fList fr = case fr of
+    Frame cls -> cls
+    _         -> error "forward"
 
 data TimStats = TimStats
     { steps  :: Int

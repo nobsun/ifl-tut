@@ -11,6 +11,7 @@ import Heap
 import qualified Stack as Stk
 import Stack hiding (push, pop, npop, discard)
 import TIM.Mark3.State
+import TIM.Mark3.Frame (FramePtr)
 
 gcFlag :: Bool
 gcFlag = False
@@ -34,9 +35,13 @@ gc state
 evacuateFromStack :: TimHeap -> TimHeap -> TimStack -> (TimHeap, TimHeap, TimStack)
 evacuateFromStack from to stk = undefined
 
-evacuateFromDump = undefined
-evacuateFromFrame  = undefined
-scavenge = undefined
+evacuateFromDump :: TimHeap -> TimHeap -> TimDump -> (TimHeap, TimHeap, TimDump)
+evacuateFromDump from to dump = (from, to, dump)
+
+evacuateFromFrame :: TimHeap -> TimHeap -> FramePtr -> (TimHeap, TimHeap, FramePtr)
+evacuateFromFrame from to fptr = (from, to, fptr)
+scavenge :: TimHeap -> TimHeap -> TimHeap
+scavenge from to = to
 
 {-
 type TimStack
