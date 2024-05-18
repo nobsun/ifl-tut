@@ -5,6 +5,12 @@ import Language
 import Utils
 
 type Code = [Instruction]
+data CCode
+    = CCode
+    { slots :: [Int]
+    , code  :: Code
+    }
+    deriving (Eq, Show)
 
 data Instruction
     = Take Int Int
@@ -14,7 +20,7 @@ data Instruction
     | Enter TimAMode
     | Return
     | Op Op
-    | Cond Code Code
+    | Cond CCode CCode
     deriving (Eq, Show)
 
 data Op
@@ -25,7 +31,7 @@ data Op
 data TimAMode
     = Arg Int
     | Label String
-    | Code [Instruction]
+    | Code CCode
     | IntConst Int
     deriving (Eq, Show)
 
@@ -34,9 +40,9 @@ data ValueAMode
     | IntVConst Int
     deriving (Eq, Show)
 
-type CodeStore = Assoc Name Code
+type CodeStore = Assoc Name CCode
 
-codeLookup :: CodeStore -> Name -> Code
+codeLookup :: CodeStore -> Name -> CCode
 codeLookup cstore lab
     = aLookup cstore lab (error ("codeLookup: Attempt to jump to unknown label "
                                ++ show lab))

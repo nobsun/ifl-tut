@@ -57,7 +57,7 @@ defaultThreshold = 50
 compile :: CoreProgram -> TimState
 compile program = TimState
     { ctrl      = []
-    , code      = [Enter (Label "main")]
+    , code      = CCode [] [Enter (Label "main")]
     , frame     = FrameNull
     , stack     = initialArgStack
     , vstack    = initialValueStack
@@ -77,7 +77,7 @@ compile program = TimState
                   ++ [(name, Label name) | (name, _code) <- compiledPrimitives ]
 
 initialArgStack :: TimStack
-initialArgStack = Stk.push ([], FrameNull) Stk.emptyStack
+initialArgStack = Stk.push (CCode [] [], FrameNull) Stk.emptyStack
 
 initialValueStack :: TimValueStack
 initialValueStack = Stk.emptyStack
@@ -85,105 +85,96 @@ initialValueStack = Stk.emptyStack
 initialDump :: TimDump
 initialDump = DummyTimDump
 
-compiledPrimitives :: Assoc Name Code
-compiledPrimitives 
-    = [ ("+", [ Take 2 2
-              , Push (Code [ Push (Code [Op Add, Return])
-                           , Enter (Arg 1) ])
-              , Enter (Arg 2) ])
-      , ("-", [ Take 2 2
-              , Push (Code [ Push (Code [Op Add, Return])
-                           , Enter (Arg 1) ])
-              , Enter (Arg 2) ])
-      , ("*", [ Take 2 2
-              , Push (Code [ Push (Code [Op Add, Return])
-                           , Enter (Arg 1) ])
-              , Enter (Arg 2) ])
-      , ("/", [ Take 2 2
-              , Push (Code [ Push (Code [Op Add, Return])
-                           , Enter (Arg 1) ])
-              , Enter (Arg 2) ])
-      , ("negate", [ Take 1 1
-                   , Push (Code [Op Neg, Return])
-                   , Enter (Arg 1) ])
-      , (">", [ Take 2 2
-              , Push (Code [ Push (Code [Op Gt, Return])
-                           , Enter (Arg 1) ])
-              , Enter (Arg 2) ])
-      , (">=", [ Take 2 2
-               , Push (Code [ Push (Code [Op Ge, Return])
-                           , Enter (Arg 1) ])
-               , Enter (Arg 2) ])
-      , ("<", [ Take 2 2
-              , Push (Code [ Push (Code [Op Lt, Return])
-                           , Enter (Arg 1) ])
-              , Enter (Arg 2) ])
-      , ("<=", [ Take 2 2
-               , Push (Code [ Push (Code [Op Le, Return])
-                           , Enter (Arg 1) ])
-               , Enter (Arg 2) ])
-      , ("==", [ Take 2 2
-               , Push (Code [ Push (Code [Op Eq, Return])
-                           , Enter (Arg 1) ])
-               , Enter (Arg 2) ])
-      , ("/=", [ Take 2 2
-               , Push (Code [ Push (Code [Op Ne, Return])
-                           , Enter (Arg 1) ])
-               , Enter (Arg 2) ])
-      , ("if", [ Take 3 3
-               , Push (Code [Cond [Enter (Arg 2)] [Enter (Arg 3)]])
-               , Enter (Arg 1)])
+compiledPrimitives :: Assoc Name CCode
+compiledPrimitives
+    = (compilePrimitive <$> primitives)
+    ++ [ ("if"
+       , CCode [1,2,3] 
+            [ Take 3 3
+            , Push (Code (CCode [2,3] 
+                [ Cond (CCode [2] [Enter (Arg 2)])
+                       (CCode [3] [Enter (Arg 3)])
+                ]))
+            , Enter (Arg 1)])
       ]
+
+compilePrimitive :: (Name, Op) -> (Name, CCode)
+compilePrimitive (name,op) = (name,) $ case op of
+    Neg -> CCode [1]
+        [ Take 1 1
+        , Push (Code (CCode [] 
+            [Op Neg, Return]))
+        , Enter (Arg 1) 
+        ]
+    _bop -> CCode [1,2]
+        [ Take 2 2
+        , Push (Code (CCode [1]
+            [ Push (Code (CCode [] [Op op, Return]))
+            , Enter (Arg 1)
+            ]))
+        , Enter (Arg 2)
+        ]
 
 type TimCompilerEnv = Assoc Name TimAMode
 
-compileSC :: TimCompilerEnv -> CoreScDefn -> (Name, Code)
+compileSC :: TimCompilerEnv -> CoreScDefn -> (Name, CCode)
 compileSC env (name, args, body)
-    | d == 0    = (name, code)
-    | otherwise = (name, Take d n : code)
+    | d == 0    = (name, ccode)
+    | otherwise = (name, CCode ss $ Take d n : code)
     where
         n = length args
-        (d, code) = compileR body newEnv n
+        (d, ccode@(CCode ss code)) = compileR body newEnv n
         newEnv = zip args (map Arg [1 ..]) ++ env
 
 type OccupiedSlots = Int
 
-compileR :: CoreExpr -> TimCompilerEnv -> OccupiedSlots-> (OccupiedSlots, Code)
+compileR :: CoreExpr -> TimCompilerEnv -> OccupiedSlots-> (OccupiedSlots, CCode)
+
 compileR e env d = case e of
     ELet isRec defns body
-        -> (d', moves ++ il)
+        -> (d', CCode (merge ns ns') (concat ils ++ il))
         where
             n = length defns
+            ns' = foldr merge [] nss
+            (nss, ils) = unzip $ (\ (CCode s is) -> (s,is)) <$> moves
             (dn, moves) = mapAccumL moveInstr (d+n) (zip defns slots)
-            (d', il)    = compileR body env' dn
+            (d', CCode ns il) = compileR body env' dn
             env'        = zip (map fst defns) (map mkIndMode slots) ++ env
             slots       = [d+1 ..]
-            moveInstr i ((_, rhs), k) = (d1, Move k am)
+            moveInstr i ((_, rhs), k) = (d1, CCode ss [Move k am])
                 where
                     (d1, am) = compileA rhs rhsenv i
+                    ss = case am of
+                        Code ccode -> ccode.slots
+                        _          -> error "AMode is not Code"
                     rhsenv | isRec     = env'
                            | otherwise = env
-
     EAp e1 e2
-        | isBinOp e -> compileB e env (d, [Return])
+        | isBinOp e -> compileB e env (d, CCode [] [Return])
         | isIf e    -> case e of
             EAp (EAp (EAp (EVar _) cond) tclause) eclause
                 -> case compileR tclause env d of
                     (d1', itc) -> case compileR eclause env d of
-                        (d2', etc) -> compileB cond env (max d1' d2', [Cond itc etc])
+                        (d2', etc) -> compileB cond env (max d1' d2', CCode (merge itc.slots etc.slots) [Cond itc etc])
             _       -> error "compileR: unexpected if-expression"
-        | otherwise -> (d2, Push am : il)
+        | otherwise -> (d2, CCode (merge ss il.slots) $ Push am : il.code)
             where
                 (d1, am) = compileA e2 env d
+                ss = case am of
+                    Code ccode -> ccode.slots
+                    _          -> error "AMode is not Code"
                 (d2, il) = compileR e1 env d1
-    EVar _v   -> (d1, [Enter am])
+    EVar _v   -> (d1, CCode ss [Enter am])
         where
             (d1, am) = compileA e env d
-    ENum n    -> (d, [PushV (IntVConst n), Return])
+            ss = case am of
+                Code ccode -> ccode.slots
+                _          -> error "Amode is not Code"
+    ENum n    -> (d, CCode [] [PushV (IntVConst n), Return])
     _         -> error "compileR: can't do this yet"
 
 mkIndMode :: Int -> TimAMode
-mkIndMode i = Code [Enter (Arg i)]
+mkIndMode i = Code (CCode [i] [Enter (Arg i)])
 
 compileA :: CoreExpr -> TimCompilerEnv -> OccupiedSlots -> (OccupiedSlots, TimAMode)
 compileA e env d = case e of
@@ -193,20 +184,18 @@ compileA e env d = case e of
         where
             (d1, il) = compileR e env d
 
-compileB :: CoreExpr -> TimCompilerEnv -> (OccupiedSlots, Code) -> (OccupiedSlots, Code)
+compileB :: CoreExpr -> TimCompilerEnv -> (OccupiedSlots, CCode) -> (OccupiedSlots, CCode)
 compileB e env (d, cont)
     = case e of
-        ENum n -> (d, PushV (IntVConst n) : cont)
+        ENum n -> (d, CCode cont.slots (PushV (IntVConst n): cont.code))
         EAp (EAp (EVar o) e1) e2
             | isBinOpName o -> (max d1 d2, c2) 
-        --  | isBinOpName o -> compileB e2 env (compileB e1 env (d, Op (nameToOp o) : cont))
                 where
-                    (d1, c1) = compileB e1 env (d, Op (nameToOp o) : cont)
+                    (d1, c1) = compileB e1 env (d, CCode cont.slots (Op (nameToOp o) : cont.code))
                     (d2, c2) = compileB e2 env (d, c1)
-
         EAp (EVar u) e1
-            | isUniOpName u -> compileB e1 env (d, Op (nameToOp u) : cont)
-        _      -> (d1, Push (Code cont) : il)
+            | isUniOpName u -> compileB e1 env (d, CCode cont.slots (Op (nameToOp u) : cont.code))
+        _      -> (d1, CCode (merge cont.slots il.slots) (Push (Code cont) : il.code))
             where
                 (d1, il) = compileR e env d
 
@@ -252,8 +241,6 @@ primitives = [("+", Add)
              ,("negate",Neg)
              ]
 
-             -- | Eq | Ne | Lt | Le | Gt | Ge
-
 --
 
 eval :: TimState -> [TimState]
@@ -267,7 +254,7 @@ doAdmin :: TimState -> TimState
 doAdmin = applyToStats statIncSteps
 
 timFinal :: TimState -> Bool
-timFinal state = null state.code || null state.ctrl
+timFinal state = null state.code.code || null state.ctrl
 
 applyToStats :: (TimStats -> TimStats) -> (TimState -> TimState)
 applyToStats f state = state { stats = f state.stats }
@@ -280,11 +267,11 @@ countUpHpAllocs n = applyToStats (statIncHpAllocs (n+1))
 
 step :: TimState -> TimState
 step state = case state'.code of
-    []  -> error "step: the state is already final"
-    Take t n : instr
+    CCode _ []  -> error "step: the state is already final"
+    CCode ss (Take t n : instr)
         | state.stack.curDepth >= n 
             -> countUpHpAllocs n
-            $  state' { code = instr
+            $  state' { code = CCode ss instr
                       , frame = fptr'
                       , stack = stack'
                       , heap = heap' 
@@ -293,18 +280,17 @@ step state = case state'.code of
             -> error "step: Too few args for Take instruction"
         where
             (cs, stack') = Stk.npop n state'.stack
-            (heap', fptr') = fAlloc state'.heap (cs ++ replicate (t - n) ([], FrameNull))
-
-    Move n am : instr
+            (heap', fptr') = fAlloc state'.heap (cs ++ replicate (t - n) (CCode [] [], FrameNull))
+    CCode ss (Move n am : instr)
         -> countUpHpAllocs n
-        $  state' { code = instr
+        $  state' { code = CCode ss instr
                   , heap = heap' 
                   }
         where
             heap' = fUpdate state'.heap fptr n (amToClosure am fptr state'.heap state'.codestore)
             fptr  = state'.frame
 
-    Enter am : instr -> case instr of
+    CCode _ (Enter am : instr) -> case instr of
         []  -> countUpExtime
             $  state' { code = instr'
                       , frame = fptr'
@@ -312,120 +298,120 @@ step state = case state'.code of
         _   -> error "step: invalid code sequence"
         where
             (instr', fptr') = amToClosure am state'.frame state'.heap state'.codestore
-    Push am : instr
+    CCode ss (Push am : instr)
         -> countUpExtime
-        $  state' { code = instr
+        $  state' { code = CCode ss instr
                   , stack = Stk.push clos state'.stack
                   }
         where
             clos = amToClosure am state'.frame state'.heap state'.codestore
-    Op Add : instr
+    CCode ss (Op Add : instr)
         -> countUpExtime
-        $  state' { code   = instr
+        $  state' { code   = CCode ss instr
                   , vstack = Stk.push (n1 + n2) vstack'
                   }
         where
             (n1,n2)      = (vs !! 0, vs !! 1)
             (vs,vstack') = Stk.npop 2 state'.vstack
-    Op Sub : instr
+    CCode ss (Op Sub : instr)
         -> countUpExtime
-        $  state' { code   = instr
+        $  state' { code   = CCode ss instr
                   , vstack = Stk.push (n1 - n2) vstack'
                   }
         where
             (n1,n2)      = (vs !! 0, vs !! 1)
             (vs,vstack') = Stk.npop 2 state'.vstack
-    Op Mul : instr
+    CCode ss (Op Mul : instr)
         -> countUpExtime
-        $  state' { code   = instr
+        $  state' { code   = CCode ss instr
                   , vstack = Stk.push (n1 * n2) vstack'
                   }
         where
             (n1,n2)      = (vs !! 0, vs !! 1)
             (vs,vstack') = Stk.npop 2 state'.vstack
-    Op Div : instr
+    CCode ss (Op Div : instr)
         -> countUpExtime
-        $  state' { code   = instr
+        $  state' { code   = CCode ss instr
                   , vstack = Stk.push (n1 `div` n2) vstack'
                   }
         where
             (n1,n2)      = (vs !! 0, vs !! 1)
             (vs,vstack') = Stk.npop 2 state'.vstack
-    Op Eq : instr
+    CCode ss (Op Eq : instr)
         -> countUpExtime
-        $ state' { code = instr
+        $ state' { code = CCode ss instr
                  , vstack = Stk.push (bool 1 0 (n1 == n2)) vstack'
                  }
         where
             (n1,n2)      = (vs !! 0, vs !! 1)
             (vs,vstack') = Stk.npop 2 state'.vstack
-    Op Ne : instr
+    CCode ss (Op Ne : instr)
         -> countUpExtime
-        $ state' { code = instr
+        $ state' { code = CCode ss instr
                  , vstack = Stk.push (bool 1 0 (n1 /= n2)) vstack'
                  }
         where
             (n1,n2)      = (vs !! 0, vs !! 1)
             (vs,vstack') = Stk.npop 2 state'.vstack
-    Op Lt : instr
+    CCode ss (Op Lt : instr)
         -> countUpExtime
-        $ state' { code = instr
+        $ state' { code = CCode ss instr
                  , vstack = Stk.push (bool 1 0 (n1 < n2)) vstack'
                  }
         where
             (n1,n2)      = (vs !! 0, vs !! 1)
             (vs,vstack') = Stk.npop 2 state'.vstack
-    Op Le : instr
+    CCode ss (Op Le : instr)
         -> countUpExtime
-        $ state' { code = instr
+        $ state' { code = CCode ss instr
                  , vstack = Stk.push (bool 1 0 (n1 <= n2)) vstack'
                  }
         where
             (n1,n2)      = (vs !! 0, vs !! 1)
             (vs,vstack') = Stk.npop 2 state'.vstack
-    Op Gt : instr
+    CCode ss (Op Gt : instr)
         -> countUpExtime
-        $ state' { code = instr
+        $ state' { code = CCode ss instr
                  , vstack = Stk.push (bool 1 0 (n1 > n2)) vstack'
                  }
         where
             (n1,n2)      = (vs !! 0, vs !! 1)
             (vs,vstack') = Stk.npop 2 state'.vstack
-    Op Ge : instr
+    CCode ss (Op Ge : instr)
         -> countUpExtime
-        $ state' { code = instr
+        $ state' { code = CCode ss instr
                  , vstack = Stk.push (bool 1 0 (n1 >= n2)) vstack'
                  }
         where
             (n1,n2)      = (vs !! 0, vs !! 1)
             (vs,vstack') = Stk.npop 2 state'.vstack
-    Return : []
+    CCode _ (Return : [])
         -> state' { code = instr' 
                   , frame = fptr'
                   , stack = stack'
                   }
         where
             ((instr',fptr'), stack') = Stk.pop state.stack
-    PushV FramePtr : instr
-        -> state' { code = instr
+    CCode ss (PushV FramePtr : instr)
+        -> state' { code = CCode ss instr
                   , vstack = Stk.push n state.vstack
                   }
         where
             n = case state.frame of
                 FrameInt m -> m
                 _          -> error "invalid frame pointer in the case"
-    PushV (IntVConst n) : instr
-        -> state' { code = instr
+    CCode ss (PushV (IntVConst n) : instr)
+        -> state' { code = CCode ss instr
                   , vstack = Stk.push n state.vstack
                   }
-    Cond i1 i2 : []
+    CCode _ (Cond i1 i2 : [])
         -> countUpExtime
         $  state' { code = if v == 0 then i1 else i2
                   , vstack = vstack'
                   }
         where
             (v,vstack') = Stk.pop state.vstack
-    c:_ -> trace (show c) undefined
+    CCode _ (c:_) -> trace (show c) undefined
     where
         state' = ctrlStep state
 
@@ -446,8 +432,8 @@ amToClosure amode fptr heap cstore = case amode of
     Label l    -> (codeLookup cstore l, fptr)
     IntConst n -> (intCode, FrameInt n)
 
-intCode :: Code
-intCode = [PushV FramePtr, Return]
+intCode :: CCode
+intCode = CCode [] [PushV FramePtr, Return]
     
 {-
 [("I",[Take 1 1,Enter (Arg 1)]),("K",[Take 2 2,Enter (Arg 1)]),("K1",[Take 2 2,Enter (Arg 2)]),("S",[Take 3 3,Push (Code [Push (Arg 3),Enter (Arg 2)]),Push (Arg 3),Enter (Arg 1)]),("compose",[Take 3 3,Push (Code [Push (Arg 3),Enter (Arg 2)]),Enter (Arg 1)]),("twice",[Take 1 1,Push (Arg 1),Push (Arg 1),Enter (Label "compose")]),

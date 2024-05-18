@@ -31,7 +31,7 @@ showSCDefns :: TimState -> IseqRep
 showSCDefns state
     = iInterleave iNewline (map showSC state.codestore)
 
-showSC :: (Name, Code) -> IseqRep
+showSC :: (Name, CCode) -> IseqRep
 showSC (name, il)
     = iConcat
     [ iStr "Code for ", iStr name, iStr ":", iNewline
@@ -52,13 +52,23 @@ showState state
 showFrame :: TimHeap -> FramePtr -> IseqRep
 showFrame heap fptr = case fptr of
     FrameNull      -> iStr "Null frame ptr" `iAppend` iNewline
-    FrameAddr addr -> iConcat
-                    [ iStr "Frame: <"
-                    , iIndent (iInterleave iNewline 
-                                (map showClosure (fList (hLookup heap addr))))
-                    , iStr ">", iNewline
-                    ]
+    FrameAddr addr -> showFrameEntry (addr, hLookup heap addr)
+    -- FrameAddr addr -> iConcat
+    --                 [ iStr "Frame: <"
+    --                 , iIndent (iInterleave iNewline 
+    --                             (map showClosure (fList (hLookup heap addr))))
+    --                 , iStr ">", iNewline
+    --                 ]
     FrameInt n     -> iConcat [ iStr "Frame ptr (int): ", iNum n, iNewline ]
+
+showFrameEntry :: (Addr, Frame) -> IseqRep
+showFrameEntry (addr,frame)
+    = iConcat
+    [ iStr ("Frame: <#" ++ show addr)
+    , iIndent (iInterleave iNewline 
+                (map showClosure (fList frame)))
+    , iStr ">", iNewline
+    ]
 
 showStack :: TimStack -> IseqRep
 showStack stack
@@ -103,18 +113,18 @@ data HowMuchToPrint
     | Terse
     | None
 
-showInstructions :: HowMuchToPrint -> [Instruction] -> IseqRep
+showInstructions :: HowMuchToPrint -> CCode -> IseqRep
 showInstructions d il = case d of
     None  -> iStr "{..}"
     Terse -> iConcat [iStr "{", iIndent (iInterleave (iStr ", ") body), iStr "}"]
         where
-            instrs = map (showInstruction None) il
-            body | length il <= nTerse = instrs
+            instrs = map (showInstruction None) il.code
+            body | length il.code <= nTerse = instrs
                  | otherwise           = take nTerse instrs ++ [iStr ".."]
     Full  -> iConcat [iStr "{ ", iIndent (iInterleave sep instrs), iStr " }"  ]
         where
             sep = iStr "," `iAppend` iNewline
-            instrs = map (showInstruction Full) il
+            instrs = map (showInstruction Full) il.code
 
 showInstruction :: HowMuchToPrint -> Instruction -> IseqRep
 showInstruction d instr = case instr of
@@ -144,7 +154,9 @@ showVArg va = case va of
     IntVConst n -> iStr "IntVConst " `iAppend` iNum n
 
 showHeap :: TimHeap -> IseqRep
-showHeap h = undefined
+showHeap heap = iConcat $ map showFrameEntry heap.assocs
+
+
 
 -- showInstructions :: TimCode -> IseqRep
 -- showInstructions is

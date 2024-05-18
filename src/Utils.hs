@@ -1,6 +1,7 @@
 module Utils
     ( space, layn, rjustify
     , Assoc, aLookup, aDomain, aRange, aEmpty, aInsert
+    , merge
     )
     where
 
@@ -39,3 +40,16 @@ aEmpty = []
 
 aAssocs :: Assoc a b -> [(a, b)]
 aAssocs = id
+
+{- | マージ
+-}
+merge :: Ord a => [a] -> [a] -> [a]
+merge xxs yys = case xxs of
+    [] -> yys
+    x:xs -> case yys of
+        [] -> xxs
+        y:ys -> case compare x y of
+            LT -> x : merge xs yys
+            EQ -> x : merge xs ys
+            _  -> y : merge xxs ys
+

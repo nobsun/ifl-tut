@@ -1,4 +1,4 @@
-module Tim.Mark3.GC
+module TIM.Mark3.GC
     where
 
 import Data.Bool

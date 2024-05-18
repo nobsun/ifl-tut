@@ -20,7 +20,7 @@ import TIM.Mark3.Frame
 data TimState
     = TimState
     { ctrl      :: [String]      -- ^ Interactive control sequences
-    , code      :: Code          -- ^ The current instruction stream
+    , code      :: CCode         -- ^ The current instruction stream
     , frame     :: FramePtr      -- ^ Address of current frame
     , stack     :: TimStack      -- ^ Stack of arguments
     , vstack    :: TimValueStack -- ^ Value stack

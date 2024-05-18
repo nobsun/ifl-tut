@@ -10,6 +10,6 @@ data FramePtr
     | FrameNull       -- ^ uninitialised
     deriving (Eq, Show)
 
-type Closure = (Code, FramePtr)
+type Closure = (CCode, FramePtr)
 
 type Frame = [Closure]
