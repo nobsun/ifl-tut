@@ -45,7 +45,7 @@ fAlloc heap frame =  second FrameAddr (hAlloc heap frame)
 fGet   :: TimHeap -> FramePtr -> Int -> Closure
 fGet heap fptr n = case fptr of
     FrameAddr addr -> hLookup heap addr !! (n - 1)
-    _              -> error ("fGet: invalid frame pointer")
+    _              -> error "fGet: invalid frame pointer"
 
 fUpdate :: TimHeap -> FramePtr -> Int -> Closure -> TimHeap
 fUpdate heap fptr n clos = case fptr of
@@ -53,7 +53,7 @@ fUpdate heap fptr n clos = case fptr of
         where
             frame = hLookup heap addr
             newFrame = take (n - 1) frame ++ clos : drop n frame
-    _              -> error ("fUpdate: invalid frame pointer")
+    _              -> error "fUpdate: invalid frame pointer"
 
 
 fList :: Frame -> [Closure]

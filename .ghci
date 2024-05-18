@@ -4,7 +4,7 @@ _prompt _ n = (utcToLocalTime <$> getCurrentTimeZone <*> getCurrentTime) >>= pri
 import Text.Show.Unicode
 :set -interactive-print=uprint
 :set -XGHC2021 -XLambdaCase -XMultiWayIf -XNPlusKPatterns -XOverloadedStrings
-:set -XNoStarIsType -XTypeFamilyDependencies -XTypeInType -XUndecidableInstances
+:set -XNoStarIsType -XTypeFamilyDependencies -XDataKind -XPolyKinds -XUndecidableInstances
 :set -XImplicitParams -XNoFieldSelectors -XDuplicateRecordFields -XOverloadedRecordDot
 :! alias catn='cat -n'
 :set editor catn

@@ -139,7 +139,7 @@ type TimCompilerEnv = Assoc Name TimAMode
 
 compileSC :: TimCompilerEnv -> CoreScDefn -> (Name, Code)
 compileSC env (name, args, body)
-    | null args = (name, code)
+    | d == 0    = (name, code)
     | otherwise = (name, Take d n : code)
     where
         n = length args
@@ -198,7 +198,12 @@ compileB e env (d, cont)
     = case e of
         ENum n -> (d, PushV (IntVConst n) : cont)
         EAp (EAp (EVar o) e1) e2
-            | isBinOpName o -> compileB e2 env (compileB e1 env (d, Op (nameToOp o) : cont))
+            | isBinOpName o -> (max d1 d2, c2) 
+        --  | isBinOpName o -> compileB e2 env (compileB e1 env (d, Op (nameToOp o) : cont))
+                where
+                    (d1, c1) = compileB e1 env (d, Op (nameToOp o) : cont)
+                    (d2, c2) = compileB e2 env (d, c1)
+
         EAp (EVar u) e1
             | isUniOpName u -> compileB e1 env (d, Op (nameToOp u) : cont)
         _      -> (d1, Push (Code cont) : il)
@@ -444,3 +449,29 @@ amToClosure amode fptr heap cstore = case amode of
 intCode :: Code
 intCode = [PushV FramePtr, Return]
     
+{-
+[("I",[Take 1 1,Enter (Arg 1)]),("K",[Take 2 2,Enter (Arg 1)]),("K1",[Take 2 2,Enter (Arg 2)]),("S",[Take 3 3,Push (Code [Push (Arg 3),Enter (Arg 2)]),Push (Arg 3),Enter (Arg 1)]),("compose",[Take 3 3,Push (Code [Push (Arg 3),Enter (Arg 2)]),Enter (Arg 1)]),("twice",[Take 1 1,Push (Arg 1),Push (Arg 1),Enter (Label "compose")]),
+
+
+
+("f",[Take 3 1
+    ,Move 2 (Code [PushV (IntVConst 0)
+                  ,Push (Code [Op Eq
+                              ,Cond [PushV (IntVConst 1),Return] [Enter (Code [Enter (Arg 3)])]
+                              ])
+                  ,Enter (Arg 1)])
+    ,Move 3 (Code [PushV (IntVConst 0)
+                  ,Push (Code [Op Eq,Cond [Enter (Code [Enter (Arg 2)])] [PushV (IntVConst 2),Return]
+                              ])
+                  ,Enter (Arg 1)])
+    ,Push (Code [Push (Code [Op Add,Return])
+                ,Enter (Code [Enter (Arg 2)])
+                ])
+    ,Enter (Code [Enter (Arg 3)])])
+
+
+
+
+
+,("+",[Take 2 2,Push (Code [Push (Code [Op Add,Return]),Enter (Arg 1)]),Enter (Arg 2)]),("-",[Take 2 2,Push (Code [Push (Code [Op Add,Return]),Enter (Arg 1)]),Enter (Arg 2)]),("*",[Take 2 2,Push (Code [Push (Code [Op Add,Return]),Enter (Arg 1)]),Enter (Arg 2)]),("/",[Take 2 2,Push (Code [Push (Code [Op Add,Return]),Enter (Arg 1)]),Enter (Arg 2)]),("negate",[Take 1 1,Push (Code [Op Neg,Return]),Enter (Arg 1)]),(">",[Take 2 2,Push (Code [Push (Code [Op Gt,Return]),Enter (Arg 1)]),Enter (Arg 2)]),(">=",[Take 2 2,Push (Code [Push (Code [Op Ge,Return]),Enter (Arg 1)]),Enter (Arg 2)]),("<",[Take 2 2,Push (Code [Push (Code [Op Lt,Return]),Enter (Arg 1)]),Enter (Arg 2)]),("<=",[Take 2 2,Push (Code [Push (Code [Op Le,Return]),Enter (Arg 1)]),Enter (Arg 2)]),("==",[Take 2 2,Push (Code [Push (Code [Op Eq,Return]),Enter (Arg 1)]),Enter (Arg 2)]),("/=",[Take 2 2,Push (Code [Push (Code [Op Ne,Return]),Enter (Arg 1)]),Enter (Arg 2)]),("if",[Take 3 3,Push (Code [Cond [Enter (Arg 2)] [Enter (Arg 3)]]),Enter (Arg 1)])]
+-}

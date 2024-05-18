@@ -117,5 +117,11 @@ cradle:
     - path: "./app/tim2/Paths_ifl_tut.hs"
       component: "ifl-tut:exe:tim2"
 
+    - path: "./app/tim3/Main.hs"
+      component: "ifl-tut:exe:tim3"
+
+    - path: "./app/tim3/Paths_ifl_tut.hs"
+      component: "ifl-tut:exe:tim3"
+
     - path: "./test"
       component: "ifl-tut:test:ifl-tut-doctest"

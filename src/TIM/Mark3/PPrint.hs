@@ -128,7 +128,6 @@ showInstruction d instr = case instr of
     Cond i1 i2 -> iStr "Cond " `iAppend` showInstructions d i1
                                `iAppend` showInstructions d i2
 
-
 showArg :: HowMuchToPrint -> TimAMode -> IseqRep
 showArg d am = case am of
     Arg m    -> iStr "Arg "   `iAppend` iNum m
@@ -143,6 +142,9 @@ showVArg :: ValueAMode -> IseqRep
 showVArg va = case va of
     FramePtr    -> iStr "FramePtr"
     IntVConst n -> iStr "IntVConst " `iAppend` iNum n
+
+showHeap :: TimHeap -> IseqRep
+showHeap h = undefined
 
 -- showInstructions :: TimCode -> IseqRep
 -- showInstructions is
@@ -288,3 +290,4 @@ showVArg va = case va of
 
 -- showFWAddr :: Addr -> IseqRep
 -- showFWAddr addr = iStr (rjustify 4 (show addr))
+
