@@ -11,7 +11,8 @@ import Heap
 import qualified Stack as Stk
 import Stack hiding (push, pop, npop, discard)
 import TIM.Mark3.State
-import TIM.Mark3.Frame (FramePtr)
+import TIM.Mark3.Frame (FramePtr(..), Frame(..), Closure)
+import TIM.Mark3.Code
 
 gcFlag :: Bool
 gcFlag = False
@@ -27,19 +28,29 @@ gc state
         }
     | otherwise = state
     where
-        (from0, to0)         = (state.heap, hInitial)
-        (from1, to1, stack') = evacuateFromStack from0 to0 state.stack
-        (from2, to2, dump')  = evacuateFromDump  from1 to1 state.dump
-        (from3, to3, frame') = evacuateFromFrame from2 to2 state.frame
+        (from0, to0)           = (state.heap, hInitial)
+        ((from1, to1), stack') = evacuateFromStack from0 to0 state.stack
+        ((from2, to2), dump')  = evacuateFromDump  from1 to1 state.dump
+        ((from3, to3), frame') = evacuateFromFramePtr from2 to2 (state.code, state.frame)
 
-evacuateFromStack :: TimHeap -> TimHeap -> TimStack -> (TimHeap, TimHeap, TimStack)
-evacuateFromStack from to stk = undefined
+evacuateFromStack :: TimHeap -> TimHeap -> TimStack -> ((TimHeap, TimHeap), TimStack)
+evacuateFromStack from to stack
+    = case mapAccumL (uncurry evacuateFromFramePtr) (from, to) stack.stkItems of
+    ((from',to'), fptrs') -> ((from',to'), stack { stkItems = items' })
+        where
+            items' = undefined fptrs'
 
-evacuateFromDump :: TimHeap -> TimHeap -> TimDump -> (TimHeap, TimHeap, TimDump)
-evacuateFromDump from to dump = (from, to, dump)
+evacuateFromDump :: TimHeap -> TimHeap -> TimDump -> ((TimHeap, TimHeap), TimDump)
+evacuateFromDump from to dump = ((from, to), dump)
 
-evacuateFromFrame :: TimHeap -> TimHeap -> FramePtr -> (TimHeap, TimHeap, FramePtr)
-evacuateFromFrame from to fptr = (from, to, fptr)
+evacuateFromFramePtr :: TimHeap -> TimHeap -> (CCode, FramePtr) -> ((TimHeap, TimHeap), FramePtr)
+evacuateFromFramePtr from to (ccode, fptr) = case fptr of
+    FrameInt _  -> ((from, to), fptr)
+    FrameNull   -> ((from, to), fptr)
+    FrameAddr a -> case hLookup from a of
+        Forward b   -> ((from, to), FrameAddr b)
+        
+
 scavenge :: TimHeap -> TimHeap -> TimHeap
 scavenge from to = to
 
@@ -47,9 +58,9 @@ scavenge from to = to
 type TimStack
     = Stack Closure
     type Closure
-        = (Code, FramePtr)
-        type Code
-            = [Instruction]
+        = (CCode, FramePtr)
+        data CCode
+            = CCode [Int] [Instruction]
         data FramePtr
             = FrameAddr Addr  ★
             | FrameInt  Int
