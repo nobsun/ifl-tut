@@ -182,6 +182,14 @@ executables:
     dependencies:
     - ifl-tut
 
+  tim4:
+    main:            Main.hs
+    source-dirs:     app/tim4
+    ghc-options:
+    - -rtsopts
+    dependencies:
+    - ifl-tut
+
 tests:
   ifl-tut-doctest:
     main:                doctests.hs

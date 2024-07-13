@@ -1,0 +1,4 @@
+g x = h x x ;
+h p q = q - p ;
+main = g 1
+
