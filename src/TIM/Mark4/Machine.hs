@@ -121,16 +121,15 @@ type TimCompilerEnv = Assoc Name TimAMode
 compileSC :: TimCompilerEnv -> CoreScDefn -> (Name, CCode)
 compileSC env (name, args, body)
     | d == 0    = (name, ccode)
-    | otherwise = (name, CCode ss $ UpdateMarkers n : Take d n : code)
+    | otherwise = (name, CCode ss $ Take d n : code)
     where
         n = length args
         (d, ccode@(CCode ss code)) = compileR body newEnv n
-        newEnv = zip args (map Arg [1 ..]) ++ env
+        newEnv = zip args (map mkUpdIndMode [1 ..]) ++ env
 
 type OccupiedSlots = Int
 
 compileR :: CoreExpr -> TimCompilerEnv -> OccupiedSlots-> (OccupiedSlots, CCode)
-
 compileR e env d = case e of
     ELet isRec defns body
         -> (d', CCode (merge ns ns') (concat ils ++ il))
@@ -140,7 +139,7 @@ compileR e env d = case e of
             (nss, ils) = unzip $ (\ (CCode s is) -> (s,is)) <$> moves
             (dn, moves) = mapAccumL moveInstr (d+n) (zip defns slots)
             (d', CCode ns il) = compileR body env' dn
-            env'        = zip (map fst defns) (map mkIndMode slots) ++ env
+            env'        = zip (map fst defns) (map mkUpdIndMode slots) ++ env
             slots       = [d+1 ..]
             moveInstr i ((_, rhs), k) = (d1, CCode ss [Move k am])
                 where
@@ -184,6 +183,9 @@ compileR e env d = case e of
 
 mkIndMode :: Int -> TimAMode
 mkIndMode i = Code (CCode [i] [Enter (Arg i)])
+
+mkUpdIndMode :: Int -> TimAMode
+mkUpdIndMode i = Code (CCode [i] [PushMarker i, Enter (Arg i)])
 
 compileA :: CoreExpr -> TimCompilerEnv -> OccupiedSlots -> (OccupiedSlots, TimAMode)
 compileA e env d = case e of
