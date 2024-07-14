@@ -15,7 +15,7 @@ data Instruction
 data TimAMode
     = Arg Int
     | Label String
-    | Code [Instruction]
+    | Code Code
     | IntConst Int
     deriving (Eq)
 

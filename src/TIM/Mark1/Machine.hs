@@ -69,7 +69,7 @@ compile program = TimState
     }
     where
         compiledCode = compiledScDefs ++ compiledPrimitives
-        compiledScDefs = map (compileSC initialEnv) scDefs
+        compiledScDefs = map (compileSc initialEnv) scDefs
         scDefs = preludeDefs ++ program
         initialEnv = [(name, Label name) | (name, _args, _body) <- scDefs ]
                   ++ [(name, Label name) | (name, _code) <- compiledPrimitives ]
@@ -88,8 +88,8 @@ compiledPrimitives = []
 
 type TimCompilerEnv = Assoc Name TimAMode
 
-compileSC :: TimCompilerEnv -> CoreScDefn -> (Name, Code)
-compileSC env (name, args, body)
+compileSc :: TimCompilerEnv -> CoreScDefn -> (Name, Code)
+compileSc env (name, args, body)
     | null args = (name, code)
     | otherwise = (name, Take (length args) : code)
     where
@@ -142,7 +142,8 @@ step state = case state'.code of
             $  state' { code = instr
                       , frame = fptr'
                       , stack = stack'
-                      , heap = heap' 
+                      , heap = heap'
+                      , ruleid = 1
                       }
         | otherwise 
             -> error "step: Too few args for Take instruction"
@@ -151,8 +152,13 @@ step state = case state'.code of
             (heap', fptr') = fAlloc state'.heap (take n state'.stack.stkItems)
     Enter am : instr -> case instr of
         []  -> countUpExtime
-            $  state' { code = instr'
+            $  state' { code  = instr'
                       , frame = fptr'
+                      , ruleid = case am of
+                        Label _    -> 6
+                        Arg _      -> 7
+                        Code _     -> 8
+                        IntConst _ -> 9
                       }
         _   -> error "step: invalid code sequence"
         where
@@ -161,6 +167,11 @@ step state = case state'.code of
         -> countUpExtime
         $  state' { code = instr
                   , stack = Stk.push clos state'.stack
+                  , ruleid = case am of
+                    Arg _      -> 2
+                    Label _    -> 3
+                    Code _     -> 4
+                    IntConst _ -> 5
                   }
         where
             clos = amToClosure am state'.frame state'.heap state'.codestore
