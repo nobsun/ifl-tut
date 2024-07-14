@@ -1,0 +1,3 @@
+horrid n m = if (n == 0) m (horrid (n - 1) m) ;
+main = horrid 10 5
+

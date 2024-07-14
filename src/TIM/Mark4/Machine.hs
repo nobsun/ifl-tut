@@ -1,4 +1,8 @@
 {-# LANGUAGE MultiWayIf #-}
+{-# LANGUAGE NoFieldSelectors #-}
+{-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE OverloadedRecordDot #-}
+
 module TIM.Mark4.Machine
     where
 
@@ -9,7 +13,7 @@ import Data.Maybe
 
 import Language
 import Heap
-import qualified Stack as Stk (push, pop, npop, discard, emptyStack, isEmptyStack)
+import qualified Stack as Stk (push, append, top, pop, npop, discard, emptyStack, isEmptyStack)
 import Stack hiding (push, pop, npop, discard)
 import Utils
 import Iseq
@@ -124,8 +128,8 @@ compileSC env (name, args, body)
     | otherwise = (name, CCode ss $ Take d n : code)
     where
         n = length args
-        (d, ccode@(CCode ss code)) = compileR body newEnv n
-        newEnv = zip args (map mkUpdIndMode [1 ..]) ++ env
+        (d, ccode@(CCode ss code)) = compileR body env' n
+        env' = zip args (map Arg [1 ..]) ++ env
 
 type OccupiedSlots = Int
 
@@ -139,7 +143,7 @@ compileR e env d = case e of
             (nss, ils) = unzip $ (\ (CCode s is) -> (s,is)) <$> moves
             (dn, moves) = mapAccumL moveInstr (d+n) (zip defns slots)
             (d', CCode ns il) = compileR body env' dn
-            env'        = zip (map fst defns) (map mkUpdIndMode slots) ++ env
+            env'        = zip (map fst defns) (map mkIndMode slots) ++ env
             slots       = [d+1 ..]
             moveInstr i ((_, rhs), k) = (d1, CCode ss [Move k am])
                 where
@@ -163,16 +167,20 @@ compileR e env d = case e of
                 ; (_, il'') = compileA e2 env d
                 }
                in (dn, CCode il.slots (Push il'' : il'.code))
-
-        | otherwise -> (d2, CCode (merge ss il.slots) $ Push am : il.code)
+        | otherwise 
+            -- -> ( d2, CCode (merge ss il.slots) $ Push am : il.code)
+            -> ( d2
+               , CCode ss' (Move d' am : Push (Code (CCode [1] [Enter (Arg d')])) : il.code )
+               )
             where
                 d' = succ d
                 (d1, am) = compileAL e2 d' env d' 
                 ss = case am of
                     Code ccode -> ccode.slots
                     _          -> error "AMode is not Code"
+                ss' = merge ss il.slots
                 (d2, il) = compileR e1 env d1
-    EVar _v   -> (d1, CCode ss [Enter am])
+    EVar _v   -> (d1, CCode ss (mkEnter am))
         where
             (d1, am) = compileA e env d
             ss = case am of
@@ -186,6 +194,11 @@ mkIndMode i = Code (CCode [i] [Enter (Arg i)])
 
 mkUpdIndMode :: Int -> TimAMode
 mkUpdIndMode i = Code (CCode [i] [PushMarker i, Enter (Arg i)])
+
+mkEnter :: TimAMode -> [Instruction]
+mkEnter am = case am of
+    Code ccode -> ccode.code
+    _          -> [Enter am]
 
 compileA :: CoreExpr -> TimCompilerEnv -> OccupiedSlots -> (OccupiedSlots, TimAMode)
 compileA e env d = case e of
@@ -307,6 +320,52 @@ step state = case state'.code of
         where
             heap' = fUpdate state'.heap fptr n (amToClosure am fptr state'.heap state'.codestore)
             fptr  = state'.frame
+    CCode ss (Push am : instr)
+        -> countUpExtime
+        $  state' { code = CCode ss instr
+                  , stack = Stk.push clos state'.stack
+                  }
+        where
+            clos = amToClosure am state'.frame state'.heap state'.codestore
+    CCode ss (PushV FramePtr : instr)
+        -> countUpExtime
+        $  state' { code = CCode ss instr
+                  , vstack = Stk.push n state.vstack
+                  }
+        where
+            n = case state.frame of
+                FrameInt m -> m
+                _          -> error "invalid frame pointer in the case"
+    CCode ss (PushV (IntVConst n) : instr)
+        -> countUpExtime
+        $  state' { code = CCode ss instr
+                  , vstack = Stk.push n state.vstack
+                  }
+    CCode ss (PushMarker x : i)
+        -> countUpExtime
+        $  state' { code = CCode ss i
+                  , stack = empty state'.stack
+                  , dump  = Stk.push (TimDumpItem state'.frame x state'.stack) state'.dump
+                  }
+    CCode ss (UpdateMarkers n : i)
+        | n <= state'.stack.curDepth
+            -> countUpExtime
+            $  state' { code = CCode ss i }
+        | otherwise
+            -> countUpExtime
+            $  state' { stack = Stk.append state'.stack clos
+                      , heap  = heap2
+                      }
+        where
+            (heap1, paFptr) = fAlloc state'.heap (Frame state'.stack.stkItems)
+            TimDumpItem fUpd x clos = Stk.top state'.dump
+            heap2 = fUpdate heap1 fUpd x (paCode, paFptr)
+            paCode = CCode ms (map (Push . Arg) (reverse ms))
+                where
+                    stk = state'.stack
+                    m   = stk.curDepth :: Int
+                    ms  = [1 .. m ]
+
     CCode _ (Enter am : instr) -> case instr of
         []  -> countUpExtime
             $  state' { code = instr'
@@ -315,13 +374,26 @@ step state = case state'.code of
         _   -> error "step: invalid code sequence"
         where        
             (instr', fptr') = amToClosure am state'.frame state'.heap state'.codestore
-    CCode ss (Push am : instr)
-        -> countUpExtime
-        $  state' { code = CCode ss instr
-                  , stack = Stk.push clos state'.stack
-                  }
-        where
-            clos = amToClosure am state'.frame state'.heap state'.codestore
+    CCode _ (Return : [])
+        | Stk.isEmptyStack state'.stack 
+            -> case Stk.pop state'.dump of
+                (TimDumpItem fu x s, dump')
+                    -> countUpExtime 
+                    $ state' { stack = s
+                             , heap  = heap' 
+                             , dump  = dump'
+                             }
+                    where
+                        heap'  = fUpdate state'.heap fu x (intCode, FrameInt n)
+                        (n, _) = Stk.pop state'.vstack
+        | otherwise
+            -> countUpExtime
+            $  state' { code = instr' 
+                      , frame = fptr'
+                      , stack = stack'
+                      }
+            where
+                ((instr',fptr'), stack') = Stk.pop state'.stack
     CCode ss (Op Add : instr)
         -> countUpExtime
         $  state' { code   = CCode ss instr
@@ -402,37 +474,6 @@ step state = case state'.code of
         where
             (n1,n2)      = (vs !! 0, vs !! 1)
             (vs,vstack') = Stk.npop 2 state'.vstack
-    CCode _ (Return : [])
-        | Stk.isEmptyStack state'.stack 
-            -> case Stk.pop state'.dump of
-                (TimDumpItem fu x s, dump')
-                    -> countUpExtime 
-                    $ state' { stack = s
-                             , heap  = heap' 
-                             , dump  = dump'
-                             }
-                    where
-                        heap'  = fUpdate state'.heap fu x (intCode, FrameInt n)
-                        (n, _) = Stk.pop state'.vstack
-        | otherwise
-            -> state' { code = instr' 
-                      , frame = fptr'
-                      , stack = stack'
-                      }
-            where
-                ((instr',fptr'), stack') = Stk.pop state'.stack
-    CCode ss (PushV FramePtr : instr)
-        -> state' { code = CCode ss instr
-                  , vstack = Stk.push n state.vstack
-                  }
-        where
-            n = case state.frame of
-                FrameInt m -> m
-                _          -> error "invalid frame pointer in the case"
-    CCode ss (PushV (IntVConst n) : instr)
-        -> state' { code = CCode ss instr
-                  , vstack = Stk.push n state.vstack
-                  }
     CCode _ (Cond i1 i2 : [])
         -> countUpExtime
         $  state' { code = if v == 0 then i1 else i2
@@ -440,11 +481,6 @@ step state = case state'.code of
                   }
         where
             (v,vstack') = Stk.pop state.vstack
-    CCode ss (PushMarker x : i)
-        -> state' { code = CCode ss i
-                  , stack = empty state'.stack
-                  , dump  = Stk.push (TimDumpItem state'.frame x state'.stack) state'.dump
-                  }
     CCode _ (c:_) -> trace (show c) undefined
     where
         state' = ctrlStep state

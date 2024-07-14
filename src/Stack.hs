@@ -34,6 +34,19 @@ push x stk = stk
     , stkItems = x : stk.stkItems
     }
 
+append :: Stack a -> Stack a -> Stack a
+append s t = t 
+    { maxDepth = maximum [s.maxDepth, t.maxDepth, depth]
+    , curDepth = depth
+    , stkItems = s.stkItems ++ t.stkItems
+    }
+    where
+        depth = s.curDepth + t.curDepth
+top :: Stack a -> a
+top stk = case stk.stkItems of
+    t:_ -> t
+    _   -> error "top: empty stack"
+
 pop :: Stack a -> (a, Stack a)
 pop stk = bool (list undefined phi stk.stkItems)
                (error "pop: empty stack")
@@ -51,7 +64,10 @@ npop n stack = case n of
 discard :: Int -> Stack a -> Stack a
 discard 0 stk = stk
 discard n stk = stk { curDepth = subtract n stk.curDepth `max` 0
-                    , stkItems = drop n stk.stkItems
+                    , stkItems = drop n stk.stkItems{-# LANGUAGE NoFieldSelectors #-}
+{-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE OverloadedRecordDot #-}
+
                     }
 
 empty :: Stack a -> Stack a

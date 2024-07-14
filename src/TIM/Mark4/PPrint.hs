@@ -80,6 +80,7 @@ showStack stack
 showValueStack :: TimValueStack -> IseqRep
 showValueStack vstack
     = iStr "VStack: " `iAppend` iStr (show vstack.stkItems)
+                      `iAppend` iNewline
 
 showDump :: TimDump -> IseqRep
 showDump dump
