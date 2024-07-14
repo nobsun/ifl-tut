@@ -17,7 +17,7 @@ import qualified Stack as Stk
 
 showFullResults :: [TimState] -> [String]
 showFullResults ts = case ts of
-    [] -> error "impossible"
+    []  -> error "impossible"
     s:_ -> iDisplay (showSCDefns s) : showResults ts
 
 showResults :: [TimState] -> [String]

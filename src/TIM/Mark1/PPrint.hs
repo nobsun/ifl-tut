@@ -14,8 +14,10 @@ import TIM.Mark1.Code
 import TIM.Mark1.Frame
 import TIM.Mark1.State
 
-showFullResults :: [TimState] -> String
-showFullResults = unlines . showResults
+showFullResults :: [TimState] -> [String]
+showFullResults ts = case ts of
+    []  -> error "impossible"
+    t:_ -> iDisplay (showSCDefns t) : showResults ts
 
 showResults :: [TimState] -> [String]
 showResults = map iDisplay . iLayn' 0 . mapoid (showState, showStats)
@@ -122,10 +124,10 @@ showInstruction d instr = case instr of
 
 showArg :: HowMuchToPrint -> TimAMode -> IseqRep
 showArg d am = case am of
-    Arg m    -> iStr "Arg "   `iAppend` iNum m
-    Code il  -> iStr "Code "  `iAppend` showInstructions d il
-    Label s  -> iStr "Label " `iAppend` iStr s
-    IntConst n -> iStr "IntConst " `iAppend` iNum n
+    Arg m    -> iStr "(Arg "   `iAppend` iNum m `iAppend` iStr ")"
+    Code il  -> iStr "(Code "  `iAppend` showInstructions d il `iAppend` iStr ")"
+    Label s  -> iStr "(Label " `iAppend` iStr s `iAppend` iStr ")"
+    IntConst n -> iStr "(IntConst " `iAppend` iNum n `iAppend` iStr ")"
 
 nTerse :: Int
 nTerse = 3

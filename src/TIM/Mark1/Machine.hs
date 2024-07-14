@@ -33,7 +33,7 @@ traceShow | debug     = Deb.traceShow
 
 run :: String -> ([String] -> [String])
 run prog inputs
-    = showResults 
+    = showFullResults 
     $ eval 
     $ setControl inputs
     $ compile 
