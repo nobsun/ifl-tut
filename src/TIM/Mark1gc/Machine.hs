@@ -3,7 +3,6 @@ module TIM.Mark1gc.Machine
 
 import Data.Char
 import Data.List
-import Data.Maybe
 
 import Language
 import Heap
@@ -16,11 +15,25 @@ import TIM.Mark1gc.Code
 import TIM.Mark1gc.Frame
 import TIM.Mark1gc.PPrint
 import TIM.Mark1gc.State
-import TIM.Mark1gc.GC
 
-run :: (?sz :: Int, ?th :: Int) => String -> ([String] -> [String])
+import Debug.Trace qualified as Deb
+
+debug :: Bool
+debug = True
+
+trace :: String -> a -> a
+trace | debug     = Deb.trace
+      | otherwise = const id
+
+traceShow :: Show a => a -> b -> b
+traceShow | debug     = Deb.traceShow
+          | otherwise = const id
+
+--
+
+run :: String -> ([String] -> [String])
 run prog inputs
-    = showResults 
+    = showFullResults 
     $ eval 
     $ setControl inputs
     $ compile 
@@ -56,7 +69,7 @@ compile program = TimState
     }
     where
         compiledCode = compiledScDefs ++ compiledPrimitives
-        compiledScDefs = map (compileSC initialEnv) scDefs
+        compiledScDefs = map (compileSc initialEnv) scDefs
         scDefs = preludeDefs ++ program
         initialEnv = [(name, Label name) | (name, _args, _body) <- scDefs ]
                   ++ [(name, Label name) | (name, _code) <- compiledPrimitives ]
@@ -75,8 +88,8 @@ compiledPrimitives = []
 
 type TimCompilerEnv = Assoc Name TimAMode
 
-compileSC :: TimCompilerEnv -> CoreScDefn -> (Name, Code)
-compileSC env (name, args, body)
+compileSc :: TimCompilerEnv -> CoreScDefn -> (Name, Code)
+compileSc env (name, args, body)
     | null args = (name, code)
     | otherwise = (name, Take (length args) : code)
     where
@@ -98,15 +111,15 @@ compileA e env = case e of
 
 --
 
-eval :: (?sz :: Int, ?th :: Int) => TimState -> [TimState]
+eval :: TimState -> [TimState]
 eval state = state : rests
     where
         rests | timFinal state = []
               | otherwise      = eval state'
         state' = doAdmin (step state)
 
-doAdmin :: (?sz :: Int, ?th :: Int) => TimState -> TimState
-doAdmin = gc . applyToStats statIncSteps
+doAdmin :: TimState -> TimState
+doAdmin = applyToStats statIncSteps
 
 timFinal :: TimState -> Bool
 timFinal state = null state.code || null state.ctrl
@@ -129,7 +142,8 @@ step state = case state'.code of
             $  state' { code = instr
                       , frame = fptr'
                       , stack = stack'
-                      , heap = heap' 
+                      , heap = heap'
+                      , ruleid = 1
                       }
         | otherwise 
             -> error "step: Too few args for Take instruction"
@@ -138,19 +152,29 @@ step state = case state'.code of
             (heap', fptr') = fAlloc state'.heap (Frame $ take n state'.stack.stkItems)
     Enter am : instr -> case instr of
         []  -> countUpExtime
-            $  state' { code = instr'
+            $  state' { code  = instr'
                       , frame = fptr'
+                      , ruleid = case am of
+                        Label _    -> 6
+                        Arg _      -> 7
+                        Code _     -> 8
+                        IntConst _ -> 9
                       }
         _   -> error "step: invalid code sequence"
         where
-            (instr', fptr') = trace "L159" amToClosure am state'.frame state'.heap state'.codestore
+            (instr', fptr') = amToClosure am state'.frame state'.heap state'.codestore
     Push am : instr
         -> countUpExtime
         $  state' { code = instr
                   , stack = Stk.push clos state'.stack
+                  , ruleid = case am of
+                    Arg _      -> 2
+                    Label _    -> 3
+                    Code _     -> 4
+                    IntConst _ -> 5
                   }
         where
-            clos = trace "L166" amToClosure am state'.frame state'.heap state'.codestore
+            clos = amToClosure am state'.frame state'.heap state'.codestore
     where
         state' = ctrlStep state
 
@@ -165,7 +189,7 @@ ctrlStep state = case state.ctrl of
 
         
 amToClosure :: TimAMode -> FramePtr -> TimHeap -> CodeStore -> Closure
-amToClosure amode fptr heap cstore = trace (">>>" ++ show amode) $ case amode of
+amToClosure amode fptr heap cstore = case amode of
     Arg n      -> fGet heap fptr n
     Code il    -> (il, fptr)
     Label l    -> (codeLookup cstore l, fptr)
@@ -174,10 +198,4 @@ amToClosure amode fptr heap cstore = trace (">>>" ++ show amode) $ case amode of
 intCode :: Code
 intCode = []
 
-{-
-type TimStack = Stack Closure
-type TimHeap  = Heap Frame
-type Frame    = [Closure]
-type Closure  = (Code, FramePtr)
-type Code     = [Instruction]
--}
+    

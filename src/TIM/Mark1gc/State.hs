@@ -15,22 +15,6 @@ import Utils
 import TIM.Mark1gc.Code
 import TIM.Mark1gc.Frame
 
-import Debug.Trace qualified as Deb
-
-debug :: Bool
-debug = True
-
-trace :: String -> a -> a
-trace | debug     = Deb.trace
-      | otherwise = const id
-
-traceShow :: Show a => a -> b -> b
-traceShow | debug     = Deb.traceShow
-          | otherwise = const id
-
-gcFlag :: Bool
-gcFlag = False
-
 --
 
 data TimState
@@ -61,31 +45,35 @@ fAlloc heap frame =  second FrameAddr (hAlloc heap frame)
 fGet   :: TimHeap -> FramePtr -> Int -> Closure
 fGet heap fptr n = case fptr of
     FrameAddr addr -> case hLookup heap addr of
-        Frame cs     -> trace (show cs) cs !! trace (show (n - 1)) (n - 1)
-        _            -> error "fGet: invalid frame"
+        Frame clos     -> clos !! (n - 1)
+        _              -> error "fGet: evacuated Frame"
     _              -> error "fGet: invalid frame pointer"
 
 fUpdate :: TimHeap -> FramePtr -> Int -> Closure -> TimHeap
 fUpdate heap fptr n clos = case fptr of
-    FrameAddr addr -> hUpdate heap addr (Frame newFrame)
+    FrameAddr addr -> hUpdate heap addr newFrame
         where
-            frame    = hLookup heap addr
-            newFrame = take (n - 1) (fList frame) ++ clos : drop n (fList frame)
+            frame = case hLookup heap addr of
+                Frame cs -> cs
+                _        -> error "fUpdate: evacuated Frame"
+            newFrame = Frame $ take (n - 1) frame ++ clos : drop n frame
     _              -> error "fUpdate: invalid frame pointer"
 
+
 fList :: Frame -> [Closure]
-fList fr = case fr of
+fList f = case f of
     Frame clos -> clos
-    _          -> []
+    _          -> error "evalucated Frame"
 
 data TimStats = TimStats
-    { steps  :: Int
-    , extime :: Int
+    { steps    :: Int
+    , extime   :: Int
     , hpallocs :: Int
+    , gccount  :: Int
     }
 
 statInitial  :: TimStats
-statInitial = TimStats { steps = 0 , extime = 0, hpallocs = 0 }
+statInitial = TimStats { steps = 0 , extime = 0, hpallocs = 0, gccount = 0 }
 
 statIncSteps :: TimStats -> TimStats
 statIncSteps s = s { steps = succ s.steps }
@@ -95,5 +83,8 @@ statIncExtime s = s { extime = succ s.extime }
 
 statIncHpAllocs :: Int -> TimStats -> TimStats
 statIncHpAllocs n s = s { hpallocs = n + s.hpallocs }
+
+statIncGcCount :: TimStats -> TimStats
+statIncGcCount s = s { gccount = succ s.gccount }
 
 type RuleId = Int

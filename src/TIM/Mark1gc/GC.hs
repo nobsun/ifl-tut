@@ -1,86 +1,96 @@
-module TIM.Mark1gc.GC where
-
-import Data.List
+module TIM.Mark1gc.GC 
+    ( gc
+    ) where
 
 import Heap
+import Iseq
 import Stack
-import Utils
+
+import TIM.Mark1gc.Code
 import TIM.Mark1gc.Frame
 import TIM.Mark1gc.State
+import TIM.Mark1gc.PPrint
 
-gc :: (?sz :: Int, ?th :: Int)
-   => TimState -> TimState
--- gc state 
---     | gcFlag = trace "evac fptr" $ case evacuateFromFramePtr state.heap hInitial (state.code, state.frame) of
---         ((from1, to1), fp') -> trace "evac stack" $ case evacuateFromStack from1 to1 state.stack of
---             ((from2, to2), stk') -> trace "evac dump" $ case evacuateFromDump from2 to2 state.dump of
---                 ((from3, to3), dmp') -> state
---                     { frame = fp'
---                     , stack = stk'
---                     , dump  = dmp'
---                     , heap  = scavenge from3 to3
---                     }
---     | otherwise = state
+import Debug.Trace qualified as Deb
 
-gc state 
-    | gcFlag = trace "evac stack" $ case evacuateFromStack state.heap hInitial state.stack of
-        ((from1, to1), stk') -> trace "evac dump" $ case evacuateFromDump from1 to1 state.dump of
-            ((from2, to2), dump') -> trace "evac fptr" $ case evacuateFromFramePtr from2 to2 (state.code, state.frame) of
-                ((from3, to3), fp') -> state
-                    { frame = fp'
-                    , stack = stk'
-                    , dump  = dump'
-                    , heap  = scavenge from3 to3
-                    }
-    | otherwise = state
+debug :: Bool
+debug = True
 
-evacuateAddr :: (?sz :: Int, ?th :: Int)
-              => TimHeap -> TimHeap -> Addr -> ((TimHeap, TimHeap), Addr)
-evacuateAddr from to a = case hLookup from a of
-    Forward a' -> ((from, to), a')
-    Frame cs   -> ((from1, to1), a')
-        where
-            (from1, to1) = undefined
-            a' = undefined
+trace :: String -> a -> a
+trace | debug     = Deb.trace
+      | otherwise = const id
 
-evacuateFromFramePtr :: (?sz :: Int, ?th :: Int)
-                     => TimHeap -> TimHeap -> Closure -> ((TimHeap, TimHeap), FramePtr)
-evacuateFromFramePtr from to (code, fp)
-    = case fp of
-        FrameAddr a -> case hLookup from a of
-            frame@(Frame cs)  -> case fAlloc to frame of
-                (to1, fp1) -> case mapAccumL (uncurry evacuateFromFramePtr) (from, to1) cs of
-                    ((from2, to2), fps2) -> case fp1 of
-                        FrameAddr a3 -> case zipWith (\ (code', _) fp' -> (code', fp')) cs fps2  of
-                            cs' -> case hUpdate to2 a3 (Frame cs') of
-                                to3 -> ((from2, to3), fp1)
-                        _           -> error $ "evacuateFromFramePtr: invalid frame pointer: " ++ show fp1
-            Forward _ -> ((from, to), fp)
-        FrameInt _n -> ((from, to), fp)
-        FrameNull   -> ((from, to), fp)
+traceShow :: Show a => a -> b -> b
+traceShow | debug     = Deb.traceShow
+          | otherwise = const id
 
-evacuateFromStack :: (?sz :: Int, ?th :: Int)
-                  => TimHeap -> TimHeap -> TimStack -> ((TimHeap, TimHeap), TimStack)
-evacuateFromStack from to stack = case mapAccumL (uncurry evacuateFromFramePtr) (from, to) stack.stkItems of
-    (hs, fps) -> (hs, stack { stkItems = zip (aDomain stack.stkItems) fps })
+gc :: (?sz :: Int, ?th :: Int) => TimState -> TimState
+gc state = case evacuateFromFramePtr (state.heap, hInitial) state.frame of
+    ((from1, to1), fptr1) -> case evacuateFromStack (from1, to1) state.stack of
+        ((from2, to2), stack2) -> case evacuateFromDump (from2, to2) state.dump of
+            ((from3, to3), dump3) -> case scavange from3 to3 of
+                to4 -> trace (gcPrint state.heap from1 to1 from2 to2 from3 to3 to4) $
+                       state { frame = fptr1
+                             , stack = stack2
+                             , dump  = dump3
+                             , heap  = to4
+                             , stats = statIncGcCount state.stats 
+                             }
+                      
 
-evacuateFromDump :: (?sz :: Int, ?th :: Int)
-                 => TimHeap -> TimHeap -> TimDump -> ((TimHeap, TimHeap), TimDump)
-evacuateFromDump from to dump = ((from, to), dump)
+evacuateFromFramePtr :: (TimHeap, TimHeap) -> FramePtr -> ((TimHeap, TimHeap), FramePtr)
+evacuateFromFramePtr (from, to) fptr = undefined
 
-scavenge :: (?sz :: Int, ?th :: Int)
-         => TimHeap -> TimHeap -> TimHeap
-scavenge from to = foldl phi to to.assocs
-    where
-        phi :: TimHeap -> (Addr, Frame) -> TimHeap
-        phi t (a, f) = case f of
-            Frame cs -> hUpdate t a (Frame (map conv cs))
-                where
-                    conv :: Closure -> Closure
-                    conv clos@(c,fp) = case fp of
-                        FrameAddr old -> case hLookup from old of
-                            Forward a'   -> (c, FrameAddr a')
-                            _            -> error $ "scavenge: not Forward: " ++ show clos
-                        FrameInt _  -> clos
-                        FrameNull   -> clos
-            Forward _ -> error $ "scavnge: found Forward in new heap: " ++ show f
+evacuateFromStack :: (TimHeap, TimHeap) -> TimStack -> ((TimHeap, TimHeap), TimStack)
+evacuateFromStack (from, to) stack = undefined
+
+evacuateFromDump :: (TimHeap, TimHeap) -> TimDump -> ((TimHeap, TimHeap), TimDump)
+evacuateFromDump (from, to) dump = undefined
+
+scavange :: TimHeap -> TimHeap -> TimHeap
+scavange from to = undefined
+
+gcPrint :: TimHeap 
+        -> TimHeap -> TimHeap -> TimHeap -> TimHeap -> TimHeap -> TimHeap
+        -> TimHeap
+        -> String
+gcPrint f0 f1 t1 f2 t2 f3 t3 t4 
+    = iDisplay $ iConcat
+    [ iNewline
+    , iStr "vvvvvvvvvvvvvvvvvvvv"
+    , iNewline
+    , iStr "before:"
+    , iNewline
+    , showHeap f0
+    , iNewline
+    , iStr "evacuated: from1"
+    , iNewline
+    , showHeap f1
+    , iNewline
+    , iStr "evacuated: to1"
+    , iNewline
+    , showHeap t1
+    , iNewline 
+    , iStr "evacuated: from2"
+    , iNewline
+    , showHeap f2
+    , iNewline
+    , iStr "evacuated: to2"
+    , iNewline
+    , showHeap t2
+    , iNewline 
+    , iStr "evacuated: from3"
+    , iNewline
+    , showHeap f3
+    , iNewline
+    , iStr "evacuated: to3"
+    , iNewline
+    , showHeap t3
+    , iNewline 
+    , iStr "scavenged: after"
+    , iNewline
+    , showHeap t4
+    , iNewline
+    , iStr "^^^^^^^^^^^^^^^^^^^^"
+    , iNewline
+    ]

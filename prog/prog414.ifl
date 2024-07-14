@@ -1,0 +1,5 @@
+compose2 f g x = f (g x x);
+id = S K K;
+f = id;
+g = id;
+main = compose2 f g id 5
