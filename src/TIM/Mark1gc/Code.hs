@@ -29,8 +29,8 @@ codeLookup cstore lab
     = aLookup cstore lab (error ("codeLookup: Attempt to jump to unknown label "
                                ++ show lab))
 
-slots :: Code -> [Int]
-slots = sort . mapMaybe slot
+useds :: Code -> [Int]
+useds = sort . mapMaybe slot
     where
         slot :: Instruction -> Maybe Int
         slot c = case c of

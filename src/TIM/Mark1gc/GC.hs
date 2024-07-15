@@ -28,7 +28,7 @@ traceShow | debug     = Deb.traceShow
 
 gc :: (?sz :: Int, ?th :: Int) => TimState -> TimState
 gc state = case evacuateFromClosure (state.heap, hInitial) (state.code, state.frame) of
-    ((from1, to1), fptr1) -> case evacuateFromStack (from1, to1) state.stack of
+    ((from1, to1), (_, fptr1)) -> case evacuateFromStack (from1, to1) state.stack of
         ((from2, to2), stack2) -> case evacuateFromDump (from2, to2) state.dump of
             ((from3, to3), dump3) -> case scavange from3 to3 of
                 to4 -> trace (gcPrint state.heap from1 to1 from2 to2 from3 to3 to4) $
@@ -39,23 +39,25 @@ gc state = case evacuateFromClosure (state.heap, hInitial) (state.code, state.fr
                              , stats = statIncGcCount state.stats 
                              }
 
-evacuateFromClosure :: (TimHeap, TimHeap) -> Closure -> ((TimHeap, TimHeap), FramePtr)
+evacuateFromClosure :: (TimHeap, TimHeap) -> Closure -> ((TimHeap, TimHeap), Closure)
 evacuateFromClosure (from, to) (code, fptr) = case fptr of
     FrameAddr addr -> case hLookup from addr of
-        fr@(Frame cs)      -> ((from', to'), fptr')
+        fr@(Frame cs)      -> ((from2, to2), (code, fptr'))
             where
                 (to0, addr0) = hAlloc to fr
                 fptr'        = FrameAddr addr0
                 from0        = hUpdate from addr (Forward addr0)
-                usedSlots    = slots code
-                ((from1, to1, _), cs1) = mapAccumL phi (from0, to0, usedSlots) (zip [1 ..] cs)
+                us           = useds code
+                ((from1, to1, _), cs1) = mapAccumL phi (from0, to0, us) (zip [1 ..] cs)
                 phi acc@(f,t,iis) (j,c) = case iis of
                     []               -> (acc, c)
                     i:is | i /= j    -> ((f,t,is), c)
-                         | otherwise -> undefined
-                (from', to') = undefined
-        fr@(Forward addr') -> ((from, to), FrameAddr addr')
-    _              -> ((from, to), fptr)
+                         | otherwise -> case evacuateFromClosure (f,t) c of
+                            ((f',t'), c') -> ((f',t',is), c')
+                to2 = hUpdate to1 addr0 (Frame cs1)
+                from2 = from1
+        fr@(Forward addr') -> ((from, to), (code, FrameAddr addr'))
+    _              -> ((from, to), (code, fptr))
 
 evacuateFromStack :: (TimHeap, TimHeap) -> TimStack -> ((TimHeap, TimHeap), TimStack)
 evacuateFromStack (from, to) stack = undefined
