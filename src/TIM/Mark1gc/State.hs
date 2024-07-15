@@ -55,10 +55,9 @@ fUpdate heap fptr n clos = case fptr of
         where
             frame = case hLookup heap addr of
                 Frame cs -> cs
-                _        -> error "fUpdate: evacuated Frame"
+                _        -> error "evacuated"
             newFrame = Frame $ take (n - 1) frame ++ clos : drop n frame
     _              -> error "fUpdate: invalid frame pointer"
-
 
 fList :: Frame -> [Closure]
 fList f = case f of

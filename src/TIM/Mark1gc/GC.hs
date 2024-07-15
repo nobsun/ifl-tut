@@ -2,6 +2,8 @@ module TIM.Mark1gc.GC
     ( gc
     ) where
 
+import Data.List
+
 import Heap
 import Iseq
 import Stack
@@ -25,7 +27,7 @@ traceShow | debug     = Deb.traceShow
           | otherwise = const id
 
 gc :: (?sz :: Int, ?th :: Int) => TimState -> TimState
-gc state = case evacuateFromFramePtr (state.heap, hInitial) state.frame of
+gc state = case evacuateFromClosure (state.heap, hInitial) (state.code, state.frame) of
     ((from1, to1), fptr1) -> case evacuateFromStack (from1, to1) state.stack of
         ((from2, to2), stack2) -> case evacuateFromDump (from2, to2) state.dump of
             ((from3, to3), dump3) -> case scavange from3 to3 of
@@ -36,10 +38,24 @@ gc state = case evacuateFromFramePtr (state.heap, hInitial) state.frame of
                              , heap  = to4
                              , stats = statIncGcCount state.stats 
                              }
-                      
 
-evacuateFromFramePtr :: (TimHeap, TimHeap) -> FramePtr -> ((TimHeap, TimHeap), FramePtr)
-evacuateFromFramePtr (from, to) fptr = undefined
+evacuateFromClosure :: (TimHeap, TimHeap) -> Closure -> ((TimHeap, TimHeap), FramePtr)
+evacuateFromClosure (from, to) (code, fptr) = case fptr of
+    FrameAddr addr -> case hLookup from addr of
+        fr@(Frame cs)      -> ((from', to'), fptr')
+            where
+                (to0, addr0) = hAlloc to fr
+                fptr'        = FrameAddr addr0
+                from0        = hUpdate from addr (Forward addr0)
+                usedSlots    = slots code
+                ((from1, to1, _), cs1) = mapAccumL phi (from0, to0, usedSlots) (zip [1 ..] cs)
+                phi acc@(f,t,iis) (j,c) = case iis of
+                    []               -> (acc, c)
+                    i:is | i /= j    -> ((f,t,is), c)
+                         | otherwise -> undefined
+                (from', to') = undefined
+        fr@(Forward addr') -> ((from, to), FrameAddr addr')
+    _              -> ((from, to), fptr)
 
 evacuateFromStack :: (TimHeap, TimHeap) -> TimStack -> ((TimHeap, TimHeap), TimStack)
 evacuateFromStack (from, to) stack = undefined

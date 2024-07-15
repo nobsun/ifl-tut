@@ -16,3 +16,13 @@ data Frame
     = Frame [Closure]
     | Forward Addr
     deriving (Eq, Show)
+
+selectClosures :: [Int] -> [Closure] -> [Closure]
+selectClosures slots cs = select slots (zip [1 ..] cs)
+    where
+        select [] _ = []
+        select _ [] = []
+        select iis@(i:is) jcjcs@((j, c) : jcs) = case compare i j of
+            LT -> select is jcjcs
+            EQ -> c : select is jcs
+            GT -> select iis jcs

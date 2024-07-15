@@ -1,6 +1,9 @@
 module TIM.Mark1gc.Code
     where
 
+import Data.List
+import Data.Maybe
+
 import Language
 import Utils
 
@@ -25,3 +28,11 @@ codeLookup :: CodeStore -> Name -> Code
 codeLookup cstore lab
     = aLookup cstore lab (error ("codeLookup: Attempt to jump to unknown label "
                                ++ show lab))
+
+slots :: Code -> [Int]
+slots = sort . mapMaybe slot
+    where
+        slot :: Instruction -> Maybe Int
+        slot c = case c of
+            Enter (Arg n) -> Just n
+            _             -> Nothing
