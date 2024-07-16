@@ -42,31 +42,40 @@ gc state = case evacuateFromClosure (state.heap, hInitial) (state.code, state.fr
 evacuateFromClosure :: (TimHeap, TimHeap) -> Closure -> ((TimHeap, TimHeap), Closure)
 evacuateFromClosure (from, to) (code, fptr) = case fptr of
     FrameAddr addr -> case hLookup from addr of
-        fr@(Frame cs)      -> ((from2, to2), (code, fptr'))
+        fr@(Frame cs)      -> ((from1, to1), (code, fptr'))
             where
                 (to0, addr0) = hAlloc to fr
                 fptr'        = FrameAddr addr0
                 from0        = hUpdate from addr (Forward addr0)
                 us           = useds code
-                ((from1, to1, _), cs1) = mapAccumL phi (from0, to0, us) (zip [1 ..] cs)
+                (from1, to1, _) = foldl' phi (from0, to0, us) (zip [1 ..] cs)
                 phi acc@(f,t,iis) (j,c) = case iis of
-                    []               -> (acc, c)
-                    i:is | i /= j    -> ((f,t,is), c)
+                    []               -> acc
+                    i:is | i /= j    -> (f,t,is)
                          | otherwise -> case evacuateFromClosure (f,t) c of
-                            ((f',t'), c') -> ((f',t',is), c')
-                to2 = hUpdate to1 addr0 (Frame cs1)
-                from2 = from1
-        fr@(Forward addr') -> ((from, to), (code, FrameAddr addr'))
+                            ((f',t'),_)  -> (f',t',is)
+        Forward _          -> ((from, to), (code, fptr))
     _              -> ((from, to), (code, fptr))
 
 evacuateFromStack :: (TimHeap, TimHeap) -> TimStack -> ((TimHeap, TimHeap), TimStack)
-evacuateFromStack (from, to) stack = undefined
+evacuateFromStack (from, to) stack = case mapAccumL evacuateFromClosure (from, to) stack.stkItems of
+    ((from', to'), cs') -> ((from', to'), stack { stkItems = cs' } )
+
 
 evacuateFromDump :: (TimHeap, TimHeap) -> TimDump -> ((TimHeap, TimHeap), TimDump)
-evacuateFromDump (from, to) dump = undefined
+evacuateFromDump (from, to) dump = ((from, to), dump)
 
 scavange :: TimHeap -> TimHeap -> TimHeap
-scavange from to = undefined
+scavange from to = foldl' phi to to.assocs
+    where
+        phi h (a, fr) = case fr of
+            Frame cs -> hUpdate h a (Frame (map psi cs))
+            _        -> error "scavange: impossible frame"
+        psi (code, fptr) = case fptr of
+            FrameAddr a -> case hLookup from a of
+                Forward a' -> (code, FrameAddr a')
+                _          -> error "scavange: not Forward"
+            _           -> (code, fptr)
 
 gcPrint :: TimHeap 
         -> TimHeap -> TimHeap -> TimHeap -> TimHeap -> TimHeap -> TimHeap
