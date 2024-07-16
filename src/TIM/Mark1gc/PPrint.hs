@@ -47,6 +47,7 @@ showState state
     , showStack state.stack
     , showValueStack state.vstack
     , showDump state.dump
+    , showHeap state.heap
     , iNewline
     ]
 

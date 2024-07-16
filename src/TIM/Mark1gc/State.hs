@@ -62,7 +62,7 @@ fUpdate heap fptr n clos = case fptr of
 fList :: Frame -> [Closure]
 fList f = case f of
     Frame clos -> clos
-    _          -> error "evalucated Frame"
+    _          -> []
 
 data TimStats = TimStats
     { steps    :: Int

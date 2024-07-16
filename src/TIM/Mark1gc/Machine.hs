@@ -13,6 +13,7 @@ import Iseq
 
 import TIM.Mark1gc.Code
 import TIM.Mark1gc.Frame
+import qualified TIM.Mark1gc.GC as GC
 import TIM.Mark1gc.PPrint
 import TIM.Mark1gc.State
 
@@ -29,9 +30,14 @@ traceShow :: Show a => a -> b -> b
 traceShow | debug     = Deb.traceShow
           | otherwise = const id
 
+gc :: (?sz::Int, ?th::Int) => TimState -> TimState
+gc | debug = GC.gc
+   | otherwise = id
+
+
 --
 
-run :: String -> ([String] -> [String])
+run :: (?sz::Int, ?th::Int) => String -> ([String] -> [String])
 run prog inputs
     = showFullResults 
     $ eval 
@@ -111,7 +117,7 @@ compileA e env = case e of
 
 --
 
-eval :: TimState -> [TimState]
+eval :: (?sz::Int, ?th::Int) => TimState -> [TimState]
 eval state = state : rests
     where
         rests | timFinal state = []
@@ -133,22 +139,22 @@ countUpExtime = applyToStats statIncExtime
 countUpHpAllocs :: Int -> TimState -> TimState
 countUpHpAllocs n = applyToStats (statIncHpAllocs (n+1))
 
-step :: TimState -> TimState
-step state = case state'.code of
+step :: (?sz::Int, ?th::Int) => TimState -> TimState
+step state = trace (iDisplay $ showHeap state.heap) $ case state'.code of
     []  -> error "step: the state is already final"
     Take n : instr
         | state.stack.curDepth >= n 
             -> countUpHpAllocs n
-            $  state' { code = instr
-                      , frame = fptr'
-                      , stack = stack'
-                      , heap = heap'
-                      , ruleid = 1
-                      }
+            $  state'' { code = instr
+                       , frame = fptr'
+                       , stack = stack'
+                       , heap = heap'
+                       , ruleid = 1
+                       }
         | otherwise 
             -> error "step: Too few args for Take instruction"
         where
-            stack' = Stk.discard n state'.stack
+            stack' = Stk.discard n state''.stack
             (heap', fptr') = fAlloc state'.heap (Frame $ take n state'.stack.stkItems)
     Enter am : instr -> case instr of
         []  -> countUpExtime
@@ -177,6 +183,7 @@ step state = case state'.code of
             clos = amToClosure am state'.frame state'.heap state'.codestore
     where
         state' = ctrlStep state
+        state'' = gc state'
 
 ctrlStep :: TimState -> TimState
 ctrlStep state = case state.ctrl of
