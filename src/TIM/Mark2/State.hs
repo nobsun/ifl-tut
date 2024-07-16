@@ -14,6 +14,7 @@ import Utils
 
 import TIM.Mark2.Code
 import TIM.Mark2.Frame
+import TIM.Mark1gc.State (statIncGcCount)
 
 --
 
@@ -44,29 +45,32 @@ fAlloc heap frame =  second FrameAddr (hAlloc heap frame)
 
 fGet   :: TimHeap -> FramePtr -> Int -> Closure
 fGet heap fptr n = case fptr of
-    FrameAddr addr -> hLookup heap addr !! (n - 1)
-    _              -> error ("fGet: invalid frame pointer")
+    FrameAddr addr -> closures (hLookup heap addr) !! (n - 1)
+    _              -> error "fGet: invalid frame pointer"
 
 fUpdate :: TimHeap -> FramePtr -> Int -> Closure -> TimHeap
 fUpdate heap fptr n clos = case fptr of
     FrameAddr addr -> hUpdate heap addr newFrame
         where
-            frame = hLookup heap addr
-            newFrame = take (n - 1) frame ++ clos : drop n frame
-    _              -> error ("fUpdate: invalid frame pointer")
+            frame = closures $ hLookup heap addr
+            newFrame = Frame $ take (n - 1) frame ++ clos : drop n frame
+    _              -> error "fUpdate: invalid frame pointer"
 
 
 fList :: Frame -> [Closure]
-fList = id
+fList fr = case fr of
+    Frame cs -> cs
+    _        -> []
 
 data TimStats = TimStats
     { steps  :: Int
     , extime :: Int
     , hpallocs :: Int
+    , gccount :: Int
     }
 
 statInitial  :: TimStats
-statInitial = TimStats { steps = 0 , extime = 0, hpallocs = 0 }
+statInitial = TimStats { steps = 0 , extime = 0, hpallocs = 0, gccount = 0 }
 
 statIncSteps :: TimStats -> TimStats
 statIncSteps s = s { steps = succ s.steps }
@@ -76,5 +80,8 @@ statIncExtime s = s { extime = succ s.extime }
 
 statIncHpAllocs :: Int -> TimStats -> TimStats
 statIncHpAllocs n s = s { hpallocs = n + s.hpallocs }
+
+statIncGcCount :: TimStats -> TimStats
+statIncGcCount s = s { gccount = succ s.gccount }
 
 type RuleId = Int

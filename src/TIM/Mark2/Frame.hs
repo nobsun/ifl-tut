@@ -12,4 +12,17 @@ data FramePtr
 
 type Closure = (Code, FramePtr)
 
-type Frame = [Closure]
+data Frame
+    = Frame [Closure]
+    | Forward Addr
+    deriving (Eq, Show)
+
+forwardAddr :: Frame -> Addr
+forwardAddr f = case f of
+    Forward addr -> addr
+    _            -> error "forwardAddr: Not evacuated"
+
+closures :: Frame -> [Closure]
+closures f = case f of
+    Frame cs -> cs
+    _        -> error "closures: Already evacuated"

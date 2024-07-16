@@ -251,7 +251,7 @@ step state = case state'.code of
             -> error "step: Too few args for Take instruction"
         where
             stack' = Stk.discard n state'.stack
-            (heap', fptr') = fAlloc state'.heap (take n state'.stack.stkItems)
+            (heap', fptr') = fAlloc state'.heap (Frame $ take n state'.stack.stkItems)
     Enter am : instr -> case instr of
         []  -> countUpExtime
             $  state' { code = instr'
