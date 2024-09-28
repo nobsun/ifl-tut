@@ -125,7 +125,8 @@ type TimCompilerEnv = Assoc Name TimAMode
 compileSC :: TimCompilerEnv -> CoreScDefn -> (Name, CCode)
 compileSC env (name, args, body)
     | d == 0    = (name, ccode)
-    | otherwise = (name, CCode ss $ Take d n : code)
+    | n == 0    = (name, CCode ss $ Take d 0 : code)
+    | otherwise = (name, CCode ss $ UpdateMarkers n : Take d n : code)
     where
         n = length args
         (d, ccode@(CCode ss code)) = compileR body env' n
@@ -354,17 +355,18 @@ step state = case state'.code of
         | otherwise
             -> countUpExtime
             $  state' { stack = Stk.append state'.stack clos
+                      , dump  = dump'
                       , heap  = heap2
                       }
         where
             (heap1, paFptr) = fAlloc state'.heap (Frame state'.stack.stkItems)
-            TimDumpItem fUpd x clos = Stk.top state'.dump
+            (TimDumpItem fUpd x clos, dump')  = Stk.pop state'.dump
             heap2 = fUpdate heap1 fUpd x (paCode, paFptr)
-            paCode = CCode ms (map (Push . Arg) (reverse ms))
+            paCode = CCode ms (map (Push . Arg) (reverse ms) ++ UpdateMarkers n : i)
                 where
                     stk = state'.stack
                     m   = stk.curDepth :: Int
-                    ms  = [1 .. m ]
+                    ms  = [1 .. m]
 
     CCode _ (Enter am : instr) -> case instr of
         []  -> countUpExtime

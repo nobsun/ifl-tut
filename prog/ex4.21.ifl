@@ -1,0 +1,4 @@
+pair x y f = f x y ; 
+fst p = p K ;
+snd p = p K1 ;
+main = let w = pair 2 3 in fst w * snd w
