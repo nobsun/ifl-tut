@@ -190,6 +190,14 @@ executables:
     dependencies:
     - ifl-tut
 
+  tim5:
+    main:            Main.hs
+    source-dirs:     app/tim5
+    ghc-options:
+    - -rtsopts
+    dependencies:
+    - ifl-tut
+
 tests:
   ifl-tut-doctest:
     main:                doctests.hs

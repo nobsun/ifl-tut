@@ -154,13 +154,16 @@ showInstruction d instr = case instr of
                           ]
     PushMarker n    -> iStr "PushMarker " `iAppend` iNum n
     UpdateMarkers n -> iStr "UpdateMarkers " `iAppend` iNum n
-
+    Switch is -> iStr "Switch " `iAppend` iNum (length is)
+    ReturnConstr t -> iStr "ReturnConstr " `iAppend` iNum t
+    
 showArg :: HowMuchToPrint -> TimAMode -> IseqRep
 showArg d am = case am of
     Arg m    -> iStr "Arg "   `iAppend` iNum m
     Code il  -> iStr "Code "  `iAppend` showInstructions d il
     Label s  -> iStr "Label " `iAppend` iStr s
     IntConst n -> iStr "IntConst " `iAppend` iNum n
+    Data i -> iStr "Data " `iAppend` iNum i
 
 nTerse :: Int
 nTerse = 3

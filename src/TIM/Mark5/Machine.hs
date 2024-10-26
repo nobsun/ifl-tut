@@ -77,9 +77,17 @@ compile program = TimState
     where
         compiledCode = compiledScDefs ++ compiledPrimitives
         compiledScDefs = map (compileSC initialEnv) scDefs
-        scDefs = preludeDefs ++ program
+        scDefs = preludeDefs ++ extraPrelude ++ program
         initialEnv = [(name, Label name) | (name, _args, _body) <- scDefs ]
                   ++ [(name, Label name) | (name, _code) <- compiledPrimitives ]
+
+extraPrelude :: [CoreScDefn]
+extraPrelude = [("cons" , [], EConstr 2 2)
+               ,("nil"  , [], EConstr 1 0)
+               ,("true" , [], EConstr 0 0)
+               ,("false", [], EConstr 1 0)
+               ,("if"   , ["c","t","f"], ECase (EVar "c") [(0,[],EVar "t"), (1,[],EVar "f")])]
+
 
 initialArgStack :: TimStack
 initialArgStack = Stk.push (CCode [] [], FrameNull) Stk.emptyStack
@@ -168,8 +176,7 @@ compileR e env d = case e of
                 ; (_, il'') = compileA e2 env d
                 }
                in (dn, CCode il.slots (Push il'' : il'.code))
-        | otherwise 
-            -- -> ( d2, CCode (merge ss il.slots) $ Push am : il.code)
+        | otherwise
             -> ( d2
                , CCode ss' (Move d' am : Push (Code (CCode [1] [Enter (Arg d')])) : il.code )
                )
@@ -188,7 +195,28 @@ compileR e env d = case e of
                 Code ccode -> ccode.slots
                 _          -> error "Amode is not Code"
     ENum n    -> (d, CCode [] [PushV (IntVConst n), Return])
+    EConstr t a
+        | a == 0    -> (d, CCode [] [ReturnConstr t])
+        | otherwise -> (d, CCode [] [UpdateMarkers a, Take a a, ReturnConstr t])
+    ECase ex alts
+              -> (d', CCode (merge ms used) $ Push (Code (CCode ms [Switch bs])) : ise)
+        where
+            (ds, ss, bs) = unzip3 $ map phi alts
+            phi alt      = compileE alt env d
+            (d', CCode used ise) = compileR ex env (maximum ds)
+            merges = foldr merge []
+            ms = merges ss
     _         -> error "compileR: can't do this yet"
+
+compileE :: CoreAlt -> TimCompilerEnv -> OccupiedSlots-> (OccupiedSlots, [Int], (Int, CCode))
+compileE alt env d = case alt of
+    (tag, vs, body) -> (d', ss', (tag, CCode ss' (ismoves ++ isbody)))
+        where
+            n = length vs
+            ss' = merge ss ts
+            (ss,ismoves) = unzip $ map (\ i -> (d+i, Move (d+i) (Data i))) [1..n]
+            (d',CCode ts isbody) = compileR body env' (d+n)
+            env' = zip vs (map (Arg . (d+)) [1..n]) ++ env
 
 mkIndMode :: Int -> TimAMode
 mkIndMode i = Code (CCode [i] [Enter (Arg i)])
@@ -319,15 +347,16 @@ step state = case state'.code of
                   , heap = heap' 
                   }
         where
-            heap' = fUpdate state'.heap fptr n (amToClosure am fptr state'.heap state'.codestore)
+            heap' = fUpdate state'.heap fptr n (amToClosure am fptr dfptr state'.heap state'.codestore)
             fptr  = state'.frame
+            dfptr = state'.dataframe
     CCode ss (Push am : instr)
         -> countUpExtime
         $  state' { code = CCode ss instr
                   , stack = Stk.push clos state'.stack
                   }
         where
-            clos = amToClosure am state'.frame state'.heap state'.codestore
+            clos = amToClosure am state'.frame state'.dataframe state'.heap state'.codestore
     CCode ss (PushV FramePtr : instr)
         -> countUpExtime
         $  state' { code = CCode ss instr
@@ -375,7 +404,7 @@ step state = case state'.code of
                       }
         _   -> error "step: invalid code sequence"
         where        
-            (instr', fptr') = amToClosure am state'.frame state'.heap state'.codestore
+            (instr', fptr') = amToClosure am state'.frame state'.dataframe state'.heap state'.codestore
     CCode _ (Return : [])
         | Stk.isEmptyStack state'.stack 
             -> case Stk.pop state'.dump of
@@ -482,7 +511,32 @@ step state = case state'.code of
                   , vstack = vstack'
                   }
         where
-            (v,vstack') = Stk.pop state.vstack
+            (v,vstack') = Stk.pop state'.vstack
+    CCode _ (Switch bs : [])
+        -> state' { code = i
+                  , vstack = vstack' 
+                  }
+        where
+            (t, vstack') = Stk.pop state'.vstack
+            i = aLookup bs t (error "step: invalid tag")
+    CCode ss (ReturnConstr t : [])
+        -> if Stk.isEmptyStack state'.stack
+              then state' { stack = di.tdstack
+                          , dump  = dump'
+                          , heap  = heap'
+                          }
+              else state' { code = i
+                          , frame = f'
+                          , dataframe = state'.frame
+                          , stack = stack'
+                          , vstack = Stk.push t state'.vstack
+                          }
+        where
+            ((i,f'), stack') = Stk.pop state'.stack
+            (di, dump') = Stk.pop state'.dump
+            heap' = fUpdate state'.heap di.tdframe di.tdindex cl
+            cl = (CCode ss [ReturnConstr t], state'.frame)
+
     CCode _ (c:_) -> trace (show c) undefined
     where
         state' = ctrlStep state
@@ -497,12 +551,13 @@ ctrlStep state = case state.ctrl of
           | otherwise     -> state { ctrl = cs }
 
         
-amToClosure :: TimAMode -> FramePtr -> TimHeap -> CodeStore -> Closure
-amToClosure amode fptr heap cstore = case amode of
+amToClosure :: TimAMode -> FramePtr -> FramePtr -> TimHeap -> CodeStore -> Closure
+amToClosure amode fptr dfptr heap cstore = case amode of
     Arg n      -> fGet heap fptr n
     Code il    -> (il, fptr)
     Label l    -> (codeLookup cstore l, fptr)
     IntConst n -> (intCode, FrameInt n)
+    Data d     -> fGet heap dfptr d
     _ -> error "not yet implemented"
 
 intCode :: CCode
