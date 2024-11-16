@@ -36,6 +36,9 @@ traceShow :: Show a => a -> b -> b
 traceShow | debug     = Deb.traceShow
           | otherwise = const id
 
+tracing :: Show a => a -> a
+tracing = trace . show <*> id
+
 --
 
 run :: String -> ([String] -> [String])
@@ -64,15 +67,15 @@ compile program = TimState
     { ctrl      = []
     , code      = CCode [] [Enter (Label "main")]
     , frame     = FrameNull
-    , stack     = initialArgStack
+    , dataframe = FrameNull
+    , stack     = initialStack
     , vstack    = initialValueStack
     , dump      = initialDump
-    , heap      = let ?sz = defaultHeapSize
-                      ?th = defaultThreshold
-                  in hInitial
+    , heap      = initHeap
     , codestore = compiledCode
     , stats     = statInitial
     , ruleid    = 0
+    , output    = ""
     }
     where
         compiledCode = compiledScDefs ++ compiledPrimitives
@@ -80,6 +83,32 @@ compile program = TimState
         scDefs = preludeDefs ++ extraPrelude ++ program
         initialEnv = [(name, Label name) | (name, _args, _body) <- scDefs ]
                   ++ [(name, Label name) | (name, _code) <- compiledPrimitives ]
+        (initHeap, initFptr) 
+            = let ?sz = defaultHeapSize
+                  ?th = defaultThreshold
+              in 
+                  fAlloc hInitial (Frame [(CCode [] [],FrameNull),(CCode [] [],FrameNull)])
+        initialStack = Stk.push (topCont, initFptr) Stk.emptyStack
+
+topCont :: CCode
+topCont = CCode [1,2]
+         [ Switch [ (1, CCode []    [])
+                  , (2, CCode [1,2] 
+                              [ Move 1 (Data 1)
+                              , Move 2 (Data 2)
+                              , Push (Code headCont)
+                              , Enter (Arg 1)
+                              ]
+                    )
+                  ]
+         ]
+
+headCont :: CCode
+headCont = CCode [1,2]
+         [ Print
+         , Push (Code topCont)
+         , Enter (Arg 2)
+         ]
 
 extraPrelude :: [CoreScDefn]
 extraPrelude = [("cons" , [], EConstr 2 2)
@@ -87,7 +116,6 @@ extraPrelude = [("cons" , [], EConstr 2 2)
                ,("true" , [], EConstr 0 0)
                ,("false", [], EConstr 1 0)
                ,("if"   , ["c","t","f"], ECase (EVar "c") [(0,[],EVar "t"), (1,[],EVar "f")])]
-
 
 initialArgStack :: TimStack
 initialArgStack = Stk.push (CCode [] [], FrameNull) Stk.emptyStack
@@ -222,7 +250,7 @@ mkIndMode :: Int -> TimAMode
 mkIndMode i = Code (CCode [i] [Enter (Arg i)])
 
 mkUpdIndMode :: Int -> TimAMode
-mkUpdIndMode i = Code (CCode [i] [PushMarker i, Enter (Arg i)])
+mkUpdIndMode i = trace ("mkUpdIndMode: " ++ show i) Code (CCode [i] [PushMarker i, Enter (Arg i)])
 
 mkEnter :: TimAMode -> [Instruction]
 mkEnter am = case am of
@@ -282,7 +310,7 @@ isUniOpName:: Name -> Bool
 isUniOpName name = name `elem` uniOps
 
 uniOps :: [Name]
-uniOps = ["negate"]
+uniOps = ["negate"] 
 
 nameToOp :: Name -> Op
 nameToOp name = aLookup primitives name (error "nameToOp: no op")
@@ -319,8 +347,8 @@ timFinal state = null state.code.code || null state.ctrl
 applyToStats :: (TimStats -> TimStats) -> (TimState -> TimState)
 applyToStats f state = state { stats = f state.stats }
 
-countUpExtime :: TimState -> TimState
-countUpExtime = applyToStats statIncExtime
+countUpExtime :: Int -> TimState -> TimState
+countUpExtime = applyToStats . statIncnExtime
 
 countUpHpAllocs :: Int -> TimState -> TimState
 countUpHpAllocs n = applyToStats (statIncHpAllocs (n+1))
@@ -328,9 +356,10 @@ countUpHpAllocs n = applyToStats (statIncHpAllocs (n+1))
 step :: TimState -> TimState
 step state = case state'.code of
     CCode _ []  -> error "step: the state is already final"
-    CCode ss (Take t n : instr)
+    CCode ss (Take t n : instr) -- ok
         | state.stack.curDepth >= n 
-            -> countUpHpAllocs n
+            -> countUpExtime (t + 1)
+            $  countUpHpAllocs n
             $  state' { code = CCode ss instr
                       , frame = fptr'
                       , stack = stack'
@@ -341,8 +370,9 @@ step state = case state'.code of
         where
             (cs, stack') = Stk.npop n state'.stack
             (heap', fptr') = fAlloc state'.heap (Frame $ cs ++ replicate (t - n) (CCode [] [], FrameNull))
-    CCode ss (Move n am : instr)
-        -> countUpHpAllocs n
+    CCode ss (Move n am : instr) -- ok
+        -> countUpExtime 1
+        $  countUpHpAllocs n
         $  state' { code = CCode ss instr
                   , heap = heap' 
                   }
@@ -350,39 +380,39 @@ step state = case state'.code of
             heap' = fUpdate state'.heap fptr n (amToClosure am fptr dfptr state'.heap state'.codestore)
             fptr  = state'.frame
             dfptr = state'.dataframe
-    CCode ss (Push am : instr)
-        -> countUpExtime
+    CCode ss (Push am : instr) -- ok
+        -> countUpExtime 1
         $  state' { code = CCode ss instr
                   , stack = Stk.push clos state'.stack
                   }
         where
             clos = amToClosure am state'.frame state'.dataframe state'.heap state'.codestore
-    CCode ss (PushV FramePtr : instr)
-        -> countUpExtime
+    CCode ss (PushV FramePtr : instr) -- ok
+        -> countUpExtime 1
         $  state' { code = CCode ss instr
                   , vstack = Stk.push n state.vstack
                   }
         where
             n = case state.frame of
                 FrameInt m -> m
-                _          -> error "invalid frame pointer in the case"
-    CCode ss (PushV (IntVConst n) : instr)
-        -> countUpExtime
+                _          -> error "invalid frame pointer for PushV FramePtr"
+    CCode ss (PushV (IntVConst n) : instr) -- ok
+        -> countUpExtime 1
         $  state' { code = CCode ss instr
                   , vstack = Stk.push n state.vstack
                   }
-    CCode ss (PushMarker x : i)
-        -> countUpExtime
-        $  state' { code = CCode ss i
+    CCode ss (PushMarker x : instr) -- ok
+        -> countUpExtime 1
+        $  state' { code = CCode ss instr
                   , stack = empty state'.stack
                   , dump  = Stk.push (TimDumpItem state'.frame x state'.stack) state'.dump
                   }
-    CCode ss (UpdateMarkers n : i)
+    CCode ss (UpdateMarkers n : instr) -- ok?
         | n <= state'.stack.curDepth
-            -> countUpExtime
-            $  state' { code = CCode ss i }
+            -> countUpExtime 1
+            $  state' { code = CCode ss instr }
         | otherwise
-            -> countUpExtime
+            -> countUpExtime 1
             $  state' { stack = Stk.append state'.stack clos
                       , dump  = dump'
                       , heap  = heap2
@@ -391,25 +421,26 @@ step state = case state'.code of
             (heap1, paFptr) = fAlloc state'.heap (Frame state'.stack.stkItems)
             (TimDumpItem fUpd x clos, dump')  = Stk.pop state'.dump
             heap2 = fUpdate heap1 fUpd x (paCode, paFptr)
-            paCode = CCode ms (map (Push . Arg) (reverse ms) ++ UpdateMarkers n : i)
+            paCode = CCode ms (map (Push . Arg) (reverse ms) ++ UpdateMarkers n : instr)
                 where
                     stk = state'.stack
                     m   = stk.curDepth :: Int
                     ms  = [1 .. m]
 
-    CCode _ (Enter am : instr) -> case instr of
-        []  -> countUpExtime
+    CCode _ (Enter am : instr) -> case instr of -- ok
+        []  -> countUpExtime 1
             $  state' { code = instr'
                       , frame = fptr'
                       }
         _   -> error "step: invalid code sequence"
         where        
             (instr', fptr') = amToClosure am state'.frame state'.dataframe state'.heap state'.codestore
-    CCode _ (Return : [])
+
+    CCode _ (Return : []) -- ok
         | Stk.isEmptyStack state'.stack 
             -> case Stk.pop state'.dump of
                 (TimDumpItem fu x s, dump')
-                    -> countUpExtime 
+                    -> countUpExtime 1
                     $ state' { stack = s
                              , heap  = heap' 
                              , dump  = dump'
@@ -418,7 +449,7 @@ step state = case state'.code of
                         heap'  = fUpdate state'.heap fu x (intCode, FrameInt n)
                         (n, _) = Stk.pop state'.vstack
         | otherwise
-            -> countUpExtime
+            -> trace "l.427" $ countUpExtime 1
             $  state' { code = instr' 
                       , frame = fptr'
                       , stack = stack'
@@ -426,7 +457,7 @@ step state = case state'.code of
             where
                 ((instr',fptr'), stack') = Stk.pop state'.stack
     CCode ss (Op Add : instr)
-        -> countUpExtime
+        -> countUpExtime 1
         $  state' { code   = CCode ss instr
                   , vstack = Stk.push (n1 + n2) vstack'
                   }
@@ -434,7 +465,7 @@ step state = case state'.code of
             (n1,n2)      = (vs !! 0, vs !! 1)
             (vs,vstack') = Stk.npop 2 state'.vstack
     CCode ss (Op Sub : instr)
-        -> countUpExtime
+        -> countUpExtime 1
         $  state' { code   = CCode ss instr
                   , vstack = Stk.push (n1 - n2) vstack'
                   }
@@ -442,7 +473,7 @@ step state = case state'.code of
             (n1,n2)      = (vs !! 0, vs !! 1)
             (vs,vstack') = Stk.npop 2 state'.vstack
     CCode ss (Op Mul : instr)
-        -> countUpExtime
+        -> countUpExtime 1
         $  state' { code   = CCode ss instr
                   , vstack = Stk.push (n1 * n2) vstack'
                   }
@@ -450,7 +481,7 @@ step state = case state'.code of
             (n1,n2)      = (vs !! 0, vs !! 1)
             (vs,vstack') = Stk.npop 2 state'.vstack
     CCode ss (Op Div : instr)
-        -> countUpExtime
+        -> countUpExtime 1
         $  state' { code   = CCode ss instr
                   , vstack = Stk.push (n1 `div` n2) vstack'
                   }
@@ -458,7 +489,7 @@ step state = case state'.code of
             (n1,n2)      = (vs !! 0, vs !! 1)
             (vs,vstack') = Stk.npop 2 state'.vstack
     CCode ss (Op Eq : instr)
-        -> countUpExtime
+        -> countUpExtime 1
         $ state' { code = CCode ss instr
                  , vstack = Stk.push (bool 1 0 (n1 == n2)) vstack'
                  }
@@ -466,7 +497,7 @@ step state = case state'.code of
             (n1,n2)      = (vs !! 0, vs !! 1)
             (vs,vstack') = Stk.npop 2 state'.vstack
     CCode ss (Op Ne : instr)
-        -> countUpExtime
+        -> countUpExtime 1
         $ state' { code = CCode ss instr
                  , vstack = Stk.push (bool 1 0 (n1 /= n2)) vstack'
                  }
@@ -474,7 +505,7 @@ step state = case state'.code of
             (n1,n2)      = (vs !! 0, vs !! 1)
             (vs,vstack') = Stk.npop 2 state'.vstack
     CCode ss (Op Lt : instr)
-        -> countUpExtime
+        -> countUpExtime 1
         $ state' { code = CCode ss instr
                  , vstack = Stk.push (bool 1 0 (n1 < n2)) vstack'
                  }
@@ -482,7 +513,7 @@ step state = case state'.code of
             (n1,n2)      = (vs !! 0, vs !! 1)
             (vs,vstack') = Stk.npop 2 state'.vstack
     CCode ss (Op Le : instr)
-        -> countUpExtime
+        -> countUpExtime 1
         $ state' { code = CCode ss instr
                  , vstack = Stk.push (bool 1 0 (n1 <= n2)) vstack'
                  }
@@ -490,7 +521,7 @@ step state = case state'.code of
             (n1,n2)      = (vs !! 0, vs !! 1)
             (vs,vstack') = Stk.npop 2 state'.vstack
     CCode ss (Op Gt : instr)
-        -> countUpExtime
+        -> countUpExtime 1
         $ state' { code = CCode ss instr
                  , vstack = Stk.push (bool 1 0 (n1 > n2)) vstack'
                  }
@@ -498,7 +529,7 @@ step state = case state'.code of
             (n1,n2)      = (vs !! 0, vs !! 1)
             (vs,vstack') = Stk.npop 2 state'.vstack
     CCode ss (Op Ge : instr)
-        -> countUpExtime
+        -> countUpExtime 1
         $ state' { code = CCode ss instr
                  , vstack = Stk.push (bool 1 0 (n1 >= n2)) vstack'
                  }
@@ -506,7 +537,7 @@ step state = case state'.code of
             (n1,n2)      = (vs !! 0, vs !! 1)
             (vs,vstack') = Stk.npop 2 state'.vstack
     CCode _ (Cond i1 i2 : [])
-        -> countUpExtime
+        -> countUpExtime 1
         $  state' { code = if v == 0 then i1 else i2
                   , vstack = vstack'
                   }
@@ -536,6 +567,14 @@ step state = case state'.code of
             (di, dump') = Stk.pop state'.dump
             heap' = fUpdate state'.heap di.tdframe di.tdindex cl
             cl = (CCode ss [ReturnConstr t], state'.frame)
+
+    CCode ss (Print : cont)
+        -> state' { code   = CCode ss cont
+                  , vstack = vstack'
+                  , output = show v
+                  }
+            where
+                (v, vstack') = Stk.pop state'.vstack
 
     CCode _ (c:_) -> trace (show c) undefined
     where

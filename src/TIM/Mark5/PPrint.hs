@@ -21,7 +21,10 @@ showFullResults ts = case ts of
     s:_ -> iDisplay (showSCDefns s) : showResults ts
 
 showResults :: [TimState] -> [String]
-showResults = map iDisplay . iLayn' 0 . mapoid (showState, showStats)
+showResults = map iDisplay . iLayn' 0 . mapoid (showState outputOnly, showStats)
+
+outputOnly :: Bool
+outputOnly = True
 
 mapoid :: (a -> b, a -> b) -> [a] -> [b]
 mapoid (f, g) (x:xs) = case xs of
@@ -40,17 +43,25 @@ showSC (name, il)
     , iStr "   ", showInstructions Full il, iNewline, iNewline
     ]
 
-showState :: TimState -> IseqRep
-showState state
+showState :: Bool -> TimState -> IseqRep
+showState True state
     = iConcat
-    [ iStr "Code:  ", showInstructions Terse state.code, iNewline
+    [ iStr "Code:  ", showInstructions Full state.code, iNewline
     , showFrame state.heap state.frame
     , showStack state.stack
     , showValueStack state.vstack
     , showDump state.dump
     , iNewline
     , showHeap state.heap
+    , showOutput state.output
     ]
+
+showState False state
+    = showOutput' state.output
+    where
+        showOutput' = \ case
+            "" -> iNil
+            s  -> iStr s
 
 showFrame :: TimHeap -> FramePtr -> IseqRep
 showFrame heap fptr = case fptr of
@@ -101,7 +112,7 @@ showDumpItem item
 showClosure :: Closure -> IseqRep
 showClosure (i, f)
     = iConcat
-    [ iStr "(", showInstructions Terse i, iStr ", "
+    [ iStr "(", showInstructions Full i, iStr ", "
     , showFramePtr f, iStr ")"
     ]
 
@@ -154,9 +165,19 @@ showInstruction d instr = case instr of
                           ]
     PushMarker n    -> iStr "PushMarker " `iAppend` iNum n
     UpdateMarkers n -> iStr "UpdateMarkers " `iAppend` iNum n
-    Switch is -> iStr "Switch " `iAppend` iNum (length is)
+    Switch is -> iConcat [ iStr "Switch ["
+                         , iIndent (iInterleave sep (map (showBranch d) is))
+                         , iStr "]"
+                         ]
+        where
+            sep = iStr "," `iAppend` iNewline
+    Print -> iStr "Print"
+
     ReturnConstr t -> iStr "ReturnConstr " `iAppend` iNum t
-    
+
+showBranch :: HowMuchToPrint -> (Tag, CCode) -> IseqRep
+showBranch d (tag, ccode) = iConcat [ iNum tag, iStr " -> ", showInstructions d ccode ]
+
 showArg :: HowMuchToPrint -> TimAMode -> IseqRep
 showArg d am = case am of
     Arg m    -> iStr "Arg "   `iAppend` iNum m
@@ -181,3 +202,8 @@ showHeap heap
     , iStr "    "
     , iIndent (iInterleave iNewline (map showFrameEntry heap.assocs ))
     ]
+
+showOutput :: String -> IseqRep
+showOutput = \ case
+    "" -> iNil
+    s  -> iConcat [iStr s, iNewline]

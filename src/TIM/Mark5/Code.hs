@@ -25,6 +25,7 @@ data Instruction
     | Cond CCode CCode
     | Switch [(Int, CCode)]
     | ReturnConstr Int
+    | Print
     deriving (Eq, Show)
 
 data Op

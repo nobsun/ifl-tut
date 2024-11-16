@@ -30,6 +30,7 @@ data TimState
     , codestore :: CodeStore     -- ^ Labelled blocks of code
     , stats     :: TimStats      -- ^ Statistics
     , ruleid    :: RuleId        -- ^ Transition rule id
+    , output    :: String        -- ^ Print result
     }
 
 type TimStack = Stack Closure
@@ -87,6 +88,9 @@ statIncSteps s = s { steps = succ s.steps }
 
 statIncExtime :: TimStats -> TimStats
 statIncExtime s = s { extime = succ s.extime }
+
+statIncnExtime :: Int -> TimStats -> TimStats
+statIncnExtime n s = s { extime = n + s.extime }
 
 statIncHpAllocs :: Int -> TimStats -> TimStats
 statIncHpAllocs n s = s { hpallocs = n + s.hpallocs }
