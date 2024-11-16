@@ -75,7 +75,7 @@ compile program = TimState
     , codestore = compiledCode
     , stats     = statInitial
     , ruleid    = 0
-    , output    = ""
+    , output    = Nothing
     }
     where
         compiledCode = compiledScDefs ++ compiledPrimitives
@@ -129,15 +129,15 @@ initialDump = Stk.emptyStack
 compiledPrimitives :: Assoc Name CCode
 compiledPrimitives
     = (compilePrimitive <$> primitives)
-    ++ [ ("if"
-       , CCode [1,2,3] 
-            [ Take 3 3
-            , Push (Code (CCode [2,3]
-                [ Cond (CCode [2] [Enter (Arg 2)])
-                       (CCode [3] [Enter (Arg 3)])
-                ]))
-            , Enter (Arg 1)])
-      ]
+    -- ++ [ ("if"
+    --    , CCode [1,2,3]
+    --         [ Take 3 3
+    --         , Push (Code (CCode [2,3]
+    --             [ Cond (CCode [2] [Enter (Arg 2)])
+    --                    (CCode [3] [Enter (Arg 3)])
+    --             ]))
+    --         , Enter (Arg 1)])
+    --   ]
 
 compilePrimitive :: (Name, Op) -> (Name, CCode)
 compilePrimitive (name,op) = (name,) $ case op of
@@ -172,19 +172,19 @@ type OccupiedSlots = Int
 
 compileR :: CoreExpr -> TimCompilerEnv -> OccupiedSlots-> (OccupiedSlots, CCode)
 compileR e env d = case e of
-    ELet isRec defns body
+    ELet isRec defs body
         -> (d', CCode (merge ns ns') (concat ils ++ il))
         where
-            n = length defns
+            n = length defs
             ns' = foldr merge [] nss
             (nss, ils) = unzip $ (\ (CCode s is) -> (s,is)) <$> moves
-            (dn, moves) = mapAccumL moveInstr (d+n) (zip defns slots)
+            (dn, moves) = mapAccumL moveInstr (d+n) (zip defs slots)
             (d', CCode ns il) = compileR body env' dn
-            env'        = zip (map fst defns) (map mkIndMode slots) ++ env
+            env'        = zip (map fst defs) (map mkIndMode slots) ++ env
             slots       = [d+1 ..]
             moveInstr i ((_, rhs), k) = (d1, CCode ss [Move k am])
                 where
-                    (d1, am) = compileAL rhs d rhsenv i
+                    (d1, am) = compileAL rhs (succ d) rhsenv i
                     ss = case am of
                         Code ccode -> ccode.slots
                         _          -> error "AMode is not Code"
@@ -192,12 +192,12 @@ compileR e env d = case e of
                            | otherwise = env
     EAp e1 e2
         | isBinOp e -> compileB e env (d, CCode [] [Return])
-        | isIf e    -> case e of
-            EAp (EAp (EAp (EVar _) cond) tclause) eclause
-                -> case compileR tclause env d of
-                    (d1', itc) -> case compileR eclause env d of
-                        (d2', etc) -> compileB cond env (max d1' d2', CCode (merge itc.slots etc.slots) [Cond itc etc])
-            _       -> error "compileR: unexpected if-expression"
+        -- | isIf e    -> case e of
+        --     EAp (EAp (EAp (EVar _) cond) tclause) eclause
+        --         -> case compileR tclause env d of
+        --             (d1', itc) -> case compileR eclause env d of
+        --                 (d2', etc) -> compileB cond env (max d1' d2', CCode (merge itc.slots etc.slots) [Cond itc etc])
+        --     _       -> error "compileR: unexpected if-expression"
         | isAtomicExpr e2 
             -> let
                 { (dn, il') = compileR e1 env d
@@ -250,7 +250,7 @@ mkIndMode :: Int -> TimAMode
 mkIndMode i = Code (CCode [i] [Enter (Arg i)])
 
 mkUpdIndMode :: Int -> TimAMode
-mkUpdIndMode i = trace ("mkUpdIndMode: " ++ show i) Code (CCode [i] [PushMarker i, Enter (Arg i)])
+mkUpdIndMode i = Code (CCode [i] [PushMarker i, Enter (Arg i)])
 
 mkEnter :: TimAMode -> [Instruction]
 mkEnter am = case am of
@@ -363,7 +363,7 @@ step state = case state'.code of
             $  state' { code = CCode ss instr
                       , frame = fptr'
                       , stack = stack'
-                      , heap = heap' 
+                      , heap = heap'
                       }
         | otherwise 
             -> error "step: Too few args for Take instruction"
@@ -449,7 +449,7 @@ step state = case state'.code of
                         heap'  = fUpdate state'.heap fu x (intCode, FrameInt n)
                         (n, _) = Stk.pop state'.vstack
         | otherwise
-            -> trace "l.427" $ countUpExtime 1
+            -> countUpExtime 1
             $  state' { code = instr' 
                       , frame = fptr'
                       , stack = stack'
@@ -536,16 +536,16 @@ step state = case state'.code of
         where
             (n1,n2)      = (vs !! 0, vs !! 1)
             (vs,vstack') = Stk.npop 2 state'.vstack
-    CCode _ (Cond i1 i2 : [])
-        -> countUpExtime 1
-        $  state' { code = if v == 0 then i1 else i2
-                  , vstack = vstack'
-                  }
-        where
-            (v,vstack') = Stk.pop state'.vstack
+    -- CCode _ (Cond i1 i2 : [])
+    --     -> countUpExtime 1
+    --     $  state' { code = if v == 0 then i1 else i2
+    --               , vstack = vstack'
+    --               }
+    --     where
+    --         (v,vstack') = Stk.pop state'.vstack
     CCode _ (Switch bs : [])
         -> state' { code = i
-                  , vstack = vstack' 
+                  , vstack = vstack'
                   }
         where
             (t, vstack') = Stk.pop state'.vstack
@@ -571,14 +571,15 @@ step state = case state'.code of
     CCode ss (Print : cont)
         -> state' { code   = CCode ss cont
                   , vstack = vstack'
-                  , output = show v
+                  , output = Just $ show v
                   }
             where
                 (v, vstack') = Stk.pop state'.vstack
 
     CCode _ (c:_) -> trace (show c) undefined
     where
-        state' = ctrlStep state
+        state0 = ctrlStep state
+        state' = state0 { output = Nothing }
 
 ctrlStep :: TimState -> TimState
 ctrlStep state = case state.ctrl of
@@ -601,7 +602,17 @@ amToClosure amode fptr dfptr heap cstore = case amode of
 
 intCode :: CCode
 intCode = CCode [] [PushV FramePtr, Return]
-    
+
+
+
+
+
+
+
+
+
+
+
 {-
 [("I",[Take 1 1,Enter (Arg 1)]),("K",[Take 2 2,Enter (Arg 1)]),("K1",[Take 2 2,Enter (Arg 2)]),("S",[Take 3 3,Push (Code [Push (Arg 3),Enter (Arg 2)]),Push (Arg 3),Enter (Arg 1)]),("compose",[Take 3 3,Push (Code [Push (Arg 3),Enter (Arg 2)]),Enter (Arg 1)]),("twice",[Take 1 1,Push (Arg 1),Push (Arg 1),Enter (Label "compose")]),
 

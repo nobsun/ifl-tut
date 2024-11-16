@@ -30,7 +30,7 @@ data TimState
     , codestore :: CodeStore     -- ^ Labelled blocks of code
     , stats     :: TimStats      -- ^ Statistics
     , ruleid    :: RuleId        -- ^ Transition rule id
-    , output    :: String        -- ^ Print result
+    , output    :: Maybe String  -- ^ Print result
     }
 
 type TimStack = Stack Closure

@@ -6,7 +6,5 @@ append xs ys = case xs of
     <1>      -> ys;
     <2> p ps -> cons p (append ps ys);
 
-main = let xs = append (cons 1 nil) (cons 2 nil)
-       in
-       cons (length xs + length xs) nil
+main = append (cons 1 nil) (cons 2 nil)
 

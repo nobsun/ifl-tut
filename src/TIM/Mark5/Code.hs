@@ -22,7 +22,7 @@ data Instruction
     | Enter TimAMode
     | Return
     | Op Op
-    | Cond CCode CCode
+--  | Cond CCode CCode
     | Switch [(Int, CCode)]
     | ReturnConstr Int
     | Print

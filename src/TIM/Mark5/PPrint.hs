@@ -4,6 +4,7 @@
 module TIM.Mark5.PPrint
     where
 
+import Data.Maybe
 import Language
 import Iseq
 import Heap
@@ -15,16 +16,20 @@ import TIM.Mark5.Frame
 import TIM.Mark5.State
 import qualified Stack as Stk
 
+import Debug.Trace
+
 showFullResults :: [TimState] -> [String]
 showFullResults ts = case ts of
     []  -> error "impossible"
-    s:_ -> iDisplay (showSCDefns s) : showResults ts
+    s:_ -> iDisplay (showSCDefns s)
+         : showResults ts
+         ++ ["all outputs: " ++ unwords (mapMaybe (\ s -> s.output) ts)]
 
 showResults :: [TimState] -> [String]
 showResults = map iDisplay . iLayn' 0 . mapoid (showState outputOnly, showStats)
 
 outputOnly :: Bool
-outputOnly = True
+outputOnly = False
 
 mapoid :: (a -> b, a -> b) -> [a] -> [b]
 mapoid (f, g) (x:xs) = case xs of
@@ -44,7 +49,7 @@ showSC (name, il)
     ]
 
 showState :: Bool -> TimState -> IseqRep
-showState True state
+showState False state
     = iConcat
     [ iStr "Code:  ", showInstructions Full state.code, iNewline
     , showFrame state.heap state.frame
@@ -52,16 +57,14 @@ showState True state
     , showValueStack state.vstack
     , showDump state.dump
     , iNewline
-    , showHeap state.heap
+    -- , showHeap state.heap
     , showOutput state.output
     ]
 
-showState False state
+showState True state
     = showOutput' state.output
     where
-        showOutput' = \ case
-            "" -> iNil
-            s  -> iStr s
+        showOutput' = maybe iNil iStr 
 
 showFrame :: TimHeap -> FramePtr -> IseqRep
 showFrame heap fptr = case fptr of
@@ -140,11 +143,12 @@ data HowMuchToPrint
 showInstructions :: HowMuchToPrint -> CCode -> IseqRep
 showInstructions d il = case d of
     None  -> iStr "{..}"
-    Terse -> iConcat [iStr "{", iIndent (iInterleave (iStr ", ") body), iStr "}"]
+    Terse -> iConcat [iStr "{ ", iIndent (iInterleave sep body), iStr "}"]
         where
             instrs = map (showInstruction None) il.code
             body | length il.code <= nTerse = instrs
                  | otherwise           = take nTerse instrs ++ [iStr ".."]
+            sep = iStr "," `iAppend` iNewline
     Full  -> iConcat [iStr "{ ", iIndent (iInterleave sep instrs), iStr " }"  ]
         where
             sep = iStr "," `iAppend` iNewline
@@ -159,24 +163,24 @@ showInstruction d instr = case instr of
     PushV va -> iStr "PushV " `iAppend` showVArg va
     Return   -> iStr "Return"
     Op op    -> iStr (show op)
-    Cond i1 i2 -> iConcat [ iStr "Cond "
-                          , showInstructions d i1
-                          , showInstructions d i2
-                          ]
+    -- Cond i1 i2 -> iConcat [ iStr "Cond "
+    --                       , showInstructions d i1
+    --                       , showInstructions d i2
+    --                       ]
     PushMarker n    -> iStr "PushMarker " `iAppend` iNum n
     UpdateMarkers n -> iStr "UpdateMarkers " `iAppend` iNum n
-    Switch is -> iConcat [ iStr "Switch ["
+    Switch is -> iConcat [ iStr "Switch [ "
+                         -- , iStr "...."
                          , iIndent (iInterleave sep (map (showBranch d) is))
-                         , iStr "]"
+                         , iStr " ]"
                          ]
         where
-            sep = iStr "," `iAppend` iNewline
+            sep = iStr "," `iAppend` iNewline :: IseqRep
     Print -> iStr "Print"
-
     ReturnConstr t -> iStr "ReturnConstr " `iAppend` iNum t
 
 showBranch :: HowMuchToPrint -> (Tag, CCode) -> IseqRep
-showBranch d (tag, ccode) = iConcat [ iNum tag, iStr " -> ", showInstructions d ccode ]
+showBranch d (tag, ccode) = iConcat [ iNum tag, iStr " -> ", showInstructions Terse ccode ]
 
 showArg :: HowMuchToPrint -> TimAMode -> IseqRep
 showArg d am = case am of
@@ -187,7 +191,7 @@ showArg d am = case am of
     Data i -> iStr "Data " `iAppend` iNum i
 
 nTerse :: Int
-nTerse = 3
+nTerse = 10
 
 showVArg :: ValueAMode -> IseqRep
 showVArg va = case va of
@@ -203,7 +207,7 @@ showHeap heap
     , iIndent (iInterleave iNewline (map showFrameEntry heap.assocs ))
     ]
 
-showOutput :: String -> IseqRep
+showOutput :: Maybe String -> IseqRep
 showOutput = \ case
-    "" -> iNil
-    s  -> iConcat [iStr s, iNewline]
+    Nothing -> iNil
+    Just  s -> iConcat [iStr "Output: ", iStr s, iNewline]
