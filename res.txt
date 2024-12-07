@@ -1,0 +1,3801 @@
+Code for __hoge:
+   { PushMarker 1 }
+
+
+Code for __huga:
+   { PushMarker 2 }
+
+
+Code for __topCont:
+   { PushMarker 3,
+     Switch [ 1 -> { },
+              2 -> { Move 1 Data 1,
+                     Move 2 Data 2,
+                     Push Label __headCont,
+                     Enter Arg 1} ] }
+
+
+Code for __headCont:
+   { PushMarker 4,
+     Print,
+     Push Label __topCont,
+     Enter Arg 2 }
+
+
+Code for I:
+   { UpdateMarkers 1,
+     Take 1 1,
+     Enter Arg 1 }
+
+
+Code for K:
+   { UpdateMarkers 2,
+     Take 2 2,
+     Enter Arg 1 }
+
+
+Code for K1:
+   { UpdateMarkers 2,
+     Take 2 2,
+     Enter Arg 2 }
+
+
+Code for S:
+   { UpdateMarkers 3,
+     Take 4 3,
+     Move 4 Code { PushMarker 4,
+                   Push Arg 3,
+                   Enter Arg 2},
+     Push Code { Enter Arg 4 },
+     Push Arg 3,
+     Enter Arg 1 }
+
+
+Code for compose:
+   { UpdateMarkers 3,
+     Take 4 3,
+     Move 4 Code { PushMarker 4,
+                   Push Arg 3,
+                   Enter Arg 2},
+     Push Code { Enter Arg 4 },
+     Enter Arg 1 }
+
+
+Code for twice:
+   { UpdateMarkers 1,
+     Take 1 1,
+     Push Arg 1,
+     Push Arg 1,
+     Enter Label compose }
+
+
+Code for cons:
+   { UpdateMarkers 2,
+     Take 2 2,
+     ReturnConstr 2 }
+
+
+Code for nil:
+   { PushMarker 12,
+     ReturnConstr 1 }
+
+
+Code for true:
+   { PushMarker 13,
+     ReturnConstr 0 }
+
+
+Code for false:
+   { PushMarker 14,
+     ReturnConstr 1 }
+
+
+Code for if:
+   { UpdateMarkers 3,
+     Take 3 3,
+     Push Code { Switch [ 0 -> { Enter Arg 2},
+                          1 -> { Enter Arg 3} ] },
+     Enter Arg 1 }
+
+
+Code for main:
+   { PushMarker 16,
+     Take 1 0,
+     Push Label nil,
+     Move 1 Code { PushMarker 1,
+                   Push Code {..},
+                   Enter Label x},
+     Push Code { Enter Arg 1 },
+     Enter Label cons }
+
+
+Code for x:
+   { PushMarker 17,
+     PushV IntVConst 2,
+     PushV IntVConst 1,
+     Add,
+     Return }
+
+
+Code for +:
+   { Take 2 2,
+     Push Code { Push Code { Add,
+                             Return },
+                 Enter Arg 1 },
+     Enter Arg 2 }
+
+
+Code for -:
+   { Take 2 2,
+     Push Code { Push Code { Sub,
+                             Return },
+                 Enter Arg 1 },
+     Enter Arg 2 }
+
+
+Code for *:
+   { Take 2 2,
+     Push Code { Push Code { Mul,
+                             Return },
+                 Enter Arg 1 },
+     Enter Arg 2 }
+
+
+Code for /:
+   { Take 2 2,
+     Push Code { Push Code { Div,
+                             Return },
+                 Enter Arg 1 },
+     Enter Arg 2 }
+
+
+Code for ==:
+   { Take 2 2,
+     Push Code { Push Code { Eq,
+                             Return },
+                 Enter Arg 1 },
+     Enter Arg 2 }
+
+
+Code for /=:
+   { Take 2 2,
+     Push Code { Push Code { Ne,
+                             Return },
+                 Enter Arg 1 },
+     Enter Arg 2 }
+
+
+Code for <:
+   { Take 2 2,
+     Push Code { Push Code { Lt,
+                             Return },
+                 Enter Arg 1 },
+     Enter Arg 2 }
+
+
+Code for <=:
+   { Take 2 2,
+     Push Code { Push Code { Le,
+                             Return },
+                 Enter Arg 1 },
+     Enter Arg 2 }
+
+
+Code for >:
+   { Take 2 2,
+     Push Code { Push Code { Gt,
+                             Return },
+                 Enter Arg 1 },
+     Enter Arg 2 }
+
+
+Code for >=:
+   { Take 2 2,
+     Push Code { Push Code { Ge,
+                             Return },
+                 Enter Arg 1 },
+     Enter Arg 2 }
+
+
+Code for negate:
+   { Take 1 1,
+     Push Code { Neg,
+                 Return },
+     Enter Arg 1 }
+
+
+     0) Code:  { Enter Label main }
+        Null frame ptr
+        Arg stack: [({ Switch [ 1 -> { },
+                                2 -> { Move 1 Data 1,
+                                       Move 2 Data 2,
+                                       Push Label __headCont,
+                                       Enter Arg 1} ] }, 1)]
+        VStack: []
+        Dump: []
+        
+        
+
+     1) Code:  { PushMarker 16,
+                 Take 1 0,
+                 Push Label nil,
+                 Move 1 Code { PushMarker 1,
+                               Push Code {..},
+                               Enter Label x},
+                 Push Code { Enter Arg 1 },
+                 Enter Label cons }
+        Frame: #1
+            ({ PushMarker 1 }, 1)
+            ({ PushMarker 2 }, 1)
+            ({ PushMarker 3,
+               Switch [ 1 -> { },
+                        2 -> { Move 1 Data 1,
+                               Move 2 Data 2,
+                               Push Label __headCont,
+                               Enter Arg 1} ] }, 1)
+            ({ PushMarker 4,
+               Print,
+               Push Label __topCont,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Push Arg 3,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Push Arg 1,
+               Push Arg 1,
+               Enter Label compose }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               ReturnConstr 2 }, 1)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 13,
+               ReturnConstr 0 }, 1)
+            ({ PushMarker 14,
+               ReturnConstr 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 3 3,
+               Push Code { Switch [ 0 -> { Enter Arg 2},
+                                    1 -> { Enter Arg 3} ] },
+               Enter Arg 1 }, 1)
+            ({ PushMarker 16,
+               Take 1 0,
+               Push Label nil,
+               Move 1 Code { PushMarker 1,
+                             Push Code {..},
+                             Enter Label x},
+               Push Code { Enter Arg 1 },
+               Enter Label cons }, 1)
+            ({ PushMarker 17,
+               PushV IntVConst 2,
+               PushV IntVConst 1,
+               Add,
+               Return }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Sub,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Mul,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Div,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Eq,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ne,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Lt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Le,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Gt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ge,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 1 1,
+               Push Code { Neg,
+                           Return },
+               Enter Arg 1 }, 1)
+        Arg stack: [({ Switch [ 1 -> { },
+                                2 -> { Move 1 Data 1,
+                                       Move 2 Data 2,
+                                       Push Label __headCont,
+                                       Enter Arg 1} ] }, 1)]
+        VStack: []
+        Dump: []
+        
+        
+
+     2) Code:  { Take 1 0,
+                 Push Label nil,
+                 Move 1 Code { PushMarker 1,
+                               Push Code {..},
+                               Enter Label x},
+                 Push Code { Enter Arg 1 },
+                 Enter Label cons }
+        Frame: #1
+            ({ PushMarker 1 }, 1)
+            ({ PushMarker 2 }, 1)
+            ({ PushMarker 3,
+               Switch [ 1 -> { },
+                        2 -> { Move 1 Data 1,
+                               Move 2 Data 2,
+                               Push Label __headCont,
+                               Enter Arg 1} ] }, 1)
+            ({ PushMarker 4,
+               Print,
+               Push Label __topCont,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Push Arg 3,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Push Arg 1,
+               Push Arg 1,
+               Enter Label compose }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               ReturnConstr 2 }, 1)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 13,
+               ReturnConstr 0 }, 1)
+            ({ PushMarker 14,
+               ReturnConstr 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 3 3,
+               Push Code { Switch [ 0 -> { Enter Arg 2},
+                                    1 -> { Enter Arg 3} ] },
+               Enter Arg 1 }, 1)
+            ({ PushMarker 16,
+               Take 1 0,
+               Push Label nil,
+               Move 1 Code { PushMarker 1,
+                             Push Code {..},
+                             Enter Label x},
+               Push Code { Enter Arg 1 },
+               Enter Label cons }, 1)
+            ({ PushMarker 17,
+               PushV IntVConst 2,
+               PushV IntVConst 1,
+               Add,
+               Return }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Sub,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Mul,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Div,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Eq,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ne,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Lt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Le,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Gt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ge,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 1 1,
+               Push Code { Neg,
+                           Return },
+               Enter Arg 1 }, 1)
+        Arg stack: []
+        VStack: []
+        Dump: [DumpedStack: [1,16,Arg stack: [({ Switch [ 1 -> { },
+                                                          2 -> { Move 1 Data 1,
+                                                                 Move 2 Data 2,
+                                                                 Push Label __headCont,
+                                                                 Enter Arg 1} ] }, 1)]
+               ]
+               ]
+        
+        
+
+     3) Code:  { Push Label nil,
+                 Move 1 Code { PushMarker 1,
+                               Push Code {..},
+                               Enter Label x},
+                 Push Code { Enter Arg 1 },
+                 Enter Label cons }
+        Frame: #2
+            ({  }, null)
+        Arg stack: []
+        VStack: []
+        Dump: [DumpedStack: [1,16,Arg stack: [({ Switch [ 1 -> { },
+                                                          2 -> { Move 1 Data 1,
+                                                                 Move 2 Data 2,
+                                                                 Push Label __headCont,
+                                                                 Enter Arg 1} ] }, 1)]
+               ]
+               ]
+        
+        
+
+     4) Code:  { Move 1 Code { PushMarker 1,
+                               Push Code {..},
+                               Enter Label x},
+                 Push Code { Enter Arg 1 },
+                 Enter Label cons }
+        Frame: #2
+            ({  }, null)
+        Arg stack: [({ PushMarker 12,
+                       ReturnConstr 1 }, 1)]
+        VStack: []
+        Dump: [DumpedStack: [1,16,Arg stack: [({ Switch [ 1 -> { },
+                                                          2 -> { Move 1 Data 1,
+                                                                 Move 2 Data 2,
+                                                                 Push Label __headCont,
+                                                                 Enter Arg 1} ] }, 1)]
+               ]
+               ]
+        
+        
+
+     5) Code:  { Push Code { Enter Arg 1 },
+                 Enter Label cons }
+        Frame: #2
+            ({ PushMarker 1,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Label x },
+               Enter Label x }, 2)
+        Arg stack: [({ PushMarker 12,
+                       ReturnConstr 1 }, 1)]
+        VStack: []
+        Dump: [DumpedStack: [1,16,Arg stack: [({ Switch [ 1 -> { },
+                                                          2 -> { Move 1 Data 1,
+                                                                 Move 2 Data 2,
+                                                                 Push Label __headCont,
+                                                                 Enter Arg 1} ] }, 1)]
+               ]
+               ]
+        
+        
+
+     6) Code:  { Enter Label cons }
+        Frame: #2
+            ({ PushMarker 1,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Label x },
+               Enter Label x }, 2)
+        Arg stack: [({ Enter Arg 1 }, 2)
+                    ({ PushMarker 12,
+                       ReturnConstr 1 }, 1)]
+        VStack: []
+        Dump: [DumpedStack: [1,16,Arg stack: [({ Switch [ 1 -> { },
+                                                          2 -> { Move 1 Data 1,
+                                                                 Move 2 Data 2,
+                                                                 Push Label __headCont,
+                                                                 Enter Arg 1} ] }, 1)]
+               ]
+               ]
+        
+        
+
+     7) Code:  { UpdateMarkers 2,
+                 Take 2 2,
+                 ReturnConstr 2 }
+        Frame: #1
+            ({ PushMarker 1 }, 1)
+            ({ PushMarker 2 }, 1)
+            ({ PushMarker 3,
+               Switch [ 1 -> { },
+                        2 -> { Move 1 Data 1,
+                               Move 2 Data 2,
+                               Push Label __headCont,
+                               Enter Arg 1} ] }, 1)
+            ({ PushMarker 4,
+               Print,
+               Push Label __topCont,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Push Arg 3,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Push Arg 1,
+               Push Arg 1,
+               Enter Label compose }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               ReturnConstr 2 }, 1)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 13,
+               ReturnConstr 0 }, 1)
+            ({ PushMarker 14,
+               ReturnConstr 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 3 3,
+               Push Code { Switch [ 0 -> { Enter Arg 2},
+                                    1 -> { Enter Arg 3} ] },
+               Enter Arg 1 }, 1)
+            ({ PushMarker 16,
+               Take 1 0,
+               Push Label nil,
+               Move 1 Code { PushMarker 1,
+                             Push Code {..},
+                             Enter Label x},
+               Push Code { Enter Arg 1 },
+               Enter Label cons }, 1)
+            ({ PushMarker 17,
+               PushV IntVConst 2,
+               PushV IntVConst 1,
+               Add,
+               Return }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Sub,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Mul,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Div,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Eq,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ne,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Lt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Le,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Gt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ge,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 1 1,
+               Push Code { Neg,
+                           Return },
+               Enter Arg 1 }, 1)
+        Arg stack: [({ Enter Arg 1 }, 2)
+                    ({ PushMarker 12,
+                       ReturnConstr 1 }, 1)]
+        VStack: []
+        Dump: [DumpedStack: [1,16,Arg stack: [({ Switch [ 1 -> { },
+                                                          2 -> { Move 1 Data 1,
+                                                                 Move 2 Data 2,
+                                                                 Push Label __headCont,
+                                                                 Enter Arg 1} ] }, 1)]
+               ]
+               ]
+        
+        
+
+     8) Code:  { Take 2 2,
+                 ReturnConstr 2 }
+        Frame: #1
+            ({ PushMarker 1 }, 1)
+            ({ PushMarker 2 }, 1)
+            ({ PushMarker 3,
+               Switch [ 1 -> { },
+                        2 -> { Move 1 Data 1,
+                               Move 2 Data 2,
+                               Push Label __headCont,
+                               Enter Arg 1} ] }, 1)
+            ({ PushMarker 4,
+               Print,
+               Push Label __topCont,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Push Arg 3,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Push Arg 1,
+               Push Arg 1,
+               Enter Label compose }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               ReturnConstr 2 }, 1)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 13,
+               ReturnConstr 0 }, 1)
+            ({ PushMarker 14,
+               ReturnConstr 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 3 3,
+               Push Code { Switch [ 0 -> { Enter Arg 2},
+                                    1 -> { Enter Arg 3} ] },
+               Enter Arg 1 }, 1)
+            ({ PushMarker 16,
+               Take 1 0,
+               Push Label nil,
+               Move 1 Code { PushMarker 1,
+                             Push Code {..},
+                             Enter Label x},
+               Push Code { Enter Arg 1 },
+               Enter Label cons }, 1)
+            ({ PushMarker 17,
+               PushV IntVConst 2,
+               PushV IntVConst 1,
+               Add,
+               Return }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Sub,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Mul,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Div,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Eq,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ne,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Lt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Le,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Gt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ge,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 1 1,
+               Push Code { Neg,
+                           Return },
+               Enter Arg 1 }, 1)
+        Arg stack: [({ Enter Arg 1 }, 2)
+                    ({ PushMarker 12,
+                       ReturnConstr 1 }, 1)]
+        VStack: []
+        Dump: [DumpedStack: [1,16,Arg stack: [({ Switch [ 1 -> { },
+                                                          2 -> { Move 1 Data 1,
+                                                                 Move 2 Data 2,
+                                                                 Push Label __headCont,
+                                                                 Enter Arg 1} ] }, 1)]
+               ]
+               ]
+        
+        
+
+     9) Code:  { ReturnConstr 2 }
+        Frame: #3
+            ({ Enter Arg 1 }, 2)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+        Arg stack: []
+        VStack: []
+        Dump: [DumpedStack: [1,16,Arg stack: [({ Switch [ 1 -> { },
+                                                          2 -> { Move 1 Data 1,
+                                                                 Move 2 Data 2,
+                                                                 Push Label __headCont,
+                                                                 Enter Arg 1} ] }, 1)]
+               ]
+               ]
+        
+        
+
+    10) Code:  { ReturnConstr 2 }
+        Frame: #3
+            ({ Enter Arg 1 }, 2)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+        Arg stack: [({ Switch [ 1 -> { },
+                                2 -> { Move 1 Data 1,
+                                       Move 2 Data 2,
+                                       Push Label __headCont,
+                                       Enter Arg 1} ] }, 1)]
+        VStack: []
+        Dump: []
+        
+        
+
+    11) Code:  { Switch [ 1 -> { },
+                          2 -> { Move 1 Data 1,
+                                 Move 2 Data 2,
+                                 Push Label __headCont,
+                                 Enter Arg 1} ] }
+        Frame: #1
+            ({ PushMarker 1 }, 1)
+            ({ PushMarker 2 }, 1)
+            ({ PushMarker 3,
+               Switch [ 1 -> { },
+                        2 -> { Move 1 Data 1,
+                               Move 2 Data 2,
+                               Push Label __headCont,
+                               Enter Arg 1} ] }, 1)
+            ({ PushMarker 4,
+               Print,
+               Push Label __topCont,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Push Arg 3,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Push Arg 1,
+               Push Arg 1,
+               Enter Label compose }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               ReturnConstr 2 }, 1)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 13,
+               ReturnConstr 0 }, 1)
+            ({ PushMarker 14,
+               ReturnConstr 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 3 3,
+               Push Code { Switch [ 0 -> { Enter Arg 2},
+                                    1 -> { Enter Arg 3} ] },
+               Enter Arg 1 }, 1)
+            ({ ReturnConstr 2 }, 3)
+            ({ PushMarker 17,
+               PushV IntVConst 2,
+               PushV IntVConst 1,
+               Add,
+               Return }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Sub,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Mul,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Div,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Eq,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ne,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Lt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Le,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Gt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ge,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 1 1,
+               Push Code { Neg,
+                           Return },
+               Enter Arg 1 }, 1)
+        Arg stack: []
+        VStack: [2]
+        Dump: []
+        
+        
+
+    12) Code:  { Move 1 Data 1,
+                 Move 2 Data 2,
+                 Push Label __headCont,
+                 Enter Arg 1 }
+        Frame: #1
+            ({ PushMarker 1 }, 1)
+            ({ PushMarker 2 }, 1)
+            ({ PushMarker 3,
+               Switch [ 1 -> { },
+                        2 -> { Move 1 Data 1,
+                               Move 2 Data 2,
+                               Push Label __headCont,
+                               Enter Arg 1} ] }, 1)
+            ({ PushMarker 4,
+               Print,
+               Push Label __topCont,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Push Arg 3,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Push Arg 1,
+               Push Arg 1,
+               Enter Label compose }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               ReturnConstr 2 }, 1)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 13,
+               ReturnConstr 0 }, 1)
+            ({ PushMarker 14,
+               ReturnConstr 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 3 3,
+               Push Code { Switch [ 0 -> { Enter Arg 2},
+                                    1 -> { Enter Arg 3} ] },
+               Enter Arg 1 }, 1)
+            ({ ReturnConstr 2 }, 3)
+            ({ PushMarker 17,
+               PushV IntVConst 2,
+               PushV IntVConst 1,
+               Add,
+               Return }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Sub,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Mul,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Div,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Eq,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ne,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Lt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Le,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Gt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ge,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 1 1,
+               Push Code { Neg,
+                           Return },
+               Enter Arg 1 }, 1)
+        Arg stack: []
+        VStack: []
+        Dump: []
+        
+        
+
+    13) Code:  { Move 2 Data 2,
+                 Push Label __headCont,
+                 Enter Arg 1 }
+        Frame: #1
+            ({ Enter Arg 1 }, 2)
+            ({ PushMarker 2 }, 1)
+            ({ PushMarker 3,
+               Switch [ 1 -> { },
+                        2 -> { Move 1 Data 1,
+                               Move 2 Data 2,
+                               Push Label __headCont,
+                               Enter Arg 1} ] }, 1)
+            ({ PushMarker 4,
+               Print,
+               Push Label __topCont,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Push Arg 3,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Push Arg 1,
+               Push Arg 1,
+               Enter Label compose }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               ReturnConstr 2 }, 1)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 13,
+               ReturnConstr 0 }, 1)
+            ({ PushMarker 14,
+               ReturnConstr 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 3 3,
+               Push Code { Switch [ 0 -> { Enter Arg 2},
+                                    1 -> { Enter Arg 3} ] },
+               Enter Arg 1 }, 1)
+            ({ ReturnConstr 2 }, 3)
+            ({ PushMarker 17,
+               PushV IntVConst 2,
+               PushV IntVConst 1,
+               Add,
+               Return }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Sub,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Mul,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Div,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Eq,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ne,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Lt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Le,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Gt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ge,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 1 1,
+               Push Code { Neg,
+                           Return },
+               Enter Arg 1 }, 1)
+        Arg stack: []
+        VStack: []
+        Dump: []
+        
+        
+
+    14) Code:  { Push Label __headCont,
+                 Enter Arg 1 }
+        Frame: #1
+            ({ Enter Arg 1 }, 2)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 3,
+               Switch [ 1 -> { },
+                        2 -> { Move 1 Data 1,
+                               Move 2 Data 2,
+                               Push Label __headCont,
+                               Enter Arg 1} ] }, 1)
+            ({ PushMarker 4,
+               Print,
+               Push Label __topCont,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Push Arg 3,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Push Arg 1,
+               Push Arg 1,
+               Enter Label compose }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               ReturnConstr 2 }, 1)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 13,
+               ReturnConstr 0 }, 1)
+            ({ PushMarker 14,
+               ReturnConstr 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 3 3,
+               Push Code { Switch [ 0 -> { Enter Arg 2},
+                                    1 -> { Enter Arg 3} ] },
+               Enter Arg 1 }, 1)
+            ({ ReturnConstr 2 }, 3)
+            ({ PushMarker 17,
+               PushV IntVConst 2,
+               PushV IntVConst 1,
+               Add,
+               Return }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Sub,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Mul,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Div,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Eq,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ne,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Lt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Le,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Gt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ge,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 1 1,
+               Push Code { Neg,
+                           Return },
+               Enter Arg 1 }, 1)
+        Arg stack: []
+        VStack: []
+        Dump: []
+        
+        
+
+    15) Code:  { Enter Arg 1 }
+        Frame: #1
+            ({ Enter Arg 1 }, 2)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 3,
+               Switch [ 1 -> { },
+                        2 -> { Move 1 Data 1,
+                               Move 2 Data 2,
+                               Push Label __headCont,
+                               Enter Arg 1} ] }, 1)
+            ({ PushMarker 4,
+               Print,
+               Push Label __topCont,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Push Arg 3,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Push Arg 1,
+               Push Arg 1,
+               Enter Label compose }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               ReturnConstr 2 }, 1)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 13,
+               ReturnConstr 0 }, 1)
+            ({ PushMarker 14,
+               ReturnConstr 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 3 3,
+               Push Code { Switch [ 0 -> { Enter Arg 2},
+                                    1 -> { Enter Arg 3} ] },
+               Enter Arg 1 }, 1)
+            ({ ReturnConstr 2 }, 3)
+            ({ PushMarker 17,
+               PushV IntVConst 2,
+               PushV IntVConst 1,
+               Add,
+               Return }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Sub,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Mul,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Div,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Eq,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ne,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Lt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Le,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Gt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ge,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 1 1,
+               Push Code { Neg,
+                           Return },
+               Enter Arg 1 }, 1)
+        Arg stack: [({ PushMarker 4,
+                       Print,
+                       Push Label __topCont,
+                       Enter Arg 2 }, 1)]
+        VStack: []
+        Dump: []
+        
+        
+
+    16) Code:  { Enter Arg 1 }
+        Frame: #2
+            ({ PushMarker 1,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Label x },
+               Enter Label x }, 2)
+        Arg stack: [({ PushMarker 4,
+                       Print,
+                       Push Label __topCont,
+                       Enter Arg 2 }, 1)]
+        VStack: []
+        Dump: []
+        
+        
+
+    17) Code:  { PushMarker 1,
+                 Push Code { Push Code { Add,
+                                         Return },
+                             Enter Label x },
+                 Enter Label x }
+        Frame: #2
+            ({ PushMarker 1,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Label x },
+               Enter Label x }, 2)
+        Arg stack: [({ PushMarker 4,
+                       Print,
+                       Push Label __topCont,
+                       Enter Arg 2 }, 1)]
+        VStack: []
+        Dump: []
+        
+        
+
+    18) Code:  { Push Code { Push Code { Add,
+                                         Return },
+                             Enter Label x },
+                 Enter Label x }
+        Frame: #2
+            ({ PushMarker 1,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Label x },
+               Enter Label x }, 2)
+        Arg stack: []
+        VStack: []
+        Dump: [DumpedStack: [2,1,Arg stack: [({ PushMarker 4,
+                                                Print,
+                                                Push Label __topCont,
+                                                Enter Arg 2 }, 1)]
+               ]
+               ]
+        
+        
+
+    19) Code:  { Enter Label x }
+        Frame: #2
+            ({ PushMarker 1,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Label x },
+               Enter Label x }, 2)
+        Arg stack: [({ Push Code { Add,
+                                   Return },
+                       Enter Label x }, 2)]
+        VStack: []
+        Dump: [DumpedStack: [2,1,Arg stack: [({ PushMarker 4,
+                                                Print,
+                                                Push Label __topCont,
+                                                Enter Arg 2 }, 1)]
+               ]
+               ]
+        
+        
+
+    20) Code:  { PushMarker 17,
+                 PushV IntVConst 2,
+                 PushV IntVConst 1,
+                 Add,
+                 Return }
+        Frame: #1
+            ({ Enter Arg 1 }, 2)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 3,
+               Switch [ 1 -> { },
+                        2 -> { Move 1 Data 1,
+                               Move 2 Data 2,
+                               Push Label __headCont,
+                               Enter Arg 1} ] }, 1)
+            ({ PushMarker 4,
+               Print,
+               Push Label __topCont,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Push Arg 3,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Push Arg 1,
+               Push Arg 1,
+               Enter Label compose }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               ReturnConstr 2 }, 1)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 13,
+               ReturnConstr 0 }, 1)
+            ({ PushMarker 14,
+               ReturnConstr 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 3 3,
+               Push Code { Switch [ 0 -> { Enter Arg 2},
+                                    1 -> { Enter Arg 3} ] },
+               Enter Arg 1 }, 1)
+            ({ ReturnConstr 2 }, 3)
+            ({ PushMarker 17,
+               PushV IntVConst 2,
+               PushV IntVConst 1,
+               Add,
+               Return }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Sub,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Mul,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Div,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Eq,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ne,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Lt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Le,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Gt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ge,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 1 1,
+               Push Code { Neg,
+                           Return },
+               Enter Arg 1 }, 1)
+        Arg stack: [({ Push Code { Add,
+                                   Return },
+                       Enter Label x }, 2)]
+        VStack: []
+        Dump: [DumpedStack: [2,1,Arg stack: [({ PushMarker 4,
+                                                Print,
+                                                Push Label __topCont,
+                                                Enter Arg 2 }, 1)]
+               ]
+               ]
+        
+        
+
+    21) Code:  { PushV IntVConst 2,
+                 PushV IntVConst 1,
+                 Add,
+                 Return }
+        Frame: #1
+            ({ Enter Arg 1 }, 2)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 3,
+               Switch [ 1 -> { },
+                        2 -> { Move 1 Data 1,
+                               Move 2 Data 2,
+                               Push Label __headCont,
+                               Enter Arg 1} ] }, 1)
+            ({ PushMarker 4,
+               Print,
+               Push Label __topCont,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Push Arg 3,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Push Arg 1,
+               Push Arg 1,
+               Enter Label compose }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               ReturnConstr 2 }, 1)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 13,
+               ReturnConstr 0 }, 1)
+            ({ PushMarker 14,
+               ReturnConstr 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 3 3,
+               Push Code { Switch [ 0 -> { Enter Arg 2},
+                                    1 -> { Enter Arg 3} ] },
+               Enter Arg 1 }, 1)
+            ({ ReturnConstr 2 }, 3)
+            ({ PushMarker 17,
+               PushV IntVConst 2,
+               PushV IntVConst 1,
+               Add,
+               Return }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Sub,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Mul,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Div,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Eq,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ne,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Lt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Le,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Gt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ge,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 1 1,
+               Push Code { Neg,
+                           Return },
+               Enter Arg 1 }, 1)
+        Arg stack: []
+        VStack: []
+        Dump: [DumpedStack: [1,17,Arg stack: [({ Push Code { Add,
+                                                             Return },
+                                                 Enter Label x }, 2)]
+               ]
+               
+               DumpedStack: [2,1,Arg stack: [({ PushMarker 4,
+                                                Print,
+                                                Push Label __topCont,
+                                                Enter Arg 2 }, 1)]
+               ]
+               ]
+        
+        
+
+    22) Code:  { PushV IntVConst 1,
+                 Add,
+                 Return }
+        Frame: #1
+            ({ Enter Arg 1 }, 2)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 3,
+               Switch [ 1 -> { },
+                        2 -> { Move 1 Data 1,
+                               Move 2 Data 2,
+                               Push Label __headCont,
+                               Enter Arg 1} ] }, 1)
+            ({ PushMarker 4,
+               Print,
+               Push Label __topCont,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Push Arg 3,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Push Arg 1,
+               Push Arg 1,
+               Enter Label compose }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               ReturnConstr 2 }, 1)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 13,
+               ReturnConstr 0 }, 1)
+            ({ PushMarker 14,
+               ReturnConstr 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 3 3,
+               Push Code { Switch [ 0 -> { Enter Arg 2},
+                                    1 -> { Enter Arg 3} ] },
+               Enter Arg 1 }, 1)
+            ({ ReturnConstr 2 }, 3)
+            ({ PushMarker 17,
+               PushV IntVConst 2,
+               PushV IntVConst 1,
+               Add,
+               Return }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Sub,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Mul,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Div,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Eq,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ne,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Lt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Le,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Gt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ge,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 1 1,
+               Push Code { Neg,
+                           Return },
+               Enter Arg 1 }, 1)
+        Arg stack: []
+        VStack: [2]
+        Dump: [DumpedStack: [1,17,Arg stack: [({ Push Code { Add,
+                                                             Return },
+                                                 Enter Label x }, 2)]
+               ]
+               
+               DumpedStack: [2,1,Arg stack: [({ PushMarker 4,
+                                                Print,
+                                                Push Label __topCont,
+                                                Enter Arg 2 }, 1)]
+               ]
+               ]
+        
+        
+
+    23) Code:  { Add,
+                 Return }
+        Frame: #1
+            ({ Enter Arg 1 }, 2)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 3,
+               Switch [ 1 -> { },
+                        2 -> { Move 1 Data 1,
+                               Move 2 Data 2,
+                               Push Label __headCont,
+                               Enter Arg 1} ] }, 1)
+            ({ PushMarker 4,
+               Print,
+               Push Label __topCont,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Push Arg 3,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Push Arg 1,
+               Push Arg 1,
+               Enter Label compose }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               ReturnConstr 2 }, 1)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 13,
+               ReturnConstr 0 }, 1)
+            ({ PushMarker 14,
+               ReturnConstr 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 3 3,
+               Push Code { Switch [ 0 -> { Enter Arg 2},
+                                    1 -> { Enter Arg 3} ] },
+               Enter Arg 1 }, 1)
+            ({ ReturnConstr 2 }, 3)
+            ({ PushMarker 17,
+               PushV IntVConst 2,
+               PushV IntVConst 1,
+               Add,
+               Return }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Sub,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Mul,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Div,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Eq,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ne,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Lt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Le,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Gt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ge,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 1 1,
+               Push Code { Neg,
+                           Return },
+               Enter Arg 1 }, 1)
+        Arg stack: []
+        VStack: [1,2]
+        Dump: [DumpedStack: [1,17,Arg stack: [({ Push Code { Add,
+                                                             Return },
+                                                 Enter Label x }, 2)]
+               ]
+               
+               DumpedStack: [2,1,Arg stack: [({ PushMarker 4,
+                                                Print,
+                                                Push Label __topCont,
+                                                Enter Arg 2 }, 1)]
+               ]
+               ]
+        
+        
+
+    24) Code:  { Return }
+        Frame: #1
+            ({ Enter Arg 1 }, 2)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 3,
+               Switch [ 1 -> { },
+                        2 -> { Move 1 Data 1,
+                               Move 2 Data 2,
+                               Push Label __headCont,
+                               Enter Arg 1} ] }, 1)
+            ({ PushMarker 4,
+               Print,
+               Push Label __topCont,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Push Arg 3,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Push Arg 1,
+               Push Arg 1,
+               Enter Label compose }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               ReturnConstr 2 }, 1)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 13,
+               ReturnConstr 0 }, 1)
+            ({ PushMarker 14,
+               ReturnConstr 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 3 3,
+               Push Code { Switch [ 0 -> { Enter Arg 2},
+                                    1 -> { Enter Arg 3} ] },
+               Enter Arg 1 }, 1)
+            ({ ReturnConstr 2 }, 3)
+            ({ PushMarker 17,
+               PushV IntVConst 2,
+               PushV IntVConst 1,
+               Add,
+               Return }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Sub,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Mul,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Div,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Eq,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ne,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Lt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Le,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Gt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ge,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 1 1,
+               Push Code { Neg,
+                           Return },
+               Enter Arg 1 }, 1)
+        Arg stack: []
+        VStack: [3]
+        Dump: [DumpedStack: [1,17,Arg stack: [({ Push Code { Add,
+                                                             Return },
+                                                 Enter Label x }, 2)]
+               ]
+               
+               DumpedStack: [2,1,Arg stack: [({ PushMarker 4,
+                                                Print,
+                                                Push Label __topCont,
+                                                Enter Arg 2 }, 1)]
+               ]
+               ]
+        
+        
+
+    25) Code:  { Return }
+        Frame: #1
+            ({ Enter Arg 1 }, 2)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 3,
+               Switch [ 1 -> { },
+                        2 -> { Move 1 Data 1,
+                               Move 2 Data 2,
+                               Push Label __headCont,
+                               Enter Arg 1} ] }, 1)
+            ({ PushMarker 4,
+               Print,
+               Push Label __topCont,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Push Arg 3,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Push Arg 1,
+               Push Arg 1,
+               Enter Label compose }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               ReturnConstr 2 }, 1)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 13,
+               ReturnConstr 0 }, 1)
+            ({ PushMarker 14,
+               ReturnConstr 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 3 3,
+               Push Code { Switch [ 0 -> { Enter Arg 2},
+                                    1 -> { Enter Arg 3} ] },
+               Enter Arg 1 }, 1)
+            ({ ReturnConstr 2 }, 3)
+            ({ PushV FramePtr,
+               Return }, int 3)
+            ({ Take 2 2,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Sub,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Mul,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Div,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Eq,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ne,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Lt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Le,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Gt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ge,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 1 1,
+               Push Code { Neg,
+                           Return },
+               Enter Arg 1 }, 1)
+        Arg stack: [({ Push Code { Add,
+                                   Return },
+                       Enter Label x }, 2)]
+        VStack: [3]
+        Dump: [DumpedStack: [2,1,Arg stack: [({ PushMarker 4,
+                                                Print,
+                                                Push Label __topCont,
+                                                Enter Arg 2 }, 1)]
+               ]
+               ]
+        
+        
+
+    26) Code:  { Push Code { Add,
+                             Return },
+                 Enter Label x }
+        Frame: #2
+            ({ PushMarker 1,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Label x },
+               Enter Label x }, 2)
+        Arg stack: []
+        VStack: [3]
+        Dump: [DumpedStack: [2,1,Arg stack: [({ PushMarker 4,
+                                                Print,
+                                                Push Label __topCont,
+                                                Enter Arg 2 }, 1)]
+               ]
+               ]
+        
+        
+
+    27) Code:  { Enter Label x }
+        Frame: #2
+            ({ PushMarker 1,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Label x },
+               Enter Label x }, 2)
+        Arg stack: [({ Add,
+                       Return }, 2)]
+        VStack: [3]
+        Dump: [DumpedStack: [2,1,Arg stack: [({ PushMarker 4,
+                                                Print,
+                                                Push Label __topCont,
+                                                Enter Arg 2 }, 1)]
+               ]
+               ]
+        
+        
+
+    28) Code:  { PushV FramePtr,
+                 Return }
+        Frame ptr (int): 3
+        Arg stack: [({ Add,
+                       Return }, 2)]
+        VStack: [3]
+        Dump: [DumpedStack: [2,1,Arg stack: [({ PushMarker 4,
+                                                Print,
+                                                Push Label __topCont,
+                                                Enter Arg 2 }, 1)]
+               ]
+               ]
+        
+        
+
+    29) Code:  { Return }
+        Frame ptr (int): 3
+        Arg stack: [({ Add,
+                       Return }, 2)]
+        VStack: [3,3]
+        Dump: [DumpedStack: [2,1,Arg stack: [({ PushMarker 4,
+                                                Print,
+                                                Push Label __topCont,
+                                                Enter Arg 2 }, 1)]
+               ]
+               ]
+        
+        
+
+    30) Code:  { Add,
+                 Return }
+        Frame: #2
+            ({ PushMarker 1,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Label x },
+               Enter Label x }, 2)
+        Arg stack: []
+        VStack: [3,3]
+        Dump: [DumpedStack: [2,1,Arg stack: [({ PushMarker 4,
+                                                Print,
+                                                Push Label __topCont,
+                                                Enter Arg 2 }, 1)]
+               ]
+               ]
+        
+        
+
+    31) Code:  { Return }
+        Frame: #2
+            ({ PushMarker 1,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Label x },
+               Enter Label x }, 2)
+        Arg stack: []
+        VStack: [6]
+        Dump: [DumpedStack: [2,1,Arg stack: [({ PushMarker 4,
+                                                Print,
+                                                Push Label __topCont,
+                                                Enter Arg 2 }, 1)]
+               ]
+               ]
+        
+        
+
+    32) Code:  { Return }
+        Frame: #2
+            ({ PushV FramePtr,
+               Return }, int 6)
+        Arg stack: [({ PushMarker 4,
+                       Print,
+                       Push Label __topCont,
+                       Enter Arg 2 }, 1)]
+        VStack: [6]
+        Dump: []
+        
+        
+
+    33) Code:  { PushMarker 4,
+                 Print,
+                 Push Label __topCont,
+                 Enter Arg 2 }
+        Frame: #1
+            ({ Enter Arg 1 }, 2)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 3,
+               Switch [ 1 -> { },
+                        2 -> { Move 1 Data 1,
+                               Move 2 Data 2,
+                               Push Label __headCont,
+                               Enter Arg 1} ] }, 1)
+            ({ PushMarker 4,
+               Print,
+               Push Label __topCont,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Push Arg 3,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Push Arg 1,
+               Push Arg 1,
+               Enter Label compose }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               ReturnConstr 2 }, 1)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 13,
+               ReturnConstr 0 }, 1)
+            ({ PushMarker 14,
+               ReturnConstr 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 3 3,
+               Push Code { Switch [ 0 -> { Enter Arg 2},
+                                    1 -> { Enter Arg 3} ] },
+               Enter Arg 1 }, 1)
+            ({ ReturnConstr 2 }, 3)
+            ({ PushV FramePtr,
+               Return }, int 3)
+            ({ Take 2 2,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Sub,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Mul,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Div,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Eq,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ne,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Lt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Le,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Gt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ge,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 1 1,
+               Push Code { Neg,
+                           Return },
+               Enter Arg 1 }, 1)
+        Arg stack: []
+        VStack: [6]
+        Dump: []
+        
+        
+
+    34) Code:  { Print,
+                 Push Label __topCont,
+                 Enter Arg 2 }
+        Frame: #1
+            ({ Enter Arg 1 }, 2)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 3,
+               Switch [ 1 -> { },
+                        2 -> { Move 1 Data 1,
+                               Move 2 Data 2,
+                               Push Label __headCont,
+                               Enter Arg 1} ] }, 1)
+            ({ PushMarker 4,
+               Print,
+               Push Label __topCont,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Push Arg 3,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Push Arg 1,
+               Push Arg 1,
+               Enter Label compose }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               ReturnConstr 2 }, 1)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 13,
+               ReturnConstr 0 }, 1)
+            ({ PushMarker 14,
+               ReturnConstr 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 3 3,
+               Push Code { Switch [ 0 -> { Enter Arg 2},
+                                    1 -> { Enter Arg 3} ] },
+               Enter Arg 1 }, 1)
+            ({ ReturnConstr 2 }, 3)
+            ({ PushV FramePtr,
+               Return }, int 3)
+            ({ Take 2 2,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Sub,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Mul,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Div,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Eq,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ne,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Lt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Le,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Gt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ge,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 1 1,
+               Push Code { Neg,
+                           Return },
+               Enter Arg 1 }, 1)
+        Arg stack: []
+        VStack: [6]
+        Dump: [DumpedStack: [1,4,Arg stack: []
+               ]
+               ]
+        
+        
+
+    35) Code:  { Push Label __topCont,
+                 Enter Arg 2 }
+        Frame: #1
+            ({ Enter Arg 1 }, 2)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 3,
+               Switch [ 1 -> { },
+                        2 -> { Move 1 Data 1,
+                               Move 2 Data 2,
+                               Push Label __headCont,
+                               Enter Arg 1} ] }, 1)
+            ({ PushMarker 4,
+               Print,
+               Push Label __topCont,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Push Arg 3,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Push Arg 1,
+               Push Arg 1,
+               Enter Label compose }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               ReturnConstr 2 }, 1)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 13,
+               ReturnConstr 0 }, 1)
+            ({ PushMarker 14,
+               ReturnConstr 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 3 3,
+               Push Code { Switch [ 0 -> { Enter Arg 2},
+                                    1 -> { Enter Arg 3} ] },
+               Enter Arg 1 }, 1)
+            ({ ReturnConstr 2 }, 3)
+            ({ PushV FramePtr,
+               Return }, int 3)
+            ({ Take 2 2,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Sub,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Mul,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Div,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Eq,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ne,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Lt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Le,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Gt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ge,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 1 1,
+               Push Code { Neg,
+                           Return },
+               Enter Arg 1 }, 1)
+        Arg stack: []
+        VStack: []
+        Dump: [DumpedStack: [1,4,Arg stack: []
+               ]
+               ]
+        
+        Output: 6
+        
+
+    36) Code:  { Enter Arg 2 }
+        Frame: #1
+            ({ Enter Arg 1 }, 2)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 3,
+               Switch [ 1 -> { },
+                        2 -> { Move 1 Data 1,
+                               Move 2 Data 2,
+                               Push Label __headCont,
+                               Enter Arg 1} ] }, 1)
+            ({ PushMarker 4,
+               Print,
+               Push Label __topCont,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Push Arg 3,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Push Arg 1,
+               Push Arg 1,
+               Enter Label compose }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               ReturnConstr 2 }, 1)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 13,
+               ReturnConstr 0 }, 1)
+            ({ PushMarker 14,
+               ReturnConstr 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 3 3,
+               Push Code { Switch [ 0 -> { Enter Arg 2},
+                                    1 -> { Enter Arg 3} ] },
+               Enter Arg 1 }, 1)
+            ({ ReturnConstr 2 }, 3)
+            ({ PushV FramePtr,
+               Return }, int 3)
+            ({ Take 2 2,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Sub,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Mul,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Div,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Eq,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ne,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Lt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Le,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Gt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ge,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 1 1,
+               Push Code { Neg,
+                           Return },
+               Enter Arg 1 }, 1)
+        Arg stack: [({ PushMarker 3,
+                       Switch [ 1 -> { },
+                                2 -> { Move 1 Data 1,
+                                       Move 2 Data 2,
+                                       Push Label __headCont,
+                                       Enter Arg 1} ] }, 1)]
+        VStack: []
+        Dump: [DumpedStack: [1,4,Arg stack: []
+               ]
+               ]
+        
+        
+
+    37) Code:  { PushMarker 12,
+                 ReturnConstr 1 }
+        Frame: #1
+            ({ Enter Arg 1 }, 2)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 3,
+               Switch [ 1 -> { },
+                        2 -> { Move 1 Data 1,
+                               Move 2 Data 2,
+                               Push Label __headCont,
+                               Enter Arg 1} ] }, 1)
+            ({ PushMarker 4,
+               Print,
+               Push Label __topCont,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Push Arg 3,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Push Arg 1,
+               Push Arg 1,
+               Enter Label compose }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               ReturnConstr 2 }, 1)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 13,
+               ReturnConstr 0 }, 1)
+            ({ PushMarker 14,
+               ReturnConstr 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 3 3,
+               Push Code { Switch [ 0 -> { Enter Arg 2},
+                                    1 -> { Enter Arg 3} ] },
+               Enter Arg 1 }, 1)
+            ({ ReturnConstr 2 }, 3)
+            ({ PushV FramePtr,
+               Return }, int 3)
+            ({ Take 2 2,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Sub,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Mul,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Div,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Eq,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ne,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Lt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Le,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Gt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ge,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 1 1,
+               Push Code { Neg,
+                           Return },
+               Enter Arg 1 }, 1)
+        Arg stack: [({ PushMarker 3,
+                       Switch [ 1 -> { },
+                                2 -> { Move 1 Data 1,
+                                       Move 2 Data 2,
+                                       Push Label __headCont,
+                                       Enter Arg 1} ] }, 1)]
+        VStack: []
+        Dump: [DumpedStack: [1,4,Arg stack: []
+               ]
+               ]
+        
+        
+
+    38) Code:  { ReturnConstr 1 }
+        Frame: #1
+            ({ Enter Arg 1 }, 2)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 3,
+               Switch [ 1 -> { },
+                        2 -> { Move 1 Data 1,
+                               Move 2 Data 2,
+                               Push Label __headCont,
+                               Enter Arg 1} ] }, 1)
+            ({ PushMarker 4,
+               Print,
+               Push Label __topCont,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Push Arg 3,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Push Arg 1,
+               Push Arg 1,
+               Enter Label compose }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               ReturnConstr 2 }, 1)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 13,
+               ReturnConstr 0 }, 1)
+            ({ PushMarker 14,
+               ReturnConstr 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 3 3,
+               Push Code { Switch [ 0 -> { Enter Arg 2},
+                                    1 -> { Enter Arg 3} ] },
+               Enter Arg 1 }, 1)
+            ({ ReturnConstr 2 }, 3)
+            ({ PushV FramePtr,
+               Return }, int 3)
+            ({ Take 2 2,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Sub,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Mul,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Div,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Eq,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ne,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Lt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Le,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Gt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ge,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 1 1,
+               Push Code { Neg,
+                           Return },
+               Enter Arg 1 }, 1)
+        Arg stack: []
+        VStack: []
+        Dump: [DumpedStack: [1,12,Arg stack: [({ PushMarker 3,
+                                                 Switch [ 1 -> { },
+                                                          2 -> { Move 1 Data 1,
+                                                                 Move 2 Data 2,
+                                                                 Push Label __headCont,
+                                                                 Enter Arg 1} ] }, 1)]
+               ]
+               
+               DumpedStack: [1,4,Arg stack: []
+               ]
+               ]
+        
+        
+
+    39) Code:  { ReturnConstr 1 }
+        Frame: #1
+            ({ Enter Arg 1 }, 2)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 3,
+               Switch [ 1 -> { },
+                        2 -> { Move 1 Data 1,
+                               Move 2 Data 2,
+                               Push Label __headCont,
+                               Enter Arg 1} ] }, 1)
+            ({ PushMarker 4,
+               Print,
+               Push Label __topCont,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Push Arg 3,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Push Arg 1,
+               Push Arg 1,
+               Enter Label compose }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               ReturnConstr 2 }, 1)
+            ({ ReturnConstr 1 }, 1)
+            ({ PushMarker 13,
+               ReturnConstr 0 }, 1)
+            ({ PushMarker 14,
+               ReturnConstr 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 3 3,
+               Push Code { Switch [ 0 -> { Enter Arg 2},
+                                    1 -> { Enter Arg 3} ] },
+               Enter Arg 1 }, 1)
+            ({ ReturnConstr 2 }, 3)
+            ({ PushV FramePtr,
+               Return }, int 3)
+            ({ Take 2 2,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Sub,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Mul,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Div,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Eq,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ne,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Lt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Le,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Gt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ge,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 1 1,
+               Push Code { Neg,
+                           Return },
+               Enter Arg 1 }, 1)
+        Arg stack: [({ PushMarker 3,
+                       Switch [ 1 -> { },
+                                2 -> { Move 1 Data 1,
+                                       Move 2 Data 2,
+                                       Push Label __headCont,
+                                       Enter Arg 1} ] }, 1)]
+        VStack: []
+        Dump: [DumpedStack: [1,4,Arg stack: []
+               ]
+               ]
+        
+        
+
+    40) Code:  { PushMarker 3,
+                 Switch [ 1 -> { },
+                          2 -> { Move 1 Data 1,
+                                 Move 2 Data 2,
+                                 Push Label __headCont,
+                                 Enter Arg 1} ] }
+        Frame: #1
+            ({ Enter Arg 1 }, 2)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 3,
+               Switch [ 1 -> { },
+                        2 -> { Move 1 Data 1,
+                               Move 2 Data 2,
+                               Push Label __headCont,
+                               Enter Arg 1} ] }, 1)
+            ({ PushMarker 4,
+               Print,
+               Push Label __topCont,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Push Arg 3,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Push Arg 1,
+               Push Arg 1,
+               Enter Label compose }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               ReturnConstr 2 }, 1)
+            ({ ReturnConstr 1 }, 1)
+            ({ PushMarker 13,
+               ReturnConstr 0 }, 1)
+            ({ PushMarker 14,
+               ReturnConstr 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 3 3,
+               Push Code { Switch [ 0 -> { Enter Arg 2},
+                                    1 -> { Enter Arg 3} ] },
+               Enter Arg 1 }, 1)
+            ({ ReturnConstr 2 }, 3)
+            ({ PushV FramePtr,
+               Return }, int 3)
+            ({ Take 2 2,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Sub,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Mul,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Div,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Eq,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ne,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Lt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Le,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Gt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ge,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 1 1,
+               Push Code { Neg,
+                           Return },
+               Enter Arg 1 }, 1)
+        Arg stack: []
+        VStack: [1]
+        Dump: [DumpedStack: [1,4,Arg stack: []
+               ]
+               ]
+        
+        
+
+    41) Code:  { Switch [ 1 -> { },
+                          2 -> { Move 1 Data 1,
+                                 Move 2 Data 2,
+                                 Push Label __headCont,
+                                 Enter Arg 1} ] }
+        Frame: #1
+            ({ Enter Arg 1 }, 2)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 3,
+               Switch [ 1 -> { },
+                        2 -> { Move 1 Data 1,
+                               Move 2 Data 2,
+                               Push Label __headCont,
+                               Enter Arg 1} ] }, 1)
+            ({ PushMarker 4,
+               Print,
+               Push Label __topCont,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Push Arg 3,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Push Arg 1,
+               Push Arg 1,
+               Enter Label compose }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               ReturnConstr 2 }, 1)
+            ({ ReturnConstr 1 }, 1)
+            ({ PushMarker 13,
+               ReturnConstr 0 }, 1)
+            ({ PushMarker 14,
+               ReturnConstr 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 3 3,
+               Push Code { Switch [ 0 -> { Enter Arg 2},
+                                    1 -> { Enter Arg 3} ] },
+               Enter Arg 1 }, 1)
+            ({ ReturnConstr 2 }, 3)
+            ({ PushV FramePtr,
+               Return }, int 3)
+            ({ Take 2 2,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Sub,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Mul,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Div,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Eq,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ne,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Lt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Le,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Gt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ge,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 1 1,
+               Push Code { Neg,
+                           Return },
+               Enter Arg 1 }, 1)
+        Arg stack: []
+        VStack: [1]
+        Dump: [DumpedStack: [1,3,Arg stack: []
+               ]
+               
+               DumpedStack: [1,4,Arg stack: []
+               ]
+               ]
+        
+        
+
+    42) Code:  {  }
+        Frame: #1
+            ({ Enter Arg 1 }, 2)
+            ({ PushMarker 12,
+               ReturnConstr 1 }, 1)
+            ({ PushMarker 3,
+               Switch [ 1 -> { },
+                        2 -> { Move 1 Data 1,
+                               Move 2 Data 2,
+                               Push Label __headCont,
+                               Enter Arg 1} ] }, 1)
+            ({ PushMarker 4,
+               Print,
+               Push Label __topCont,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               Enter Arg 2 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Push Arg 3,
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 4 3,
+               Move 4 Code { PushMarker 4,
+                             Push Arg 3,
+                             Enter Arg 2},
+               Push Code { Enter Arg 4 },
+               Enter Arg 1 }, 1)
+            ({ UpdateMarkers 1,
+               Take 1 1,
+               Push Arg 1,
+               Push Arg 1,
+               Enter Label compose }, 1)
+            ({ UpdateMarkers 2,
+               Take 2 2,
+               ReturnConstr 2 }, 1)
+            ({ ReturnConstr 1 }, 1)
+            ({ PushMarker 13,
+               ReturnConstr 0 }, 1)
+            ({ PushMarker 14,
+               ReturnConstr 1 }, 1)
+            ({ UpdateMarkers 3,
+               Take 3 3,
+               Push Code { Switch [ 0 -> { Enter Arg 2},
+                                    1 -> { Enter Arg 3} ] },
+               Enter Arg 1 }, 1)
+            ({ ReturnConstr 2 }, 3)
+            ({ PushV FramePtr,
+               Return }, int 3)
+            ({ Take 2 2,
+               Push Code { Push Code { Add,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Sub,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Mul,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Div,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Eq,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ne,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Lt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Le,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Gt,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 2 2,
+               Push Code { Push Code { Ge,
+                                       Return },
+                           Enter Arg 1 },
+               Enter Arg 2 }, 1)
+            ({ Take 1 1,
+               Push Code { Neg,
+                           Return },
+               Enter Arg 1 }, 1)
+        Arg stack: []
+        VStack: []
+        Dump: [DumpedStack: [1,3,Arg stack: []
+               ]
+               
+               DumpedStack: [1,4,Arg stack: []
+               ]
+               ]
+        
+        
+
+Steps take = 42
+Execution time = 38
+Number of frames allocated = 3
+Heap usage = 11
+Max depth of stack = 1
+
+all outputs: 6

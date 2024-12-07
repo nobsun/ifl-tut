@@ -1,0 +1,2 @@
+main = cons (x + x) nil;
+x = 1 + 2

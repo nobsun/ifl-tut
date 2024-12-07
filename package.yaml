@@ -1,5 +1,5 @@
 name:                ifl-tut
-version:             4.4.3
+version:             4.6.4
 synopsis:           Implementing Fuctional Lanbuage -- a tutorial
 
 github:              "nobsun/ifl-tut"
@@ -193,6 +193,14 @@ executables:
   tim5:
     main:            Main.hs
     source-dirs:     app/tim5
+    ghc-options:
+    - -rtsopts
+    dependencies:
+    - ifl-tut
+
+  tim6:
+    main:            Main.hs
+    source-dirs:     app/tim6
     ghc-options:
     - -rtsopts
     dependencies:
