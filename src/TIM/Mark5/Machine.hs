@@ -78,7 +78,7 @@ compile program = TimState
     , output    = Nothing
     }
     where
-        compiledCode = compiledScDefs ++ compiledPrimitives
+        compiledCode = bootstrap ++ compiledScDefs ++ compiledPrimitives
         compiledScDefs = map (compileSC initialEnv) scDefs
         scDefs = preludeDefs ++ extraPrelude ++ program
         initialEnv = [(name, Label name) | (name, _args, _body) <- scDefs ]
@@ -88,25 +88,29 @@ compile program = TimState
                   ?th = defaultThreshold
               in 
                   fAlloc hInitial (Frame [(CCode [] [],FrameNull),(CCode [] [],FrameNull)])
-        initialStack = Stk.push (topCont, initFptr) Stk.emptyStack
+        initialStack = Stk.push (topContCode, initFptr) Stk.emptyStack
+        topContCode = snd topCont
+        bootstrap = [topCont, headCont]
 
-topCont :: CCode
-topCont = CCode [1,2]
+topCont :: (Name, CCode)
+topCont = ("__topCont",)
+        $ CCode [1,2]
          [ Switch [ (1, CCode []    [])
                   , (2, CCode [1,2] 
                               [ Move 1 (Data 1)
                               , Move 2 (Data 2)
-                              , Push (Code headCont)
+                              , Push (Label "__headCont")
                               , Enter (Arg 1)
                               ]
                     )
                   ]
          ]
 
-headCont :: CCode
-headCont = CCode [1,2]
+headCont :: (Name, CCode)
+headCont = ("__headCont",)
+         $ CCode [1,2]
          [ Print
-         , Push (Code topCont)
+         , Push (Label "__topCont")
          , Enter (Arg 2)
          ]
 
