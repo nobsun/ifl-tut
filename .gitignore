@@ -27,3 +27,5 @@ cabal.project.local~
 .ghc.environment.*
 programming_session.log
 start_programming
+res.txt
+
