@@ -35,7 +35,7 @@ data Op
 
 data TimAMode
     = Arg Int
-    | Label String
+    | Label Name Int
     | Code CCode
     | IntConst Int
     | Data Int

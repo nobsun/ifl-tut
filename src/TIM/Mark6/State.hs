@@ -28,7 +28,8 @@ data TimState
     , vstack    :: TimValueStack -- ^ Value stack
     , dump      :: TimDump       -- ^ Dump
     , heap      :: TimHeap       -- ^ Heap of frames
-    , codestore :: CodeStore     -- ^ Labelled blocks of code   
+    , codestore :: CodeStore     -- ^ Labelled blocks of code
+    , symtbl    :: Assoc Name Int -- ^ Symbol table for debug print
     , stats     :: TimStats      -- ^ Statistics
     , ruleid    :: RuleId        -- ^ Transition rule id
     , output    :: Maybe String  -- ^ Print result
@@ -98,14 +99,15 @@ statIncHpAllocs n s = s { hpallocs = n + s.hpallocs }
 
 type RuleId = Int
 
-type CodeStore = (FramePtr, Assoc Name Int)
+-- type CodeStore = (FramePtr, Assoc Name Int)
+type CodeStore = FramePtr
 
-codeLookup :: TimHeap -> CodeStore -> Name -> CCode
-codeLookup heap codestore lab
-    = fst (codeLookup' heap codestore lab)
+-- codeLookup :: TimHeap -> CodeStore -> Name -> CCode
+-- codeLookup heap codestore lab
+--     = fst (codeLookup' heap codestore lab)
 
-codeLookup' :: TimHeap -> CodeStore -> Name -> Closure
-codeLookup' heap (fptr, names) lab
-    = fGet heap fptr i
-    where
-        i = aLookup names lab (error "codeLookup fail")
+-- codeLookup' :: TimHeap -> CodeStore -> Name -> Closure
+-- codeLookup' heap (fptr, names) lab
+--     = fGet heap fptr i
+--     where
+--         i = aLookup names lab (error "codeLookup fail")

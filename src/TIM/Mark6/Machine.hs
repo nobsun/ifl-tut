@@ -66,7 +66,7 @@ defaultThreshold = 50
 compile :: CoreProgram -> TimState
 compile program = TimState
     { ctrl      = []
-    , code      = CCode [] [Enter (Label "main")]
+    , code      = CCode [] [Enter (Label "main" entry)]
     , frame     = FrameNull
     , dataframe = FrameNull
     , stack     = initialStack
@@ -74,24 +74,52 @@ compile program = TimState
     , dump      = initialDump
     , heap      = initHeap'
     , codestore = codeStore
+    , symtbl    = tbl
     , stats     = statInitial
     , ruleid    = 0
     , output    = Nothing
     }
     where
-        (initHeap', codeStore) = allocateInitialHeap compiledCode 
+        (initHeap', (codeStore, tbl)) = allocateInitialHeap compiledCode 
         compiledCode = [dummyCont "hoge", dummyCont "huga"] ++ bootstrap ++ compiledScDefs ++ compiledPrimitives
         compiledScDefs = map (compileSC initialEnv) scDefs
         scDefs = preludeDefs ++ extraPrelude ++ program
-        initialEnv = [(name, Label name) | (name, _args, _body) <- scDefs ]
-                  ++ [(name, Label name) | (name, _code) <- compiledPrimitives ]
-        initialStack = Stk.push (topContCode, fst codeStore) Stk.emptyStack
+        initialEnv = [(name, Label name addr) | (name, _args, _body) <- scDefs
+                     , let addr = aLookup tbl name (error "not found in tbl") ]
+                  ++ [(name, Label name addr) | (name, _code) <- compiledPrimitives
+                     , let addr = aLookup tbl name (error "not found in tbl") ]
+        initialStack = Stk.push (topContCode, codeStore) Stk.emptyStack
         topContCode = snd topCont
         bootstrap = [topCont, headCont]
+        entry = aLookup tbl "main" (error "main undefined")
+        topCont :: (Name, CCode)
+        topCont = ("__topCont",)
+                $ CCode [1,2]
+                [ Switch [ (1, CCode []    [])
+                        , (2, CCode [1,2] 
+                                    [ Move 1 (Data 1)
+                                    , Move 2 (Data 2)
+                                    , Push (Label "__headCont" hcent)
+                                    , Enter (Arg 1)
+                                    ]
+                            )
+                        ]
+                ]
+        headCont :: (Name, CCode)
+        headCont = ("__headCont",)
+                $ CCode [1,2]
+                [ Print
+                , Push (Label "__topCont" tpent)
+                , Enter (Arg 2)
+                ]
+        tpent = aLookup tbl "__topCont"  (error "top-cont undefined")
+        hcent = aLookup tbl "__headCont" (error "head-cont undefined")
+        
 
-allocateInitialHeap :: Assoc Name CCode -> (TimHeap, CodeStore)
+allocateInitialHeap :: Assoc Name CCode -> (TimHeap, (CodeStore, Assoc Name Int))
 allocateInitialHeap ccode
     = (heap, (globalFrameAddr, offsets))
+
     where
         indexedCode = zip [1 ..] ccode
         offsets     = [ (name, offset) | (offset, (name, _)) <- indexedCode ]
@@ -109,28 +137,6 @@ allocateInitialHeap ccode
 
 dummyCont :: Name -> (Name, CCode)
 dummyCont name = ("__"++name, CCode [] [])
-
-topCont :: (Name, CCode)
-topCont = ("__topCont",)
-        $ CCode [1,2]
-         [ Switch [ (1, CCode []    [])
-                  , (2, CCode [1,2] 
-                              [ Move 1 (Data 1)
-                              , Move 2 (Data 2)
-                              , Push (Label "__headCont")
-                              , Enter (Arg 1)
-                              ]
-                    )
-                  ]
-         ]
-
-headCont :: (Name, CCode)
-headCont = ("__headCont",)
-         $ CCode [1,2]
-         [ Print
-         , Push (Label "__topCont")
-         , Enter (Arg 2)
-         ]
 
 extraPrelude :: [CoreScDefn]
 extraPrelude = [("cons" , [], EConstr 2 2)
@@ -150,7 +156,7 @@ initialDump = Stk.emptyStack
 
 compiledPrimitives :: Assoc Name CCode
 compiledPrimitives
-    = (compilePrimitive <$> primitives)
+    = compilePrimitive <$> primitives
     -- ++ [ ("if"
     --    , CCode [1,2,3]
     --         [ Take 3 3
@@ -617,7 +623,7 @@ amToClosure :: TimAMode -> FramePtr -> FramePtr -> TimHeap -> CodeStore -> Closu
 amToClosure amode fptr dfptr heap cstore = case amode of
     Arg n      -> fGet heap fptr n
     Code il    -> (il, fptr)
-    Label l    -> codeLookup' heap cstore l
+    Label l ix -> fGet heap cstore ix
     IntConst n -> (intCode, FrameInt n)
     Data d     -> fGet heap dfptr d
     _ -> error "not yet implemented"

@@ -41,7 +41,7 @@ showSCDefns :: TimState -> IseqRep
 showSCDefns state
     = iInterleave iNewline (map showSC gframe)
     where
-        (fptr, names) = state.codestore
+        (fptr, names) = (state.codestore, state.symtbl)
         gframe = [ (n, fst $ fGet state.heap fptr i) | (n,i) <- names ]
 
 showSC :: (Name, CCode) -> IseqRep
@@ -187,9 +187,9 @@ showBranch d (tag, ccode) = iConcat [ iNum tag, iStr " -> ", showInstructions Te
 
 showArg :: HowMuchToPrint -> TimAMode -> IseqRep
 showArg d am = case am of
-    Arg m    -> iStr "Arg "   `iAppend` iNum m
-    Code il  -> iStr "Code "  `iAppend` showInstructions d il
-    Label s  -> iStr "Label " `iAppend` iStr s
+    Arg m      -> iStr "Arg "   `iAppend` iNum m
+    Code il    -> iStr "Code "  `iAppend` showInstructions d il
+    Label s i  -> iStr "Label " `iAppend` iStr s `iAppend` iStr " " `iAppend` iNum i
     IntConst n -> iStr "IntConst " `iAppend` iNum n
     Data i -> iStr "Data " `iAppend` iNum i
 
