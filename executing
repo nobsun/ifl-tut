@@ -1,4 +1,4 @@
 #!/bin/bash
 
 source .curname
-stack exec -- $CURRENT_STACK_EXE_ENTRY
+stack exec -- $CURRENT_STACK_EXE_ENTRY $1
