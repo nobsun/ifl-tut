@@ -37,7 +37,8 @@ traceShow | debug     = Deb.traceShow
           | otherwise = const id
 
 run :: String -> ([String] -> [String])
-run prog inputs = showResults 
+run prog inputs 
+    = showFullResults 
     $ eval 
     $ setControl inputs
     $ compile 
@@ -62,10 +63,10 @@ gmFinal state = null state.code
 
 step :: GmState -> GmState
 step state = case map toLower $ head state.ctrl of
-    ""                -> state' { ctrl = tail state.ctrl }
+    ""                -> state' { ctrl = drop 1 state.ctrl }
     "c"               -> state' { ctrl = repeat "" }
     '#': n
-      | all isDigit n -> trace (iDisplay (inspect :: IseqRep)) (state' { ctrl = tail state.ctrl })
+      | all isDigit n -> trace (iDisplay (inspect :: IseqRep)) (state' { ctrl = drop 1 state.ctrl })
             where
                 inspect = iConcat [ iStr "         #"
                                   , iStr n, iStr " -> "
@@ -74,8 +75,8 @@ step state = case map toLower $ head state.ctrl of
                                   ]
                 (a,_) = Stk.pop state.stack
                 node  = hLookup state.heap a
-    s | all isDigit s -> state' { ctrl = replicate (read s) "" ++ tail state.ctrl }
-      | otherwise     -> state' { ctrl = tail state.ctrl }
+    s | all isDigit s -> state' { ctrl = replicate (read s) "" ++ drop 1 state.ctrl }
+      | otherwise     -> state' { ctrl = drop 1 state.ctrl }
     where
         state' = case state.code of
             i:is -> dispatch i (state { code = is, output = ""})
@@ -252,7 +253,7 @@ unwind state
 
 rearrange :: Int -> GmHeap -> GmStack -> GmStack
 rearrange n heap stk
-    = foldr phi (Stk.discard n stk) $ take n $ tail stk.stkItems
+    = foldr phi (Stk.discard n stk) $ take n $ drop 1 stk.stkItems
     where
         phi a = Stk.push (getArg (hLookup heap a))
 
@@ -452,6 +453,14 @@ buildInitialHeap program
             ++ compiledPrimitives
 
 extraPreludeDefs :: [CoreScDefn]
+extraPreludeDefs = [("cons" , [], EConstr 2 2)
+                   ,("nil"  , [], EConstr 1 0)
+                   ,("true" , [], EConstr 2 0)
+                   ,("false", [], EConstr 1 0)
+                   ,("if"   , ["c","t","f"], ECase (EVar "c") [(2,[],EVar "t"), (1,[],EVar "f")])]
+
+{- --
+extraPreludeDefs :: [CoreScDefn]
 extraPreludeDefs = parse extraPrelude
 
 extraPrelude :: String
@@ -460,7 +469,7 @@ extraPrelude = unlines
     , "             <1> -> f ;"
     , "             <2> -> t"
     ]
-
+-- -}
 type GmCompiledSC = (Name, Arity, GmCode)
 
 allocateSc :: GmHeap -> GmCompiledSC -> (GmHeap, (Name, Addr))

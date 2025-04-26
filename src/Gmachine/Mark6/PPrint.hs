@@ -4,6 +4,8 @@
 module Gmachine.Mark6.PPrint
     where
 
+import Data.Char
+import Data.Maybe
 import Language
 import Iseq
 import Heap
@@ -14,6 +16,18 @@ import Gmachine.Mark6.Code
 import Gmachine.Mark6.Node
 import Gmachine.Mark6.State
 
+showFullResults :: [GmState] -> [String]
+showFullResults gs = case gs of
+    []  -> error "impossible"
+    s:_ -> iDisplay (showSCDefns s)
+         : showResults gs
+         ++ ["all outputs: " 
+            ++ "(" 
+            ++ unwords ( filter (all isDigit) 
+                       $ filter (not . null) 
+                       $ map (\ s -> s.output) gs)
+            ++ ")"]
+
 showResults :: [GmState] -> [String]
 showResults = map iDisplay . iLayn' 0 . mapoid (showState, showStats)
 
@@ -22,6 +36,12 @@ mapoid (f, g) (x:xs) = case xs of
     [] -> f x : [g x]
     _  -> f x : mapoid (f,g) xs
 mapoid _ [] = []
+
+showSCDefns :: GmState -> IseqRep
+showSCDefns state
+    = iInterleave iNewline (map (showSC state) defs)
+    where
+        defs = state.globals
 
 showSC :: GmState -> (Name, Addr) -> IseqRep
 showSC s (name, addr)
