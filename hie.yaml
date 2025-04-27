@@ -39,6 +39,12 @@ cradle:
     - path: "./app/gm6/Paths_ifl_tut.hs"
       component: "ifl-tut:exe:gm6"
 
+    - path: "./app/gm7/Main.hs"
+      component: "ifl-tut:exe:gm7"
+
+    - path: "./app/gm7/Paths_ifl_tut.hs"
+      component: "ifl-tut:exe:gm7"
+
     - path: "./app/ti1/Main.hs"
       component: "ifl-tut:exe:ti1"
 
@@ -134,6 +140,12 @@ cradle:
 
     - path: "./app/tim5/Paths_ifl_tut.hs"
       component: "ifl-tut:exe:tim5"
+
+    - path: "./app/tim6/Main.hs"
+      component: "ifl-tut:exe:tim6"
+
+    - path: "./app/tim6/Paths_ifl_tut.hs"
+      component: "ifl-tut:exe:tim6"
 
     - path: "./test"
       component: "ifl-tut:test:ifl-tut-doctest"
