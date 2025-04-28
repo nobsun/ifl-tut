@@ -61,16 +61,16 @@ showInstructions is
 
 showInstruction :: Instruction -> IseqRep
 showInstruction i = case i of
+    Unwind       -> iStr "Unwind"
+    PushGlobal f -> iStr "PushGlobal " `iAppend` showGlobalMode f
+    PushInt n    -> iStr "PushInt "    `iAppend` iNum n
+    MkAp         -> iStr "MkAp"
+    Push n       -> iStr "Push "       `iAppend` iNum n
+    Pop n        -> iStr "Pop "        `iAppend` iNum n
+    Update n     -> iStr "Update "     `iAppend` iNum n
     Slide n      -> iStr "Slide "      `iAppend` iNum n
     Alloc n      -> iStr "Alloc "      `iAppend` iNum n
-    Update n     -> iStr "Update "     `iAppend` iNum n
-    Pop n        -> iStr "Pop "        `iAppend` iNum n
-    Unwind       -> iStr "Unwind"
-    PushGlobal f -> iStr "PushGlobal " `iAppend` iStr f
-    PushInt n    -> iStr "PushInt "    `iAppend` iNum n
-    Push n       -> iStr "Push "       `iAppend` iNum n
-    PushBasic n  -> iStr "PushBasic"   `iAppend` iNum n
-    MkAp         -> iStr "MkAp"
+    PushBasic n  -> iStr "PushBasic "  `iAppend` iNum n
     MkBool       -> iStr "MkBool"
     MkInt        -> iStr "MkInt"
     Get          -> iStr "Get"
@@ -86,6 +86,9 @@ showInstruction i = case i of
     Le           -> iStr "Le"
     Gt           -> iStr "Gt"
     Ge           -> iStr "Ge"
+    And          -> iStr "And"
+    Or           -> iStr "Or"
+    Not          -> iStr "Not"
     Cond i1 i2
         -> iConcat
          [ iStr "Cond [2: ", shortShowInstructions 2 i1
@@ -100,8 +103,17 @@ showInstruction i = case i of
     Split n 
         -> iConcat
          [ iStr "Split ", iNum n]
+    UpdateBool n -> iStr "UpdateBool " `iAppend` iNum n
+    UpdateInt n  -> iStr "UpdateInt " `iAppend` iNum n
+    Return       -> iStr "Return"
     Print
         -> iStr "Print"
+
+showGlobalMode :: GmGlobalMode -> IseqRep
+showGlobalMode f = case f of
+    GlobalLabel name -> iStr name
+    GlobalPack tag arity
+        -> iConcat [iStr "Pack{",iNum tag,iStr ",",iNum arity,iStr "}"]
 
 showAlts :: [(Int, GmCode)] -> IseqRep
 showAlts nis
@@ -167,11 +179,12 @@ showDump s
     ]
 
 showDumpItem :: GmDumpItem -> IseqRep
-showDumpItem (code, stack)
+showDumpItem (code, stack, vstack)
     = iConcat 
     [ iStr "<"
     , shortShowInstructions 3 code, iStr ", "
-    , shortShowStack stack,         iStr ">"
+    , shortShowStack stack,         iStr ", "
+    , shortShowVStack vstack,       iStr ">"
     ]
 
 shortShowInstructions :: Int -> GmCode -> IseqRep
@@ -186,17 +199,25 @@ shortShowInstructions number code
 
 shortShowStack :: GmStack -> IseqRep
 shortShowStack stack
-    =  iConcat
+    = iConcat
     [ iStr "["
     , iInterleave (iStr ", ") (map showAddr stack.stkItems)
     , iStr "]"
     ]
 
+shortShowVStack :: GmVStack -> IseqRep
+shortShowVStack vstack
+    = iConcat
+    [ iStr "["
+    , iInterleave (iStr ", ") (map iNum vstack.stkItems)
+    , iStr "]"
+    ]
+
 showVStack :: GmState -> IseqRep
 showVStack s
-    = iConcat [iStr "Vstack:["
+    = iConcat [iStr "Vstack:[ "
               ,iInterleave (iStr ", ") (map iNum s.vstack.stkItems)
-              ,iStr "]"]
+              ,iStr " ]"]
 
 showStats :: GmState -> IseqRep
 showStats s

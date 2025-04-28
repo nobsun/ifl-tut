@@ -572,12 +572,12 @@ step state = case state'.code of
     --     where
     --         (v,vstack') = Stk.pop state'.vstack
     CCode _ (Switch bs : [])
-        -> state' { code = i
+        -> state  { code = i
                   , vstack = vstack'
                   }
         where
-            (t, vstack') = Stk.pop state'.vstack
-            i = aLookup bs t (error "step: invalid tag")
+            (t, vstack') = Stk.pop state.vstack
+            i = aLookup bs t (error $ "step: invalid tag: " ++ show t ++ ":" ++ show bs)
     CCode ss (ReturnConstr t : [])
         -> if Stk.isEmptyStack state'.stack
               then state' { stack = di.tdstack

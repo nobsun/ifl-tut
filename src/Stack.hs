@@ -12,7 +12,7 @@ data Stack a
     { maxDepth :: Int
     , curDepth :: Int
     , stkItems :: [a]
-    } deriving Show
+    } deriving (Eq, Show)
 
 emptyStack :: Stack a
 emptyStack = Stack 0 0 []

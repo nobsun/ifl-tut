@@ -484,6 +484,16 @@ initialCode = [PushGlobal "main", Eval, Print]
 oldInitialCode :: GmCode
 oldInitialCode = [PushGlobal "main", Unwind]
 
+
+{- |
+>>> compileSc (parseSc "main = 42")
+("main",0,[PushInt 42,Update 0,Pop 0,Unwind])
+>>> compileSc (parseSc "main = 3 + 4 * 5")
+("main",0,[PushInt 5,PushInt 4,Mul,PushInt 3,Add,Update 0,Pop 0,Unwind])
+>>> compileSc (parseSc "main = I 3")
+("main",0,[PushInt 3,PushGlobal "I",Mkap,Eval,Update 0,Pop 0,Unwind])
+
+-}
 compileSc :: CoreScDefn -> GmCompiledSC
 compileSc (name, args, body)
     = (name, length args, compileR body (zip args [0 ..]))

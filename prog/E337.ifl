@@ -1,2 +1,2 @@
-main = fac 5 ;
+main = cons (fac 5) nil ;
 fac n = if (n == 0) 1 (n * fac (n -1))

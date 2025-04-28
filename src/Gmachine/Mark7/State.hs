@@ -21,13 +21,14 @@ data GmState
     , output  :: GmOutput
     , code    :: GmCode
     , stack   :: GmStack
-    , dump    :: GmDump
     , vstack  :: GmVStack
+    , dump    :: GmDump
     , heap    :: GmHeap
-    , globals :: GmGlobals
+    , globals :: GmEnvironment
     , stats   :: GmStats
     , ruleid  :: GmRuleId
     }
+    deriving (Eq)
 
 --
 
@@ -40,7 +41,7 @@ type GmStack = Stack Addr
 --
 
 type GmDump = Stack GmDumpItem
-type GmDumpItem = (GmCode, GmStack)
+type GmDumpItem = (GmCode, GmStack, GmVStack)
 
 --
 
@@ -52,21 +53,15 @@ type GmHeap = Heap Node
 
 --
 
-type GmGlobals = Assoc Name Addr
-
---
-
-type GmCompiler = CoreExpr -> GmEnvironment -> GmCode
-
---
-
 type GmEnvironment = Assoc Name Addr
 
+--
 
 data GmStats
     = GmStats
     { steps :: Int 
     }
+    deriving (Eq, Show)
 
 statInitial :: GmStats
 statInitial = GmStats { steps = 0 }

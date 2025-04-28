@@ -19,6 +19,7 @@ data Heap a = Heap
     , frees     :: [Addr]
     , assocs    :: Assoc Addr a
     }
+    deriving (Eq, Show)
 
 hInitial   :: (?sz :: Int, ?th :: Int) => Heap a 
 hAlloc     :: Heap a -> a -> (Heap a, Addr)
@@ -64,4 +65,4 @@ hLookup heap addr = aLookup heap.assocs addr (error ("hLookup: no entry: #" ++ s
 
 hAddresses heap = aDomain heap.assocs
 
-hNull = 0
+hNull = -1

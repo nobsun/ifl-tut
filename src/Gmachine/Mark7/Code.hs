@@ -1,31 +1,67 @@
 module Gmachine.Mark7.Code
-  where
+    ( GmCode
+    , Instruction (..)
+    , GmGlobalMode (..)
+    )
+    where
 
-import Language
+import Parser
+import Language hiding (takeFirstParse)
+import Utils
 
 type GmCode = [Instruction]
 
 data Instruction
-    = Slide Int
-    | Alloc Int
-    | Update Int
-    | Pop Int
-    | Unwind
-    | PushGlobal Name
+    = Unwind
+    | PushGlobal GmGlobalMode
     | PushInt Int
     | Push Int
+    | Pop Int
+    | Update Int
     | MkAp
+    | Slide Int
+    | Alloc Int
     | Eval
-    | Add | Sub | Mul | Div
-    | Neg
+    | Add | Sub | Mul | Div | Neg
     | Eq | Ne | Lt | Le | Gt | Ge
+    | And | Or | Not
     | Cond GmCode GmCode
-    | Pack Int Int
-    | CaseJump [(Tag, GmCode)]
+    | Pack Tag Arity
+    | CaseJump (Assoc Tag GmCode)
     | Split Arity
-    | Print
     | PushBasic Int
     | MkBool
     | MkInt
+    | UpdateInt Int
+    | UpdateBool Int
     | Get
-    deriving (Eq, Show)
+    | Return
+    | Print
+    deriving (Eq, Show, Read)
+
+data GmGlobalMode
+    = GlobalLabel Name
+    | GlobalPack Int Int
+    deriving (Eq)
+
+instance Show GmGlobalMode where
+    show :: GmGlobalMode -> String
+    show mode = case mode of
+        GlobalLabel name -> name
+        GlobalPack tag arity -> "Pack{"++show tag++","++show arity++"}"
+
+instance Read GmGlobalMode where
+    readsPrec :: Int -> ReadS GmGlobalMode
+    readsPrec _ s = [(readGlobalMode s,"")]
+
+readGlobalMode :: String -> GmGlobalMode
+readGlobalMode = takeFirstParse . pGlobalMode . clex 1
+
+pGlobalMode :: Parser GmGlobalMode
+pGlobalMode =  pGlobalPack `pAlt'` pGlobalLabel
+
+pGlobalPack :: Parser GmGlobalMode
+pGlobalPack = uncurry GlobalPack <$$ pLit "Pack" <** pLit "{" <**> pTagArity <** pLit "}"
+
+pGlobalLabel :: Parser GmGlobalMode
+pGlobalLabel = GlobalLabel <$$> pSat (const True)

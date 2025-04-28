@@ -310,6 +310,12 @@ syntax = takeFirstParse . pProgram
 parse :: String -> CoreProgram
 parse = syntax . clex 1
 
+parseSc :: String -> CoreScDefn
+parseSc = takeFirstParse . pSc . clex 1
+
+parseExpr :: String -> CoreExpr
+parseExpr = takeFirstParse . pExpr . clex 1
+
 pVar :: Parser String
 pVar = pSat ((&&) . isAlpha . head <*> (`notElem` keywords))
 

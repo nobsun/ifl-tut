@@ -15,4 +15,4 @@ data Node
     | NGlobal Int GmCode
     | NInd Addr
     | NConstr Tag [Addr]
-    deriving (Eq, Show)
+    deriving (Eq, Show, Read)

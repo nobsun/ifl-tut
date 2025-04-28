@@ -8,6 +8,7 @@ module Gmachine.Mark7.Machine
     where
 
 import Data.Char
+import Data.Function
 import Data.List
 -- import Text.ParserCombinators.ReadP
 
@@ -18,7 +19,8 @@ import Stack hiding (push, pop, npop, discard)
 import Utils
 import Iseq
 
-import Gmachine.Mark7.Code ( GmCode, Instruction(..) )
+import Gmachine.Mark7.Code
+import Gmachine.Mark7.Compiler
 import Gmachine.Mark7.Node
 import Gmachine.Mark7.PPrint
 import Gmachine.Mark7.State
@@ -83,162 +85,43 @@ step state = case map toLower $ head state.ctrl of
             []   -> error "already final state"
 
 dispatch :: Instruction -> GmState -> GmState
-dispatch (PushGlobal f) = pushglobal f
-dispatch (PushInt n)    = pushint n
-dispatch (PushBasic n)  = pushbasic n
-dispatch MkAp           = mkap
-dispatch MkBool         = mkbool
-dispatch MkInt          = mkint
-dispatch Get            = getinstr
-dispatch (Slide n)      = slide n
-dispatch (Push n)       = push n
-dispatch (Update n)     = update n
-dispatch (Pop n)        = pop n
-dispatch Unwind          = unwind
-dispatch (Alloc n)       = alloc n
-dispatch Add             = dyadicIntOp (+)
-dispatch Sub             = dyadicIntOp (-)
-dispatch Mul             = dyadicIntOp (*)
-dispatch Div             = dyadicIntOp div
-dispatch Neg             = neg negate
-dispatch Eq              = dyadicBoolOp (==)
-dispatch Ne              = dyadicBoolOp (/=)
-dispatch Lt              = dyadicBoolOp (<)
-dispatch Le              = dyadicBoolOp (<=)
-dispatch Gt              = dyadicBoolOp (>)
-dispatch Ge              = dyadicBoolOp (>=)
-dispatch Eval            = evalop
-dispatch (Cond i1 i2)    = cond i1 i2
-dispatch (Pack t a)      = pack t a
-dispatch (CaseJump alts) = casejump alts
-dispatch (Split n)       = split n
-dispatch Print           = gmprint
-
-pushglobal :: Name -> GmState -> GmState
-pushglobal f state = case readsPack f of
-    EConstr tag arity : _
-        | f `elem` aDomain state.globals
-            -> state { stack = Stk.push a state.stack
-                     , ruleid = 37
-                     }
-        | otherwise
-            -> state { stack = Stk.push a state.stack
-                     , heap = heap'
-                     , globals = aInsert state.globals (showconstr tag arity) a
-                     , ruleid = 38
-                     }
-            where
-                node = NGlobal arity [Pack tag arity, Update 0, Unwind]
-                (heap', a') = hAlloc state.heap node
-                a = aLookup state.globals f a'
-    _   -> state { stack = Stk.push a state.stack
-                 , ruleid = 5
-                 }
-        where
-            a = aLookup state.globals f (error $ "pushglobal: undeclared global: " ++ f)
-
-readsPack :: Name -> [CoreExpr]
-readsPack = map fst . filter (null . snd) . pEConstr . clex 0
-
-
-pushint :: Int -> GmState -> GmState
-pushint n state
-    = case aLookup state.globals name (negate 1) of
-        a' | a' < 0    -> state { stack = Stk.push a state.stack
-                                , heap  = heap'
-                                , globals = aInsert state.globals name a
-                                , ruleid = 14
-                                }
-           | otherwise -> state { stack = Stk.push a' state.stack
-                                , ruleid = 13
-                                }
-    where
-        name = show n
-        node = NNum n
-        (heap', a) = hAlloc state.heap node
-
-pushbasic :: Int -> GmState -> GmState
-pushbasic n s = s' { ruleid = 41 }
-    where
-        s' = s { vstack = Stk.push n s.vstack }
-
-mkbool :: GmState -> GmState
-mkbool s = s' { ruleid = 42 }
-    where
-        s' = s { stack = Stk.push addr s.stack 
-               , vstack = vstack'
-               , heap = heap'
-               }
-        (tag,vstack') = Stk.pop s.vstack
-        (heap',addr) = hAlloc s.heap (NConstr tag [])
-
-mkint  :: GmState -> GmState
-mkint s = s' { ruleid = 43 }
-    where
-        s' = s { stack = Stk.push addr s.stack
-               , vstack = vstack'
-               , heap = heap'
-               }
-        (n,vstack') = Stk.pop s.vstack
-        (heap',addr) = hAlloc s.heap (NNum n)
-
-getinstr :: GmState -> GmState
-getinstr s = s' { ruleid = rid }
-    where
-        s' = s { stack = stack'
-               , vstack = Stk.push n s.vstack
-               }
-        (addr,stack') = Stk.pop s.stack
-        (n,rid) = case hLookup s.heap addr of
-            NConstr t [] -> (t,44)
-            NNum m       -> (m,45)
-            _            -> error "invalid node for Get"
-
-mkap :: GmState -> GmState
-mkap state
-    = state { stack = stack'
-            , heap  = heap'
-            , ruleid = 7 }
-    where
-        (a1, stk')  = Stk.pop state.stack
-        (a2, stk'') = Stk.pop stk'
-        (heap', a)  = hAlloc state.heap (NAp a1 a2)
-        stack'      = Stk.push a stk''
-
-push :: Int -> GmState -> GmState
-push n state
-    = state { stack = Stk.push an state.stack
-            , ruleid = 18 }
-        where
-            an = traceShow (length state.stack.stkItems) state.stack.stkItems !! n
-
-getArg :: Node -> Addr
-getArg (NAp _ a2) = a2
-getArg _          = error "getArg: Not application node"
-
-update :: Int -> GmState -> GmState
-update n state
-    = state { stack  = stack'
-            , heap   = heap'
-            , ruleid = 15
-            }
-    where
-        (a, stack') = Stk.pop state.stack
-        heap' = hUpdate state.heap (stack'.stkItems !! n) (NInd a)
-
-pop :: Int -> GmState -> GmState
-pop n state
-    = state { stack = Stk.discard n state.stack
-            , ruleid = 16
-            }
-
-slide :: Int -> GmState -> GmState
-slide n state
-    = state { stack = stack'
-            , ruleid = 5 }
-    where
-        (a, stk) = Stk.pop state.stack
-        stack' = Stk.push a (Stk.discard n stk)
+dispatch instr = case instr of
+    Unwind          -> unwind 
+    PushGlobal f    -> pushGlobal f
+    PushInt n       -> pushInt n
+    Push n          -> push n
+    Pop n           -> pop n
+    Update n        -> update n
+    MkAp            -> mkAp
+    Slide n         -> slide n
+    Alloc n         -> alloc n
+    Eval            -> evalop
+    Add             -> dyadicIntOp (+)
+    Sub             -> dyadicIntOp (-)
+    Mul             -> dyadicIntOp (*)
+    Div             -> dyadicIntOp div
+    Neg             -> unaryOp negate
+    Eq              -> dyadicBoolOp (==)
+    Ne              -> dyadicBoolOp (/=)
+    Lt              -> dyadicBoolOp (<)
+    Le              -> dyadicBoolOp (<=)
+    Gt              -> dyadicBoolOp (>)
+    Ge              -> dyadicBoolOp (>=)
+    And             -> dyadicLogicOp (&&)
+    Or              -> dyadicLogicOp (||)
+    Not             -> unaryLogicOp not
+    Cond ti fi      -> cond ti fi
+    Pack tag arity  -> pack tag arity
+    CaseJump alts   -> caseJump alts
+    Split arity     -> split arity
+    PushBasic n     -> pushBasic n
+    MkBool          -> mkBool
+    MkInt           -> mkInt
+    UpdateInt n     -> updateInt n
+    UpdateBool b    -> updateBool b
+    Get             -> gmGet
+    Return          -> gmReturn
+    Print           -> gmPrint
 
 unwind :: GmState -> GmState
 unwind state
@@ -252,16 +135,18 @@ unwind state
                 | otherwise
                     -> state { code  = i'
                              , stack = Stk.push a stk'
+                             , vstack = vstk'
                              , dump  = dump'
                              , ruleid = 22
                              }
                 where
-                    ((i',stk'), dump') = Stk.pop state.dump
+                    ((i',stk',vstk'), dump') = Stk.pop state.dump
             NAp a1 _  -> state { code = [Unwind]
-                               , stack = stack'
-                               , ruleid = 11 }
+                               , stack = stk'
+                               , ruleid = 11
+                               }
                 where
-                    stack' = Stk.push a1 state.stack
+                    stk' = Stk.push a1 state.stack
             NInd a1   -> state { code = [Unwind]
                                , stack = Stk.push a1 stk
                                , ruleid = 17
@@ -271,6 +156,7 @@ unwind state
                     -> state { code  = i'
                              , stack = Stk.push ak stk'
                              , dump  = dump'
+                             , vstack = vstk'
                              , ruleid = 29
                              }
                 | otherwise
@@ -281,22 +167,102 @@ unwind state
                 where 
                     k      = stk.curDepth
                     (ak,_) = Stk.pop $ Stk.discard k state.stack
-                    ((i',stk'), dump') = Stk.pop state.dump
-            NConstr _t _as
-                -> state { code = i'
-                         , stack = Stk.push a' stk'
-                         , dump  = dump'
-                         , ruleid = 35
-                         }
+                    ((i',stk',vstk'), dump') = Stk.pop state.dump
+            NConstr _ _
+                | isEmptyStack state.dump -> state
+                | otherwise
+                    -> state { code = i'
+                            , stack = Stk.push a stk'
+                            , vstack = vstk'
+                            , dump  = dump'
+                            , ruleid = 35
+                            }
                 where
-                    (a',_)             = Stk.pop state.stack
-                    ((i',stk'), dump') = Stk.pop state.dump 
+                    ((i',stk',vstk'), dump') = Stk.pop state.dump 
 
-rearrange :: Int -> GmHeap -> GmStack -> GmStack
-rearrange n heap stk
-    = foldr phi (Stk.discard n stk) $ take n $ drop 1 stk.stkItems
+pushGlobal :: GmGlobalMode -> GmState -> GmState
+pushGlobal f state = case f of
+    GlobalPack tag arity
+        | show f `elem` aDomain state.globals
+            -> state { stack = Stk.push a state.stack
+                     , ruleid = 37
+                     }
+        | otherwise
+            -> state { stack = Stk.push a state.stack
+                     , heap = heap'
+                     , globals = aInsert state.globals (show f) a
+                     , ruleid = 38
+                     }
+            where
+                node = NGlobal arity [Pack tag arity, Update 0, Unwind]
+                (heap', a') = hAlloc state.heap node
+                a = aLookup state.globals (show f) a'
+                
+    GlobalLabel name -> state { stack = Stk.push a state.stack
+                              , ruleid = 5
+                              }
+        where
+            a = aLookup state.globals name
+                    (error $ "pushglobal: undeclared global: " ++ name)
+
+
+pushInt :: Int -> GmState -> GmState
+pushInt n state
+    = case aLookup state.globals name (negate 1) of
+        a' | a' < 0    -> state { stack = Stk.push a state.stack
+                                , heap  = heap'
+                                , globals = aInsert state.globals name a
+                                , ruleid = 14
+                                }
+           | otherwise -> state { stack = Stk.push a' state.stack
+                                , ruleid = 13
+                                }
     where
-        phi a = Stk.push (getArg (hLookup heap a))
+        name = show n
+        node = NNum n
+        (heap',a) = hAlloc state.heap node
+
+push :: Int -> GmState -> GmState
+push n state
+    = state { stack = Stk.push an state.stack
+            , ruleid = 18 }
+        where
+            an = state.stack.stkItems !! n
+
+pop :: Int -> GmState -> GmState
+pop n state
+    = state { stack = Stk.discard n state.stack
+            , ruleid = 16
+            }
+
+update :: Int -> GmState -> GmState
+update n state
+    = state { stack  = stk'
+            , heap   = heap'
+            , ruleid = 15
+            }
+    where
+        (a, stk') = Stk.pop state.stack
+        heap' = hUpdate state.heap (stk'.stkItems !! n) (NInd a)
+
+mkAp :: GmState -> GmState
+mkAp state
+    = state { stack = stk'
+            , heap  = heap'
+            , ruleid = 7 }
+    where
+        (a1, stk1) = Stk.pop state.stack
+        (a2, stk2) = Stk.pop stk1
+        (heap', a) = hAlloc state.heap (NAp a1 a2)
+        stk'       = Stk.push a stk2
+
+slide :: Int -> GmState -> GmState
+slide n state
+    = state { stack = stk'
+            , ruleid = 5 }
+    where
+        (a, stk) = Stk.pop state.stack
+        stk' = Stk.push a (Stk.discard n stk)
 
 alloc :: Int -> GmState -> GmState
 alloc n state
@@ -309,32 +275,230 @@ alloc n state
         (heap', as) = allocNodes n state.heap
 
 allocNodes :: Int -> GmHeap -> (GmHeap, [Addr])
-allocNodes 0     heap = (heap, [])
-allocNodes (n+1) heap = (heap2, a:as)
-    where
-        (heap1, as) = allocNodes n heap
-        (heap2, a ) = hAlloc heap1 (NInd hNull)
-allocNodes _ _ = error "allocNodes: negative number"
+allocNodes m heap = case m of
+    0   -> (heap, [])
+    n+1 -> (heap2, a:as)
+        where
+            (heap1, as) = allocNodes n heap
+            (heap2, a ) = hAlloc heap1 (NInd hNull)
+    _   -> error "allocNodes: negative number"
 
-neg :: (Int -> Int) -> GmState -> GmState
-neg uop s = s' { ruleid = 40 }
+evalop :: GmState -> GmState
+evalop state
+    = state
+    { code   = [Unwind]
+    , stack  = Stk.push a emptyStack
+    , vstack = emptyStack
+    , dump   = Stk.push (state.code, stk, state.vstack) state.dump
+    , ruleid = 48
+    }
     where
-        s' = s { vstack = Stk.push (uop a) vstack' }
-        (a,vstack') = Stk.pop s.vstack
+        (a,stk) = Stk.pop state.stack
 
 dyadicIntOp :: (Int -> Int -> Int) -> GmState -> GmState
-dyadicIntOp bop s = s' { ruleid = 39 }
+dyadicIntOp bop state
+    = state { vstack = Stk.push (a1 `bop` a2) vstk2
+            , ruleid = 39 
+            }
     where
-        s' = s { vstack = Stk.push ((as !! 0) `bop` (as !! 1)) vstack' }
-        (as,vstack') = Stk.npop 2 s.vstack
+        (a1, vstk1) = Stk.pop state.vstack
+        (a2, vstk2) = Stk.pop vstk1
 
 dyadicBoolOp :: (Int -> Int -> Bool) -> GmState -> GmState
-dyadicBoolOp cmp s = s'
+dyadicBoolOp = dyadicIntOp . ((conv .) .)
     where
-        s' = dyadicIntOp ((conv .) . cmp) s
         conv False = 1
         conv True  = 2
 
+dyadicLogicOp :: (Bool -> Bool -> Bool) -> GmState -> GmState
+dyadicLogicOp op = dyadicBoolOp (op `on` conv)
+    where
+        conv 1 = False
+        conv 2 = True
+        conv _ = error "not Boolean"
+
+unaryLogicOp :: (Bool -> Bool) -> GmState -> GmState
+unaryLogicOp op = unaryOp (enc . op . dec)
+    where
+        dec 1 = False
+        dec 2 = True
+        dec _ = error "not Boolean"
+        enc False = 1
+        enc True  = 2
+
+unaryOp :: (Int -> Int) -> GmState -> GmState
+unaryOp uop state 
+    = state 
+    { vstack = Stk.push (uop v) vstk'
+    , ruleid = 40
+    }
+    where
+        (v, vstk') = Stk.pop state.vstack
+
+cond :: GmCode -> GmCode -> GmState -> GmState
+cond ti fi state
+    = state { code   = cont ++ state.code
+            , vstack = vstk'
+            , ruleid = rid
+            }
+    where
+        (v,vstk') = Stk.pop state.vstack 
+        (cont,rid) = case v of
+            2 -> (ti,46)
+            1 -> (fi,47)
+            _ -> error "not boolean"
+
+pack :: Tag -> Arity -> GmState -> GmState
+pack tag arity state
+    = state { stack = Stk.push a stk'
+            , heap  = heap'
+            , ruleid = 30
+            }
+    where
+        (as, stk') = Stk.npop arity state.stack
+        (heap', a) = hAlloc state.heap (NConstr tag as)
+
+caseJump :: [(Int, GmCode)] -> GmState -> GmState
+caseJump alts state
+    = state { code   = cont ++ state.code
+            , ruleid = 31
+            }
+    where
+        (a, _) = Stk.pop state.stack
+        cont = case hLookup state.heap a of
+            NConstr t _
+                -> aLookup alts t
+                    (error $ "No case for constructor<" ++ show t ++ ">")
+            n   -> error $ "casejump: Not data structure: " ++ show n
+
+split :: Int -> GmState -> GmState
+split n state
+    = state { stack = stk' 
+            , ruleid = 32
+            }
+    where
+        (a, stk) = Stk.pop state.stack
+        stk' = case hLookup state.heap a of
+            NConstr _ as
+                | n == length as -> foldr Stk.push stk as
+                | otherwise      -> error "Not saturated"
+            _                    -> error "Not data structure"
+
+pushBasic :: Int -> GmState -> GmState
+pushBasic n state
+    = state
+    { vstack = Stk.push n state.vstack
+    , ruleid = 41
+    }
+
+mkBool :: GmState -> GmState
+mkBool state
+    = state
+    { stack = Stk.push addr state.stack 
+    , vstack = vstk'
+    , heap = heap'
+    , ruleid = 42
+    }
+    where
+        (tag, vstk') = Stk.pop state.vstack
+        (heap',addr) = hAlloc state.heap (NConstr tag [])
+
+mkInt  :: GmState -> GmState
+mkInt state
+    = state
+    { stack = Stk.push addr state.stack
+    , vstack = vstk'
+    , heap = heap'
+    , ruleid = 43
+    }
+    where
+        (n,vstk') = Stk.pop state.vstack
+        (heap',addr) = hAlloc state.heap (NNum n)
+
+updateBool :: Int -> GmState -> GmState
+updateBool n state
+    = state'
+    { stack = stk'
+    , heap  = heap'
+    }
+    where
+        state' = mkBool state
+        (a, stk') = Stk.pop state'.stack
+        node = hLookup state'.heap a
+        a' = stk'.stkItems !! n
+        heap' = hUpdate state'.heap a' node
+
+updateInt :: Int -> GmState -> GmState
+updateInt n state
+    = state'
+    { stack = stk'
+    , heap  = heap'
+    }
+    where
+        state' = mkInt state
+        (a, stk') = Stk.pop state'.stack
+        node = hLookup state'.heap a
+        a' = stk'.stkItems !! n
+        heap' = hUpdate state'.heap a' node
+
+gmGet :: GmState -> GmState
+gmGet state
+    = state
+    { stack = stk'
+    , vstack = Stk.push n state.vstack
+    , ruleid = rid
+    }
+    where
+        (a,stk') = Stk.pop state.stack
+        (n,rid) = case hLookup state.heap a of
+            NConstr t [] -> (t,44)
+            NNum m       -> (m,45)
+            _            -> error "invalid node for Get"
+
+gmReturn :: GmState -> GmState
+gmReturn state
+    = state
+    { code = cont
+    , stack = stk'
+    , vstack = vstk
+    , dump = dmp
+    }
+    where
+        ((cont,stk,vstk),dmp) = Stk.pop state.dump
+        ak = last state.stack.stkItems
+        stk' = Stk.push ak stk
+
+gmPrint :: GmState -> GmState
+gmPrint state
+    = case hLookup state.heap a of
+        NNum n
+            -> state { output = show n
+                     , stack  = stk
+                     , ruleid = 33
+                     }
+        NConstr t as 
+            -> state { output = showConstr t (length as)
+                     , code   = printCode (length as) ++ state.code
+                     , stack  = foldr Stk.push stk as
+                     , ruleid = 34
+                     }
+        _   -> error "gmprint: cannot print"
+    where
+        (a, stk) = Stk.pop state.stack
+        showConstr tag arity
+            = "Pack{" ++ show tag ++ "," ++ show arity ++ "}"
+        printCode n = concat $ take n $ cycle [[Eval, Print]]
+
+rearrange :: Int -> GmHeap -> GmStack -> GmStack
+rearrange n heap stk
+    = foldr phi (Stk.discard n stk) $ take n $ drop 1 stk.stkItems
+    where
+        phi a = Stk.push (getArg (hLookup heap a))
+getArg :: Node -> Addr
+getArg (NAp _ a2) = a2
+getArg _          = error "getArg: Not application node"
+
+{-
 boxInteger :: Int -> GmState -> GmState
 boxInteger n state
     = state { stack = Stk.push addr state.stack
@@ -378,308 +542,4 @@ boxBoolean b state
         (heap', addr) = hAlloc state.heap (NConstr tag [])
         tag | b         = 2
             | otherwise = 1
-
-evalop :: GmState -> GmState
-evalop state
-    = state
-    { code = [Unwind]
-    , stack = Stk.push a emptyStack
-    , dump  = dump'
-    , ruleid = 23
-    }
-    where
-        (a, stack') = Stk.pop state.stack
-        dump' = Stk.push (state.code, stack') state.dump
-
-cond :: GmCode -> GmCode -> GmState -> GmState
-cond ti fi s = s' { ruleid = rid }
-    where
-        s' = s { code = cont ++ s.code
-               , vstack = vstack'
-               }
-        (v,vstack') = Stk.pop s.vstack 
-        (cont,rid) = case v of
-            2 -> (ti,46)
-            1 -> (fi,47)
-            _ -> error "not boolean"
-
--- cond i1 i2 state = case hLookup state.heap a of
---     NNum 1 -> state { code = i1 ++ state.code
---                     , stack = stack'
---                     , ruleid = 21
---                     }
---     NNum 0 -> state { code = i2 ++ state.code
---                     , stack = stack'
---                     , ruleid = 22
---                     }
---     _ -> error "cond: invalid node"
---     where
---         (a, stack') = Stk.pop state.stack
-
-pack :: Tag -> Arity -> GmState -> GmState
-pack t n state
-    = state { stack = Stk.push a stack'
-            , heap  = heap'
-            , ruleid = 30
-            }
-    where
-        (as, stack') = Stk.npop n state.stack
-        (heap', a)   = hAlloc state.heap (NConstr t as)
-
-casejump :: [(Int, GmCode)] -> GmState -> GmState
-casejump alts state
-    = state { code   = i ++ state.code
-            , ruleid = 31
-            }
-    where
-        (a, _) = Stk.pop state.stack
-        i = case hLookup state.heap a of
-            NConstr t _ss
-                -> aLookup alts t (error $ "No case for constructor" ++ show t)
-            n   -> error $ "casejump: Not data structure: "
-                        ++ show n
-
-split :: Int -> GmState -> GmState
-split n state
-    = state { stack = stack' 
-            , ruleid = 32
-            }
-    where
-        (a, stk) = Stk.pop state.stack
-        stack' = case hLookup state.heap a of
-            NConstr _t as
-                | n == length as -> foldr Stk.push stk as
-                | otherwise      -> error "Not saturated"
-            _                    -> error "Not data structure"
-
-gmprint :: GmState -> GmState
-gmprint state
-    = case hLookup state.heap a of
-        NNum n
-            -> state { output = show n
-                     , stack  = stk
-                     , ruleid = 33
-                     }
-        NConstr t as 
-            -> state { output = showconstr t (length as)
-                     , code   = printcode (length as) ++ state.code
-                     , stack  = foldr Stk.push stk as
-                     , ruleid = 34
-                     }
-        _   -> error "gmprint: cannot print"
-    where
-        (a, stk) = Stk.pop state.stack
-
-showconstr :: Tag -> Arity -> String
-showconstr tag arity
-    = "Pack{" ++ show tag ++ "," ++ show arity ++ "}"
-
-printcode :: Int -> GmCode
-printcode n = concat $ take n $ cycle [[Eval, Print]]
-
---
-
-defaultHeapSize :: Int
-defaultHeapSize = 1024 ^ (2 :: Int)
-
-defaultThreshold :: Int
-defaultThreshold = 50
-
---
-
-compile :: CoreProgram -> GmState
-compile program
-    = GmState
-    { ctrl    = []
-    , output  = ""
-    , code    = initialCode
-    , stack   = emptyStack
-    , dump    = emptyStack
-    , vstack  = emptyStack
-    , heap    = heap'
-    , globals = globals'
-    , stats   = statInitial
-    , ruleid  = 0
-    }
-    where
-        (heap', globals') = let { ?sz = defaultHeapSize; ?th = defaultThreshold }
-                            in buildInitialHeap program
-
-buildInitialHeap :: (?sz :: Int, ?th :: Int) => CoreProgram -> (GmHeap, GmGlobals)
-buildInitialHeap program
-    = mapAccumL allocateSc hInitial compiled
-    where
-        compiled :: [GmCompiledSC]
-        compiled 
-            = map compileSc 
-                (preludeDefs ++ extraPreludeDefs ++ program)
-            ++ compiledPrimitives
-
-extraPreludeDefs :: [CoreScDefn]
-extraPreludeDefs = [("cons" , [], EConstr 2 2)
-                   ,("nil"  , [], EConstr 1 0)
-                   ,("true" , [], EConstr 2 0)
-                   ,("false", [], EConstr 1 0)
-                   ,("if"   , ["c","t","f"], ECase (EVar "c") [(2,[],EVar "t"), (1,[],EVar "f")])]
-
-{- --
-extraPreludeDefs :: [CoreScDefn]
-extraPreludeDefs = parse extraPrelude
-
-extraPrelude :: String
-extraPrelude = unlines
-    [ "if c t f = case c of"
-    , "             <1> -> f ;"
-    , "             <2> -> t"
-    ]
--- -}
-type GmCompiledSC = (Name, Arity, GmCode)
-
-allocateSc :: GmHeap -> GmCompiledSC -> (GmHeap, (Name, Addr))
-allocateSc heap (name, arity, instrs)
-    = (heap', (name, addr))
-    where
-        (heap', addr) = hAlloc heap (NGlobal arity instrs)
-
-initialCode :: GmCode
-initialCode = [PushGlobal "main", Eval, Print]
-
-oldInitialCode :: GmCode
-oldInitialCode = [PushGlobal "main", Unwind]
-
-compileSc :: CoreScDefn -> GmCompiledSC
-compileSc (name, args, body)
-    = (name, length args, compileR body (zip args [0 ..]))
-
-compileR :: GmCompiler
-compileR e args = compileE e args ++ [Update n, Pop n, Unwind]
-    where
-        n = length args
-
-compileE :: GmCompiler
-compileE expr env = case expr of
-    ENum n -> [PushInt n]
-    ELet isRec defs e
-        | isRec     -> compileLetrec compileE defs e env
-        | otherwise -> compileLet    compileE defs e env
-    EAp (EAp (EVar name) e0) e1
-        | name `elem` aDomain builtInDyadic
-                    -> compileE e1 env ++ compileE e0 (argOffset 1 env) ++ [dyadic]
-            where
-                dyadic = aLookup builtInDyadic name (error "Invalid dyadic operator" )
-    EAp (EVar "negate") e
-                    -> compileE e env ++ [Neg]
-    ECase e alts    -> compileE e env ++ [CaseJump (compileAlts compileE' alts env)]
-    _ -> compileC expr env ++ [Eval]
-
-builtInDyadic :: Assoc Name Instruction
-builtInDyadic 
-    = [ ("+", Add), ("-", Sub), ("*", Mul), ("/", Div)
-      , ("==", Eq), ("/=", Ne), (">", Gt), (">=", Ge), ("<", Lt), ("<=", Le)]
-
-compileC :: GmCompiler
-compileC expr env = case expr of
-    EVar v
-        | v `elem` aDomain env -> [Push a]
-        | otherwise            -> [PushGlobal v]
-        where
-            a = aLookup env v (error "compileC: Cannot happen")
-    ENum n  -> [PushInt n]
-    EAp e1 e2 -> case spines expr of
-        [] -> compileC e2 env ++ compileC e1 (argOffset 1 env) ++ [MkAp]
-        ss -> compileCS ss env
-        where
-            spines = iter 0 []
-            iter a ss e = case e of
-                EAp e1' e2'        -> iter (succ a) (e2':ss) e1'
-                EConstr _ arity  
-                    | a == arity -> reverse (e : ss)
-                _                -> []
-    ELet recflg defs e
-        | recflg    -> compileLetrec compileC defs e env
-        | otherwise -> compileLet compileC defs e env
-    ECase e _as
-            -> compileE e env -- ++ [Casejump (compileAlts as env)]
-    EConstr tag 0
-            -> [Pack tag 0]
-    EConstr tag a
-            -> [PushGlobal (showconstr tag a)]
-    _       -> error $ "compileC: Not implemented for: " ++ show expr
-                               
-compileCS :: [CoreExpr] -> GmEnvironment -> [Instruction]
-compileCS exprs env = case exprs of
-    [EConstr tag arity] -> [Pack tag arity]
-    e : es              -> compileC e env ++ compileCS es (argOffset 1 env)
-    []                  -> error "compileCS: empty exprs"
-
-
-compileLet :: GmCompiler -> Assoc Name CoreExpr -> GmCompiler
-compileLet comp defs expr env
-    = compileLet' defs env ++ comp expr env' ++ [Slide (length defs)]
-    where
-        env' = compileArgs defs env
-
-compileLet' :: Assoc Name CoreExpr -> GmEnvironment -> GmCode
-compileLet' [] _env = []
-compileLet' ((_name, expr):defs) env
-    = compileC expr env ++ compileLet' defs (argOffset 1 env)
-
-compileArgs :: Assoc Name CoreExpr -> GmEnvironment -> GmEnvironment
-compileArgs defs env
-    = zip (aDomain defs) [n-1, n-2 .. 0] ++ argOffset n env
-    where
-        n = length defs
-
-argOffset :: Int -> GmEnvironment -> GmEnvironment
-argOffset n env = [(v, m+n) | (v, m) <- env ]
-
-compileLetrec :: GmCompiler -> Assoc Name CoreExpr -> GmCompiler
-compileLetrec comp defs e env
-    =  [Alloc n]
-    ++ compiled defs (n-1)
-    ++ comp e newArgs
-    ++ [Slide n]
-    where
-        newArgs = compileArgs defs env
-        n = length defs
-        compiled dds i = case dds of
-            []   -> []
-            d:ds -> compileC (snd d) newArgs
-                 ++ [Update i]
-                 ++ compiled ds (i-1)
-
-compiledPrimitives :: [GmCompiledSC]
-compiledPrimitives
-    = [ ("+", 2, [Push 1, Eval, Push 1, Eval, Add, Update 2, Pop 2, Unwind])
-      , ("-", 2, [Push 1, Eval, Push 1, Eval, Sub, Update 2, Pop 2, Unwind])
-      , ("*", 2, [Push 1, Eval, Push 1, Eval, Mul, Update 2, Pop 2, Unwind])
-      , ("/", 2, [Push 1, Eval, Push 1, Eval, Div, Update 2, Pop 2, Unwind])
-      , ("negate", 1, [Push 0, Eval, Neg, Update 1, Pop 1, Unwind])
-      , ("==", 2, [Push 1, Eval, Push 1, Eval, Eq, Update 2, Pop 2, Unwind])
-      , ("/=", 2, [Push 1, Eval, Push 1, Eval, Ne, Update 2, Pop 2, Unwind])
-      , ("<", 2, [Push 1, Eval, Push 1, Eval, Lt, Update 2, Pop 2, Unwind])
-      , ("<=", 2, [Push 1, Eval, Push 1, Eval, Le, Update 2, Pop 2, Unwind])
-      , (">", 2, [Push 1, Eval, Push 1, Eval, Gt, Update 2, Pop 2, Unwind])
-      , (">=", 2, [Push 1, Eval, Push 1, Eval, Ge, Update 2, Pop 2, Unwind])
-      ]
-
-compileAlts :: (Int -> GmCompiler)
-            -> [CoreAlt]
-            -> GmEnvironment
-            -> [(Int, GmCode)]
-compileAlts comp alts env
-    = [ (tag, comp len body (zip names [0 ..] ++ argOffset len env))
-      | (tag, names, body) <- alts, let len = length names ]
-
-compileE' :: Int -> GmCompiler
-compileE' offset expr env
-    = [Split offset] ++ compileE expr env ++ [Slide offset]
-
---
-
-sample :: String
-sample = unlines
-    [ "length xs = case xs of"
-    , "                   <1> -> 0 ;"
-    , "                   <2> y ys -> 1 + length ys"
-    ]
+-}
