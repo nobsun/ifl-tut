@@ -1,0 +1,3 @@
+main = twice' (twice' (S K K)) 3 ;
+twice' f x = par f (f x)
+

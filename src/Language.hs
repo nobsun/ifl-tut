@@ -302,7 +302,7 @@ clex i (c : cs)
 clex _ "" = []
 
 isIdChar :: Char -> Bool
-isIdChar c = isAlpha c || isDigit c || (c == '_')
+isIdChar c = isAlpha c || isDigit c || c == '_' || c == '\''
 
 syntax :: [Token] -> CoreProgram
 syntax = takeFirstParse . pProgram

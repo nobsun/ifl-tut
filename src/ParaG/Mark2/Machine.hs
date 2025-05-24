@@ -4,9 +4,10 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-module ParaG.Mark1.Machine
+module ParaG.Mark2.Machine
     where
 
+import Data.Bool
 import Data.Char
 import Data.Function
 import Data.List
@@ -18,17 +19,16 @@ import Stack hiding (push, pop, npop, discard)
 import Utils
 import Iseq
 
-import ParaG.Mark1.Code
-import ParaG.Mark1.Compiler
-import ParaG.Mark1.Node
-import ParaG.Mark1.PPrint
-import ParaG.Mark1.State
+import ParaG.Mark2.Code
+import ParaG.Mark2.Compiler
+import ParaG.Mark2.Node
+import ParaG.Mark2.PPrint
+import ParaG.Mark2.State
 
 import Debug.Trace qualified as Deb
-import ParaG.Mark1.State (PgmLocalState)
 
 debug :: Bool
-debug = True
+debug = False
 
 trace :: String -> a -> a
 trace | debug     = Deb.trace
@@ -101,6 +101,32 @@ makeTask tid addr = PgmLocalState
 tick :: PgmLocalState -> PgmLocalState
 tick local = local { clock = succ local.clock }
 
+lock :: Addr -> GmState -> GmState
+lock addr (global, local)
+    = ( global { heap = heap'}
+      , local
+      )
+    where
+        heap' = newHeap node
+        node  = hLookup global.heap addr
+        newHeap nd = case nd of
+            NAp a1 a2       -> hUpdate global.heap addr (NLAp a1 a2 local.taskid)
+            NGlobal n c 
+                | n == 0    -> hUpdate global.heap addr (NLGlobal n c local.taskid)
+            _               -> global.heap
+
+unlock :: Addr -> GmState -> GmState
+unlock addr (global, local)
+    = newState node
+    where
+        node  = hLookup global.heap addr
+        newState nd = case nd of
+            NLAp a1 a2 _tid
+                -> unlock a1 (global { heap = hUpdate global.heap addr (NAp a1 a2) }, local)
+            NLGlobal n c _tid
+                -> (global { heap = hUpdate global.heap addr (NGlobal n c)}, local)
+            _   -> (global, local)
+
 step :: PgmGlobalState -> PgmLocalState -> GmState
 step global local 
     = list (error "step: no code") phi local.code
@@ -148,7 +174,7 @@ dispatch instr = case instr of
     Par             -> pgmPar
 
 unwind :: GmState -> GmState
-unwind (global, local)
+unwind gl@(global, local)
     = newState (hLookup global.heap a)
     where
         (a, stk) = Stk.pop local.stack
@@ -169,10 +195,10 @@ unwind (global, local)
                         )
                 where
                     ((i',stk',vstk'), dump') = Stk.pop local.dump
-            NAp a1 _  -> ( global
+            NAp a1 a2 -> ( global { heap = hUpdate global.heap a (NLAp a1 a2 local.taskid) }
                          , local { code = [Unwind]
                                  , stack = stk'
-                                 , ruleid = 11
+                                 , ruleid = 52
                                  }
                          )
                 where
@@ -184,6 +210,10 @@ unwind (global, local)
                                  }
                          )
             NGlobal n c
+                | n == 0
+                    -> ( global { heap = hUpdate global.heap a (NLGlobal n c local.taskid)}
+                       , local { code = c }
+                       )
                 | k < n
                     -> ( global 
                        , local { code  = i'
@@ -217,6 +247,14 @@ unwind (global, local)
                        )
                 where
                     ((i',stk',vstk'), dump') = Stk.pop local.dump 
+            NLAp _ _ tid -> (global', trace msg local' { code = [Unwind] })
+                where
+                    (global',local') = bool id (unlock a) (tid < local.taskid) gl
+                    msg = "task#"++show local.taskid++" meets with locked by task#" ++ show tid
+            NLGlobal _ _ tid -> (global', trace msg local' { code = [Unwind]} )
+                where 
+                    (global',local') = bool id (unlock a) (tid < local.taskid) gl
+                    msg = "task#"++show local.taskid++" meets with locked by task#" ++ show tid
 
 pushGlobal :: GmGlobalMode -> GmState -> GmState
 pushGlobal f (global, local) = case f of
@@ -290,14 +328,14 @@ pop n (global, local)
 
 update :: Int -> GmState -> GmState
 update n (global, local)
-    = ( global { heap = heap' }
-      , local { stack  = stk'
-              , ruleid = 15
-              }
+    = ( global' { heap = heap' }
+      , local' { stack = stk' }
       )
     where
         (a, stk') = Stk.pop local.stack
-        heap'     = hUpdate global.heap (stk'.stkItems !! n) (NInd a)
+        ra = stk'.stkItems !! n 
+        (global',local') = unlock ra (global,local)
+        heap' = hUpdate global'.heap ra (NInd a)
 
 mkAp :: GmState -> GmState
 mkAp (global, local)
@@ -569,9 +607,10 @@ rearrange n heap stk
         phi a = Stk.push (getArg (hLookup heap a))
 
 getArg :: Node -> Addr
-getArg (NAp _ a2) = a2
-getArg (NInd a)   = a
-getArg _          = error "getArg: Not application node"
+getArg (NAp _ a2)    = a2
+getArg (NLAp _ a2 _) = a2
+getArg (NInd a)    = a
+getArg _           = error "getArg: Not application node"
 
 pgmPar :: GmState -> GmState
 pgmPar (global, local)
