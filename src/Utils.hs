@@ -1,7 +1,7 @@
 module Utils
     ( space, layn, rjustify
     , Assoc, aLookup, aDomain, aRange, aEmpty, aInsert
-    , merge
+    , merge, list
     )
     where
 
@@ -53,3 +53,8 @@ merge xxs yys = case xxs of
             EQ -> x : merge xs ys
             _  -> y : merge xxs ys
 
+{- | list -}
+list :: b -> (a -> [a] -> b) -> [a] -> b
+list z c xxs = case xxs of
+    []   -> z
+    x:xs -> c x xs

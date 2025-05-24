@@ -1,0 +1,1 @@
+main = par (S K K) (S K K 3)
