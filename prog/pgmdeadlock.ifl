@@ -1,0 +1,4 @@
+add x y = x + y ;
+mul x y = x * y ;
+h f g = compose f g ;
+main = h (add 3) (mul 2) 3
