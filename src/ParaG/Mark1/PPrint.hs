@@ -168,7 +168,9 @@ showLocalState gs@(_global, local)
                 , showDump gs
                 , showVStack gs
                 , showClock local.clock
-                ])]
+                ])
+    , iNewline
+    ]
 
 showOutput :: GmOutput-> IseqRep
 showOutput o = iConcat [iStr "Output: \"", iStr o, iStr "\""]

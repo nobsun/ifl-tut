@@ -169,6 +169,7 @@ showLocalState gs@(_global, local)
                 , showVStack gs
                 , showClock local.clock
                 ])
+    , iNewline
     ]
 
 showOutput :: GmOutput-> IseqRep
@@ -275,5 +276,4 @@ showClock c
     = iConcat
     [ iStr " Clock: "
     , iNum c
-    , iNewline
     ]

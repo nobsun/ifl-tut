@@ -249,12 +249,12 @@ unwind gl@(global, local)
                     ((i',stk',vstk'), dump') = Stk.pop local.dump 
             NLAp _ _ tid -> (global', trace msg local' { code = [Unwind] })
                 where
-                    (global',local') = bool id (unlock a) (const True (tid < local.taskid)) gl
-                    msg = "task#"++show local.taskid++" meets with locked by task#" ++ show tid
+                    (global',local') = bool id (unlock a) (tid <= local.taskid) gl
+                    msg = "task#"++show local.taskid++" meets *NAp locked by task#" ++ show tid
             NLGlobal _ _ tid -> (global', trace msg local' { code = [Unwind]} )
                 where 
-                    (global',local') = bool id (unlock a) (const True (tid < local.taskid)) gl
-                    msg = "task#"++show local.taskid++" meets with locked by task#" ++ show tid
+                    (global',local') = bool id (unlock a) (tid <= local.taskid) gl
+                    msg = "task#"++show local.taskid++" meets *NGlobal locked by task#" ++ show tid
 
 pushGlobal :: GmGlobalMode -> GmState -> GmState
 pushGlobal f (global, local) = case f of
