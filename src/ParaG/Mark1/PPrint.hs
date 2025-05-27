@@ -136,7 +136,7 @@ showState s = iConcat
     , showSparks s.pgmGlobal.sparks, iNewline
     , iIndent $ iInterleave iNewline 
               $ curry showLocalState s.pgmGlobal <$> s.pgmLocals
-    , showHeap s.pgmGlobal
+--    , showHeap s.pgmGlobal
     ]
 
 showHeap :: PgmGlobalState -> IseqRep
@@ -257,7 +257,12 @@ showVStack (_global, local)
 
 showStats :: PgmState -> IseqRep
 showStats s
-    = iConcat [ iStr "live durations = ", iStr (show s.pgmGlobal.stats.durations) ]
+    = iConcat [ iStr "live durations = ", iStr $ show s.pgmGlobal.stats.durations
+              , iNewline
+              , iStr "total tasks    = ", iNum $ length s.pgmGlobal.stats.durations
+              , iNewline
+              , iStr "total clocks   = ", iNum $ sum s.pgmGlobal.stats.durations
+              ]
 
 showAddr :: Addr -> IseqRep
 showAddr addr = iStr ('#' : show addr)

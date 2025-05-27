@@ -28,7 +28,7 @@ import ParaG.Mark2.State
 import Debug.Trace qualified as Deb
 
 debug :: Bool
-debug = True
+debug = () == ()
 
 trace :: String -> a -> a
 trace | debug     = Deb.trace
@@ -195,7 +195,7 @@ unwind gl@(global, local)
                         )
                 where
                     ((i',stk',vstk'), dump') = Stk.pop local.dump
-            NAp a1 a2 -> ( global { heap = hUpdate global.heap a (NLAp a1 a2 local.taskid) }
+            NAp a1 a2 -> ( global { heap = trace msg hUpdate global.heap a (NLAp a1 a2 local.taskid) }
                          , local { code = [Unwind]
                                  , stack = stk'
                                  , ruleid = 52
@@ -203,6 +203,8 @@ unwind gl@(global, local)
                          )
                 where
                     stk' = Stk.push a1 local.stack
+                    msg = "task#" ++ show local.taskid ++ " locks   #" 
+                        ++ show a ++ " : " ++ iDisplay (showNode global a node)
             NInd a1   -> ( global
                          , local { code = [Unwind]
                                  , stack = Stk.push a1 stk
@@ -211,7 +213,7 @@ unwind gl@(global, local)
                          )
             NGlobal n c
                 | n == 0
-                    -> ( global { heap = hUpdate global.heap a (NLGlobal n c local.taskid)}
+                    -> ( global { heap = trace msg hUpdate global.heap a (NLGlobal n c local.taskid)}
                        , local { code = c }
                        )
                 | k < n
@@ -234,6 +236,8 @@ unwind gl@(global, local)
                     k      = stk.curDepth
                     (ak,_) = Stk.pop $ Stk.discard k local.stack
                     ((i',stk',vstk'), dump') = Stk.pop local.dump
+                    msg = "task#" ++ show local.taskid ++ " locks   #" 
+                        ++ show a ++ " : " ++ iDisplay (showNode global a node)
             NConstr _ _
                 | isEmptyStack local.dump -> (global, local)
                 | otherwise
@@ -249,12 +253,19 @@ unwind gl@(global, local)
                     ((i',stk',vstk'), dump') = Stk.pop local.dump 
             NLAp _ _ tid -> (global', trace msg local' { code = [Unwind] })
                 where
-                    (global',local') = bool id (unlock a) (tid <= local.taskid) gl
-                    msg = "task#"++show local.taskid++" meets *NAp locked by task#" ++ show tid
+                    (global',local') = bool id (trace ulmsg unlock a) (tid <= local.taskid) gl
+                    msg = "task#"++show local.taskid ++     " meets   #"
+                        ++ show a ++ " : " ++ iDisplay (showNode global a node)
+                    ulmsg = "task#" ++ show local.taskid ++ " unlocks #" 
+                          ++ show a ++ " : " ++ iDisplay (showNode global a node)
             NLGlobal _ _ tid -> (global', trace msg local' { code = [Unwind]} )
                 where 
-                    (global',local') = bool id (unlock a) (tid <= local.taskid) gl
-                    msg = "task#"++show local.taskid++" meets *NGlobal locked by task#" ++ show tid
+                    (global',local') = bool id (trace ulmsg unlock a) (tid <= local.taskid) gl
+                    msg = "task#"++show local.taskid ++     " meets   #"
+                        ++ show a ++ " : " ++ iDisplay (showNode global a node)
+                    ulmsg = "task#" ++ show local.taskid ++ " unlocks #" 
+                          ++ show a ++ " : " ++ iDisplay (showNode global a node)
+
 
 pushGlobal :: GmGlobalMode -> GmState -> GmState
 pushGlobal f (global, local) = case f of
