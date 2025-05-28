@@ -1,0 +1,4 @@
+#!/bin/bash
+
+source .curname
+stack build ifl-tut:exe:$CURRENT_STACK_EXE_ENTRY --ghc-options -D__TRACE__ "$@"

@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE NPlusKPatterns #-}
 {-# LANGUAGE ImplicitParams #-}
 {-# LANGUAGE NoFieldSelectors #-}
@@ -27,15 +28,19 @@ import ParaG.Mark2.State
 
 import Debug.Trace qualified as Deb
 
-debug :: Bool
-debug = () == ()
-
+#ifdef __TRACE__
 trace :: String -> a -> a
-trace | debug     = Deb.trace
-      | otherwise = const id
-
+trace = Deb.trace
 tracing :: Show a => a -> a
 tracing = trace . show <*> id
+#else
+trace :: String -> a -> a
+trace = const id
+tracing :: Show a => a -> a
+tracing = id
+#endif
+
+
 
 run :: String -> ([String] -> [String])
 run prog inputs 
@@ -253,18 +258,23 @@ unwind gl@(global, local)
                     ((i',stk',vstk'), dump') = Stk.pop local.dump 
             NLAp _ _ tid -> (global', trace msg local' { code = [Unwind] })
                 where
-                    (global',local') = bool id (trace ulmsg unlock a) (tid <= local.taskid) gl
+                    (global',local') = bool id (trace ulmsg unlock a) (tid `__cmp__` local.taskid) gl
                     msg = "task#"++show local.taskid ++     " meets   #"
                         ++ show a ++ " : " ++ iDisplay (showNode global a node)
                     ulmsg = "task#" ++ show local.taskid ++ " unlocks #" 
                           ++ show a ++ " : " ++ iDisplay (showNode global a node)
             NLGlobal _ _ tid -> (global', trace msg local' { code = [Unwind]} )
                 where 
-                    (global',local') = bool id (trace ulmsg unlock a) (tid <= local.taskid) gl
+                    (global',local') = bool id (trace ulmsg unlock a) (tid `__cmp__` local.taskid) gl
                     msg = "task#"++show local.taskid ++     " meets   #"
                         ++ show a ++ " : " ++ iDisplay (showNode global a node)
                     ulmsg = "task#" ++ show local.taskid ++ " unlocks #" 
                           ++ show a ++ " : " ++ iDisplay (showNode global a node)
+#ifdef __GE__
+        __cmp__ = (>=)
+#else
+        __cmp__ = (<=)
+#endif
 
 
 pushGlobal :: GmGlobalMode -> GmState -> GmState
