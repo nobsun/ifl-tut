@@ -1,0 +1,6 @@
+add x y = x + y;
+main = letrec
+          x = 2 + 3 * 4;
+          y = (4 - 1) * 2;
+          z = par add x y
+       in par add z z
