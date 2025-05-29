@@ -40,8 +40,6 @@ tracing :: Show a => a -> a
 tracing = id
 #endif
 
-
-
 run :: String -> ([String] -> [String])
 run prog inputs 
     = showFullResults 
@@ -270,12 +268,15 @@ unwind gl@(global, local)
                         ++ show a ++ " : " ++ iDisplay (showNode global a node)
                     ulmsg = "task#" ++ show local.taskid ++ " unlocks #" 
                           ++ show a ++ " : " ++ iDisplay (showNode global a node)
+#ifdef __TRUE__
+        __cmp__ = \ _ _ -> True
+#else
 #ifdef __GE__
         __cmp__ = (>=)
 #else
         __cmp__ = (<=)
 #endif
-
+#endif
 
 pushGlobal :: GmGlobalMode -> GmState -> GmState
 pushGlobal f (global, local) = case f of
