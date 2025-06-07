@@ -67,10 +67,15 @@ data PgmLocalState = PgmLocalState
     , stack  :: GmStack
     , dump   :: GmDump
     , vstack :: GmVStack
+    , locks  :: GmLocks
     , clock  :: GmClock
     , taskid :: GmTaskId
     , ruleid :: GmRuleId
     }
+
+--
+
+type GmLocks = [Addr]
 
 --
 

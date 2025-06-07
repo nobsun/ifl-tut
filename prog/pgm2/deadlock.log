@@ -1,0 +1,1805 @@
+Code for I
+  Code:{ Push 0
+         Eval
+         Update 1
+         Pop 1
+         Unwind }
+
+Code for K
+  Code:{ Push 0
+         Eval
+         Update 2
+         Pop 2
+         Unwind }
+
+Code for K1
+  Code:{ Push 1
+         Eval
+         Update 2
+         Pop 2
+         Unwind }
+
+Code for S
+  Code:{ Push 2
+         Push 2
+         MkAp
+         Push 3
+         Push 2
+         MkAp
+         MkAp
+         Eval
+         Update 3
+         Pop 3
+         Unwind }
+
+Code for compose
+  Code:{ Push 2
+         Push 2
+         MkAp
+         Push 1
+         MkAp
+         Eval
+         Update 3
+         Pop 3
+         Unwind }
+
+Code for twice
+  Code:{ Push 0
+         Push 1
+         PushGlobal compose
+         MkAp
+         MkAp
+         Eval
+         Update 1
+         Pop 1
+         Unwind }
+
+Code for mul2
+  Code:{ PushBasic 2
+         Push 0
+         Eval
+         Get
+         Mul
+         UpdateInt 1
+         Return }
+
+Code for twicep
+  Code:{ Push 1
+         Push 1
+         MkAp
+         Push 0
+         Par
+         Push 1
+         MkAp
+         Update 2
+         Pop 2
+         Unwind }
+
+Code for main
+  Code:{ Alloc 2
+         PushGlobal mul2
+         PushGlobal twicep
+         MkAp
+         Update 1
+         Push 1
+         PushGlobal twicep
+         MkAp
+         Update 0
+         PushInt 2
+         Push 1
+         MkAp
+         Eval
+         Update 2
+         Pop 2
+         Unwind
+         Slide 2 }
+
+Code for +
+  Code:{ Push 1
+         Eval
+         Get
+         Push 0
+         Eval
+         Get
+         Add
+         UpdateInt 2
+         Return }
+
+Code for -
+  Code:{ Push 1
+         Eval
+         Get
+         Push 0
+         Eval
+         Get
+         Sub
+         UpdateInt 2
+         Return }
+
+Code for *
+  Code:{ Push 1
+         Eval
+         Get
+         Push 0
+         Eval
+         Get
+         Mul
+         UpdateInt 2
+         Return }
+
+Code for /
+  Code:{ Push 1
+         Eval
+         Get
+         Push 0
+         Eval
+         Get
+         Div
+         UpdateInt 2
+         Return }
+
+Code for negate
+  Code:{ Push 0
+         Eval
+         Get
+         Neg
+         UpdateInt 1
+         Return }
+
+Code for ==
+  Code:{ Push 1
+         Eval
+         Get
+         Push 0
+         Eval
+         Get
+         Eq
+         UpdateBool 2
+         Return }
+
+Code for /=
+  Code:{ Push 1
+         Eval
+         Get
+         Push 0
+         Eval
+         Get
+         Ne
+         UpdateBool 2
+         Return }
+
+Code for >=
+  Code:{ Push 1
+         Eval
+         Get
+         Push 0
+         Eval
+         Get
+         Ge
+         UpdateBool 2
+         Return }
+
+Code for >
+  Code:{ Push 1
+         Eval
+         Get
+         Push 0
+         Eval
+         Get
+         Gt
+         UpdateBool 2
+         Return }
+
+Code for <=
+  Code:{ Push 1
+         Eval
+         Get
+         Push 0
+         Eval
+         Get
+         Le
+         UpdateBool 2
+         Return }
+
+Code for <
+  Code:{ Push 1
+         Eval
+         Get
+         Push 0
+         Eval
+         Get
+         Lt
+         UpdateBool 2
+         Return }
+
+Code for &&
+  Code:{ Push 1
+         Eval
+         Get
+         Push 0
+         Eval
+         Get
+         And
+         UpdateBool 2
+         Return }
+
+Code for ||
+  Code:{ Push 1
+         Eval
+         Get
+         Push 0
+         Eval
+         Get
+         Or
+         UpdateBool 2
+         Return }
+
+Code for not
+  Code:{ Push 0
+         Eval
+         Get
+         Not
+         UpdateBool 1
+         Return }
+
+Code for if
+  Code:{ Push 0
+         Eval
+         Get
+         Cond [2: {Push 1; Eval; ...}, 1: {Push 2; Eval; ...}] }
+
+Code for par
+  Code:{ Push 1
+         Push 0
+         Par
+         Push 1
+         MkAp
+         Update 2
+         Pop 2
+         Unwind }
+
+Code for True
+  Code:{ Pack 20
+         Eval
+         Update 0
+         Pop 0
+         Unwind }
+
+Code for False
+  Code:{ Pack 10
+         Eval
+         Update 0
+         Pop 0
+         Unwind }
+
+     0) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Eval
+                          Print }
+                 
+                  Stack:[ #9: Global main ]
+                   Dump:[  ]
+                 Vstack:[  ]
+                  Clock: 0
+        
+
+     1) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Unwind }
+                 
+                  Stack:[ #9: Global main ]
+                   Dump:[ <{Print}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 1
+        
+
+     2) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Alloc 2
+                          PushGlobal mul2
+                          PushGlobal twicep
+                          MkAp
+                          Update 1
+                          Push 1
+                          PushGlobal twicep
+                          MkAp
+                          Update 0
+                          PushInt 2
+                          Push 1
+                          MkAp
+                          Eval
+                          Update 2
+                          Pop 2
+                          Unwind
+                          Slide 2 }
+                 
+                  Stack:[ #9: *Global main (locked by task#)0) ]
+                   Dump:[ <{Print}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 2
+        
+
+     3) Output: ""
+        Sparks: 
+        Task #0:   Code:{ PushGlobal mul2
+                          PushGlobal twicep
+                          MkAp
+                          Update 1
+                          Push 1
+                          PushGlobal twicep
+                          MkAp
+                          Update 0
+                          PushInt 2
+                          Push 1
+                          MkAp
+                          Eval
+                          Update 2
+                          Pop 2
+                          Unwind
+                          Slide 2 }
+                 
+                  Stack:[ #9: *Global main (locked by task#)0)
+                          #28: Ind #-1
+                          #29: Ind #-1 ]
+                   Dump:[ <{Print}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 3
+        
+
+     4) Output: ""
+        Sparks: 
+        Task #0:   Code:{ PushGlobal twicep
+                          MkAp
+                          Update 1
+                          Push 1
+                          PushGlobal twicep
+                          MkAp
+                          Update 0
+                          PushInt 2
+                          Push 1
+                          MkAp
+                          Eval
+                          Update 2
+                          Pop 2
+                          Unwind
+                          Slide 2 }
+                 
+                  Stack:[ #9: *Global main (locked by task#)0)
+                          #28: Ind #-1
+                          #29: Ind #-1
+                          #7: Global mul2 ]
+                   Dump:[ <{Print}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 4
+        
+
+     5) Output: ""
+        Sparks: 
+        Task #0:   Code:{ MkAp
+                          Update 1
+                          Push 1
+                          PushGlobal twicep
+                          MkAp
+                          Update 0
+                          PushInt 2
+                          Push 1
+                          MkAp
+                          Eval
+                          Update 2
+                          Pop 2
+                          Unwind
+                          Slide 2 }
+                 
+                  Stack:[ #9: *Global main (locked by task#)0)
+                          #28: Ind #-1
+                          #29: Ind #-1
+                          #7: Global mul2
+                          #8: Global twicep ]
+                   Dump:[ <{Print}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 5
+        
+
+     6) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Update 1
+                          Push 1
+                          PushGlobal twicep
+                          MkAp
+                          Update 0
+                          PushInt 2
+                          Push 1
+                          MkAp
+                          Eval
+                          Update 2
+                          Pop 2
+                          Unwind
+                          Slide 2 }
+                 
+                  Stack:[ #9: *Global main (locked by task#)0)
+                          #28: Ind #-1
+                          #29: Ind #-1
+                          #30: Ap #8 #7 ]
+                   Dump:[ <{Print}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 6
+        
+
+     7) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Push 1
+                          PushGlobal twicep
+                          MkAp
+                          Update 0
+                          PushInt 2
+                          Push 1
+                          MkAp
+                          Eval
+                          Update 2
+                          Pop 2
+                          Unwind
+                          Slide 2 }
+                 
+                  Stack:[ #9: *Global main (locked by task#)0)
+                          #28: Ind #30
+                          #29: Ind #-1 ]
+                   Dump:[ <{Print}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 7
+        
+
+     8) Output: ""
+        Sparks: 
+        Task #0:   Code:{ PushGlobal twicep
+                          MkAp
+                          Update 0
+                          PushInt 2
+                          Push 1
+                          MkAp
+                          Eval
+                          Update 2
+                          Pop 2
+                          Unwind
+                          Slide 2 }
+                 
+                  Stack:[ #9: *Global main (locked by task#)0)
+                          #28: Ind #30
+                          #29: Ind #-1
+                          #28: Ind #30 ]
+                   Dump:[ <{Print}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 8
+        
+
+     9) Output: ""
+        Sparks: 
+        Task #0:   Code:{ MkAp
+                          Update 0
+                          PushInt 2
+                          Push 1
+                          MkAp
+                          Eval
+                          Update 2
+                          Pop 2
+                          Unwind
+                          Slide 2 }
+                 
+                  Stack:[ #9: *Global main (locked by task#)0)
+                          #28: Ind #30
+                          #29: Ind #-1
+                          #28: Ind #30
+                          #8: Global twicep ]
+                   Dump:[ <{Print}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 9
+        
+
+    10) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Update 0
+                          PushInt 2
+                          Push 1
+                          MkAp
+                          Eval
+                          Update 2
+                          Pop 2
+                          Unwind
+                          Slide 2 }
+                 
+                  Stack:[ #9: *Global main (locked by task#)0)
+                          #28: Ind #30
+                          #29: Ind #-1
+                          #31: Ap #8 #28 ]
+                   Dump:[ <{Print}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 10
+        
+
+    11) Output: ""
+        Sparks: 
+        Task #0:   Code:{ PushInt 2
+                          Push 1
+                          MkAp
+                          Eval
+                          Update 2
+                          Pop 2
+                          Unwind
+                          Slide 2 }
+                 
+                  Stack:[ #9: *Global main (locked by task#)0)
+                          #28: Ind #30
+                          #29: Ind #31 ]
+                   Dump:[ <{Print}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 11
+        
+
+    12) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Push 1
+                          MkAp
+                          Eval
+                          Update 2
+                          Pop 2
+                          Unwind
+                          Slide 2 }
+                 
+                  Stack:[ #9: *Global main (locked by task#)0)
+                          #28: Ind #30
+                          #29: Ind #31
+                          #32: 2 ]
+                   Dump:[ <{Print}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 12
+        
+
+    13) Output: ""
+        Sparks: 
+        Task #0:   Code:{ MkAp
+                          Eval
+                          Update 2
+                          Pop 2
+                          Unwind
+                          Slide 2 }
+                 
+                  Stack:[ #9: *Global main (locked by task#)0)
+                          #28: Ind #30
+                          #29: Ind #31
+                          #32: 2
+                          #29: Ind #31 ]
+                   Dump:[ <{Print}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 13
+        
+
+    14) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Eval
+                          Update 2
+                          Pop 2
+                          Unwind
+                          Slide 2 }
+                 
+                  Stack:[ #9: *Global main (locked by task#)0)
+                          #28: Ind #30
+                          #29: Ind #31
+                          #33: Ap #29 #32 ]
+                   Dump:[ <{Print}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 14
+        
+
+    15) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Unwind }
+                 
+                  Stack:[ #33: Ap #29 #32 ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[  ]
+                  Clock: 15
+        
+
+    16) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Unwind }
+                 
+                  Stack:[ #33: *Ap #29 #32 (locked by task#0)
+                          #29: Ind #31 ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[  ]
+                  Clock: 16
+        
+
+    17) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Unwind }
+                 
+                  Stack:[ #33: *Ap #29 #32 (locked by task#0)
+                          #31: Ap #8 #28 ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[  ]
+                  Clock: 17
+        
+
+    18) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Unwind }
+                 
+                  Stack:[ #33: *Ap #29 #32 (locked by task#0)
+                          #31: *Ap #8 #28 (locked by task#0)
+                          #8: Global twicep ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[  ]
+                  Clock: 18
+        
+
+    19) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Push 1
+                          Push 1
+                          MkAp
+                          Push 0
+                          Par
+                          Push 1
+                          MkAp
+                          Update 2
+                          Pop 2
+                          Unwind }
+                 
+                  Stack:[ #33: *Ap #29 #32 (locked by task#0)
+                          #32: 2
+                          #28: Ind #30 ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[  ]
+                  Clock: 19
+        
+
+    20) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Push 1
+                          MkAp
+                          Push 0
+                          Par
+                          Push 1
+                          MkAp
+                          Update 2
+                          Pop 2
+                          Unwind }
+                 
+                  Stack:[ #33: *Ap #29 #32 (locked by task#0)
+                          #32: 2
+                          #28: Ind #30
+                          #32: 2 ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[  ]
+                  Clock: 20
+        
+
+    21) Output: ""
+        Sparks: 
+        Task #0:   Code:{ MkAp
+                          Push 0
+                          Par
+                          Push 1
+                          MkAp
+                          Update 2
+                          Pop 2
+                          Unwind }
+                 
+                  Stack:[ #33: *Ap #29 #32 (locked by task#0)
+                          #32: 2
+                          #28: Ind #30
+                          #32: 2
+                          #28: Ind #30 ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[  ]
+                  Clock: 21
+        
+
+    22) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Push 0
+                          Par
+                          Push 1
+                          MkAp
+                          Update 2
+                          Pop 2
+                          Unwind }
+                 
+                  Stack:[ #33: *Ap #29 #32 (locked by task#0)
+                          #32: 2
+                          #28: Ind #30
+                          #34: Ap #28 #32 ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[  ]
+                  Clock: 22
+        
+
+    23) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Par
+                          Push 1
+                          MkAp
+                          Update 2
+                          Pop 2
+                          Unwind }
+                 
+                  Stack:[ #33: *Ap #29 #32 (locked by task#0)
+                          #32: 2
+                          #28: Ind #30
+                          #34: Ap #28 #32
+                          #34: Ap #28 #32 ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[  ]
+                  Clock: 23
+        
+
+    24) Output: ""
+        Sparks: #34
+        Task #0:   Code:{ Push 1
+                          MkAp
+                          Update 2
+                          Pop 2
+                          Unwind }
+                 
+                  Stack:[ #33: *Ap #29 #32 (locked by task#0)
+                          #32: 2
+                          #28: Ind #30
+                          #34: Ap #28 #32 ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[  ]
+                  Clock: 24
+        
+
+    25) Output: ""
+        Sparks: 
+        Task #0:   Code:{ MkAp
+                          Update 2
+                          Pop 2
+                          Unwind }
+                 
+                  Stack:[ #33: *Ap #29 #32 (locked by task#0)
+                          #32: 2
+                          #28: Ind #30
+                          #34: Ap #28 #32
+                          #28: Ind #30 ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[  ]
+                  Clock: 25
+        
+        Task #1:   Code:{ Unwind }
+                 
+                  Stack:[ #34: Ap #28 #32 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 1
+        
+
+    26) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Update 2
+                          Pop 2
+                          Unwind }
+                 
+                  Stack:[ #33: *Ap #29 #32 (locked by task#0)
+                          #32: 2
+                          #28: Ind #30
+                          #35: Ap #28 #34 ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[  ]
+                  Clock: 26
+        
+        Task #1:   Code:{ Unwind }
+                 
+                  Stack:[ #34: *Ap #28 #32 (locked by task#1)
+                          #28: Ind #30 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 2
+        
+
+    27) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Pop 2
+                          Unwind }
+                 
+                  Stack:[ #33: Ind #35
+                          #32: 2
+                          #28: Ind #30 ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[  ]
+                  Clock: 27
+        
+        Task #1:   Code:{ Unwind }
+                 
+                  Stack:[ #34: *Ap #28 #32 (locked by task#1)
+                          #30: Ap #8 #7 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 3
+        
+
+    28) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Unwind }
+                 
+                  Stack:[ #33: Ind #35 ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[  ]
+                  Clock: 28
+        
+        Task #1:   Code:{ Unwind }
+                 
+                  Stack:[ #34: *Ap #28 #32 (locked by task#1)
+                          #30: *Ap #8 #7 (locked by task#1)
+                          #8: Global twicep ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 4
+        
+
+    29) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Unwind }
+                 
+                  Stack:[ #35: Ap #28 #34 ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[  ]
+                  Clock: 29
+        
+        Task #1:   Code:{ Push 1
+                          Push 1
+                          MkAp
+                          Push 0
+                          Par
+                          Push 1
+                          MkAp
+                          Update 2
+                          Pop 2
+                          Unwind }
+                 
+                  Stack:[ #34: *Ap #28 #32 (locked by task#1)
+                          #32: 2
+                          #7: Global mul2 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 5
+        
+
+    30) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Unwind }
+                 
+                  Stack:[ #35: *Ap #28 #34 (locked by task#0)
+                          #28: Ind #30 ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[  ]
+                  Clock: 30
+        
+        Task #1:   Code:{ Push 1
+                          MkAp
+                          Push 0
+                          Par
+                          Push 1
+                          MkAp
+                          Update 2
+                          Pop 2
+                          Unwind }
+                 
+                  Stack:[ #34: *Ap #28 #32 (locked by task#1)
+                          #32: 2
+                          #7: Global mul2
+                          #32: 2 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 6
+        
+
+    31) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Unwind }
+                 
+                  Stack:[ #35: *Ap #28 #34 (locked by task#0)
+                          #30: *Ap #8 #7 (locked by task#1) ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[  ]
+                  Clock: 31
+        
+        Task #1:   Code:{ MkAp
+                          Push 0
+                          Par
+                          Push 1
+                          MkAp
+                          Update 2
+                          Pop 2
+                          Unwind }
+                 
+                  Stack:[ #34: *Ap #28 #32 (locked by task#1)
+                          #32: 2
+                          #7: Global mul2
+                          #32: 2
+                          #7: Global mul2 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 7
+        
+
+    32) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Unwind }
+                 
+                  Stack:[ #35: *Ap #28 #34 (locked by task#0)
+                          #30: Ap #8 #7 ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[  ]
+                  Clock: 32
+        
+        Task #1:   Code:{ Push 0
+                          Par
+                          Push 1
+                          MkAp
+                          Update 2
+                          Pop 2
+                          Unwind }
+                 
+                  Stack:[ #34: *Ap #28 #32 (locked by task#1)
+                          #32: 2
+                          #7: Global mul2
+                          #36: Ap #7 #32 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 8
+        
+
+    33) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Unwind }
+                 
+                  Stack:[ #35: *Ap #28 #34 (locked by task#0)
+                          #30: *Ap #8 #7 (locked by task#0)
+                          #8: Global twicep ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[  ]
+                  Clock: 33
+        
+        Task #1:   Code:{ Par
+                          Push 1
+                          MkAp
+                          Update 2
+                          Pop 2
+                          Unwind }
+                 
+                  Stack:[ #34: *Ap #28 #32 (locked by task#1)
+                          #32: 2
+                          #7: Global mul2
+                          #36: Ap #7 #32
+                          #36: Ap #7 #32 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 9
+        
+
+    34) Output: ""
+        Sparks: #36
+        Task #0:   Code:{ Push 1
+                          Push 1
+                          MkAp
+                          Push 0
+                          Par
+                          Push 1
+                          MkAp
+                          Update 2
+                          Pop 2
+                          Unwind }
+                 
+                  Stack:[ #35: *Ap #28 #34 (locked by task#0)
+                          #34: *Ap #28 #32 (locked by task#1)
+                          #7: Global mul2 ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[  ]
+                  Clock: 34
+        
+        Task #1:   Code:{ Push 1
+                          MkAp
+                          Update 2
+                          Pop 2
+                          Unwind }
+                 
+                  Stack:[ #34: *Ap #28 #32 (locked by task#1)
+                          #32: 2
+                          #7: Global mul2
+                          #36: Ap #7 #32 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 10
+        
+
+    35) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Push 1
+                          MkAp
+                          Push 0
+                          Par
+                          Push 1
+                          MkAp
+                          Update 2
+                          Pop 2
+                          Unwind }
+                 
+                  Stack:[ #35: *Ap #28 #34 (locked by task#0)
+                          #34: *Ap #28 #32 (locked by task#1)
+                          #7: Global mul2
+                          #34: *Ap #28 #32 (locked by task#1) ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[  ]
+                  Clock: 35
+        
+        Task #1:   Code:{ MkAp
+                          Update 2
+                          Pop 2
+                          Unwind }
+                 
+                  Stack:[ #34: *Ap #28 #32 (locked by task#1)
+                          #32: 2
+                          #7: Global mul2
+                          #36: Ap #7 #32
+                          #7: Global mul2 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 11
+        
+        Task #2:   Code:{ Unwind }
+                 
+                  Stack:[ #36: Ap #7 #32 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 1
+        
+
+    36) Output: ""
+        Sparks: 
+        Task #0:   Code:{ MkAp
+                          Push 0
+                          Par
+                          Push 1
+                          MkAp
+                          Update 2
+                          Pop 2
+                          Unwind }
+                 
+                  Stack:[ #35: *Ap #28 #34 (locked by task#0)
+                          #34: *Ap #28 #32 (locked by task#1)
+                          #7: Global mul2
+                          #34: *Ap #28 #32 (locked by task#1)
+                          #7: Global mul2 ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[  ]
+                  Clock: 36
+        
+        Task #1:   Code:{ Update 2
+                          Pop 2
+                          Unwind }
+                 
+                  Stack:[ #34: *Ap #28 #32 (locked by task#1)
+                          #32: 2
+                          #7: Global mul2
+                          #37: Ap #7 #36 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 12
+        
+        Task #2:   Code:{ Unwind }
+                 
+                  Stack:[ #36: *Ap #7 #32 (locked by task#2)
+                          #7: Global mul2 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 2
+        
+
+    37) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Push 0
+                          Par
+                          Push 1
+                          MkAp
+                          Update 2
+                          Pop 2
+                          Unwind }
+                 
+                  Stack:[ #35: *Ap #28 #34 (locked by task#0)
+                          #34: Ind #37
+                          #7: Global mul2
+                          #38: Ap #7 #34 ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[  ]
+                  Clock: 37
+        
+        Task #1:   Code:{ Pop 2
+                          Unwind }
+                 
+                  Stack:[ #34: Ind #37
+                          #32: 2
+                          #7: Global mul2 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 13
+        
+        Task #2:   Code:{ PushBasic 2
+                          Push 0
+                          Eval
+                          Get
+                          Mul
+                          UpdateInt 1
+                          Return }
+                 
+                  Stack:[ #36: *Ap #7 #32 (locked by task#2)
+                          #32: 2 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 3
+        
+
+    38) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Par
+                          Push 1
+                          MkAp
+                          Update 2
+                          Pop 2
+                          Unwind }
+                 
+                  Stack:[ #35: *Ap #28 #34 (locked by task#0)
+                          #34: Ind #37
+                          #7: Global mul2
+                          #38: Ap #7 #34
+                          #38: Ap #7 #34 ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[  ]
+                  Clock: 38
+        
+        Task #1:   Code:{ Unwind }
+                 
+                  Stack:[ #34: Ind #37 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 14
+        
+        Task #2:   Code:{ Push 0
+                          Eval
+                          Get
+                          Mul
+                          UpdateInt 1
+                          Return }
+                 
+                  Stack:[ #36: *Ap #7 #32 (locked by task#2)
+                          #32: 2 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[ 2 ]
+                  Clock: 4
+        
+
+    39) Output: ""
+        Sparks: #38
+        Task #0:   Code:{ Push 1
+                          MkAp
+                          Update 2
+                          Pop 2
+                          Unwind }
+                 
+                  Stack:[ #35: *Ap #28 #34 (locked by task#0)
+                          #34: Ind #37
+                          #7: Global mul2
+                          #38: Ap #7 #34 ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[  ]
+                  Clock: 39
+        
+        Task #1:   Code:{ Unwind }
+                 
+                  Stack:[ #37: Ap #7 #36 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 15
+        
+        Task #2:   Code:{ Eval
+                          Get
+                          Mul
+                          UpdateInt 1
+                          Return }
+                 
+                  Stack:[ #36: *Ap #7 #32 (locked by task#2)
+                          #32: 2
+                          #32: 2 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[ 2 ]
+                  Clock: 5
+        
+
+    40) Output: ""
+        Sparks: 
+        Task #0:   Code:{ MkAp
+                          Update 2
+                          Pop 2
+                          Unwind }
+                 
+                  Stack:[ #35: *Ap #28 #34 (locked by task#0)
+                          #34: Ind #37
+                          #7: Global mul2
+                          #38: Ap #7 #34
+                          #7: Global mul2 ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[  ]
+                  Clock: 40
+        
+        Task #1:   Code:{ Unwind }
+                 
+                  Stack:[ #37: *Ap #7 #36 (locked by task#1)
+                          #7: Global mul2 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 16
+        
+        Task #2:   Code:{ Get
+                          Mul
+                          UpdateInt 1
+                          Return }
+                 
+                  Stack:[ #36: *Ap #7 #32 (locked by task#2)
+                          #32: 2
+                          #32: 2 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[ 2 ]
+                  Clock: 6
+        
+        Task #3:   Code:{ Unwind }
+                 
+                  Stack:[ #38: Ap #7 #34 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 1
+        
+
+    41) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Update 2
+                          Pop 2
+                          Unwind }
+                 
+                  Stack:[ #35: *Ap #28 #34 (locked by task#0)
+                          #34: Ind #37
+                          #7: Global mul2
+                          #39: Ap #7 #38 ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[  ]
+                  Clock: 41
+        
+        Task #1:   Code:{ PushBasic 2
+                          Push 0
+                          Eval
+                          Get
+                          Mul
+                          UpdateInt 1
+                          Return }
+                 
+                  Stack:[ #37: *Ap #7 #36 (locked by task#1)
+                          #36: *Ap #7 #32 (locked by task#2) ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 17
+        
+        Task #2:   Code:{ Mul
+                          UpdateInt 1
+                          Return }
+                 
+                  Stack:[ #36: *Ap #7 #32 (locked by task#2)
+                          #32: 2 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[ 2, 2 ]
+                  Clock: 7
+        
+        Task #3:   Code:{ Unwind }
+                 
+                  Stack:[ #38: *Ap #7 #34 (locked by task#3)
+                          #7: Global mul2 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 2
+        
+
+    42) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Pop 2
+                          Unwind }
+                 
+                  Stack:[ #35: Ind #39
+                          #34: Ind #37
+                          #7: Global mul2 ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[  ]
+                  Clock: 42
+        
+        Task #1:   Code:{ Push 0
+                          Eval
+                          Get
+                          Mul
+                          UpdateInt 1
+                          Return }
+                 
+                  Stack:[ #37: *Ap #7 #36 (locked by task#1)
+                          #36: *Ap #7 #32 (locked by task#2) ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[ 2 ]
+                  Clock: 18
+        
+        Task #2:   Code:{ UpdateInt 1
+                          Return }
+                 
+                  Stack:[ #36: *Ap #7 #32 (locked by task#2)
+                          #32: 2 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[ 4 ]
+                  Clock: 8
+        
+        Task #3:   Code:{ PushBasic 2
+                          Push 0
+                          Eval
+                          Get
+                          Mul
+                          UpdateInt 1
+                          Return }
+                 
+                  Stack:[ #38: *Ap #7 #34 (locked by task#3)
+                          #34: Ind #37 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 3
+        
+
+    43) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Unwind }
+                 
+                  Stack:[ #35: Ind #39 ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[  ]
+                  Clock: 43
+        
+        Task #1:   Code:{ Eval
+                          Get
+                          Mul
+                          UpdateInt 1
+                          Return }
+                 
+                  Stack:[ #37: *Ap #7 #36 (locked by task#1)
+                          #36: 4
+                          #36: 4 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[ 2 ]
+                  Clock: 19
+        
+        Task #2:   Code:{ Return }
+                 
+                  Stack:[ #36: 4
+                          #32: 2 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 9
+        
+        Task #3:   Code:{ Push 0
+                          Eval
+                          Get
+                          Mul
+                          UpdateInt 1
+                          Return }
+                 
+                  Stack:[ #38: *Ap #7 #34 (locked by task#3)
+                          #34: Ind #37 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[ 2 ]
+                  Clock: 4
+        
+
+    44) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Unwind }
+                 
+                  Stack:[ #39: Ap #7 #38 ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[  ]
+                  Clock: 44
+        
+        Task #1:   Code:{ Get
+                          Mul
+                          UpdateInt 1
+                          Return }
+                 
+                  Stack:[ #37: *Ap #7 #36 (locked by task#1)
+                          #36: 4
+                          #36: 4 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[ 2 ]
+                  Clock: 20
+        
+        Task #3:   Code:{ Eval
+                          Get
+                          Mul
+                          UpdateInt 1
+                          Return }
+                 
+                  Stack:[ #38: *Ap #7 #34 (locked by task#3)
+                          #34: Ind #37
+                          #34: Ind #37 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[ 2 ]
+                  Clock: 5
+        
+
+    45) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Unwind }
+                 
+                  Stack:[ #39: *Ap #7 #38 (locked by task#0)
+                          #7: Global mul2 ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[  ]
+                  Clock: 45
+        
+        Task #1:   Code:{ Mul
+                          UpdateInt 1
+                          Return }
+                 
+                  Stack:[ #37: *Ap #7 #36 (locked by task#1)
+                          #36: 4 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[ 4, 2 ]
+                  Clock: 21
+        
+        Task #3:   Code:{ Unwind }
+                 
+                  Stack:[ #34: Ind #37 ]
+                   Dump:[ <{}, [], []>
+                          <{Get; Mul; UpdateInt 1; ...}, [#34, #38], [2]> ]
+                 Vstack:[  ]
+                  Clock: 6
+        
+
+    46) Output: ""
+        Sparks: 
+        Task #0:   Code:{ PushBasic 2
+                          Push 0
+                          Eval
+                          Get
+                          Mul
+                          UpdateInt 1
+                          Return }
+                 
+                  Stack:[ #39: *Ap #7 #38 (locked by task#0)
+                          #38: *Ap #7 #34 (locked by task#3) ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[  ]
+                  Clock: 46
+        
+        Task #1:   Code:{ UpdateInt 1
+                          Return }
+                 
+                  Stack:[ #37: *Ap #7 #36 (locked by task#1)
+                          #36: 4 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[ 8 ]
+                  Clock: 22
+        
+        Task #3:   Code:{ Unwind }
+                 
+                  Stack:[ #37: *Ap #7 #36 (locked by task#1) ]
+                   Dump:[ <{}, [], []>
+                          <{Get; Mul; UpdateInt 1; ...}, [#34, #38], [2]> ]
+                 Vstack:[  ]
+                  Clock: 7
+        
+
+    47) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Push 0
+                          Eval
+                          Get
+                          Mul
+                          UpdateInt 1
+                          Return }
+                 
+                  Stack:[ #39: *Ap #7 #38 (locked by task#0)
+                          #38: *Ap #7 #34 (locked by task#3) ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[ 2 ]
+                  Clock: 47
+        
+        Task #1:   Code:{ Return }
+                 
+                  Stack:[ #37: 8
+                          #36: 4 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 23
+        
+        Task #3:   Code:{ Get
+                          Mul
+                          UpdateInt 1
+                          Return }
+                 
+                  Stack:[ #38: *Ap #7 #34 (locked by task#3)
+                          #34: Ind #37
+                          #37: 8 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[ 2 ]
+                  Clock: 8
+        
+
+    48) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Eval
+                          Get
+                          Mul
+                          UpdateInt 1
+                          Return }
+                 
+                  Stack:[ #39: *Ap #7 #38 (locked by task#0)
+                          #38: *Ap #7 #34 (locked by task#3)
+                          #38: *Ap #7 #34 (locked by task#3) ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[ 2 ]
+                  Clock: 48
+        
+        Task #3:   Code:{ Mul
+                          UpdateInt 1
+                          Return }
+                 
+                  Stack:[ #38: *Ap #7 #34 (locked by task#3)
+                          #34: Ind #37 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[ 8, 2 ]
+                  Clock: 9
+        
+
+    49) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Unwind }
+                 
+                  Stack:[ #38: *Ap #7 #34 (locked by task#3) ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []>
+                          <{Get; Mul; UpdateInt 1; ...}, [#38, #39], [2]> ]
+                 Vstack:[  ]
+                  Clock: 49
+        
+        Task #3:   Code:{ UpdateInt 1
+                          Return }
+                 
+                  Stack:[ #38: *Ap #7 #34 (locked by task#3)
+                          #34: Ind #37 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[ 16 ]
+                  Clock: 10
+        
+
+    50) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Unwind }
+                 
+                  Stack:[ #38: 16 ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []>
+                          <{Get; Mul; UpdateInt 1; ...}, [#38, #39], [2]> ]
+                 Vstack:[  ]
+                  Clock: 50
+        
+        Task #3:   Code:{ Return }
+                 
+                  Stack:[ #38: 16
+                          #34: Ind #37 ]
+                   Dump:[ <{}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 11
+        
+
+    51) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Get
+                          Mul
+                          UpdateInt 1
+                          Return }
+                 
+                  Stack:[ #39: *Ap #7 #38 (locked by task#0)
+                          #38: 16
+                          #38: 16 ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[ 2 ]
+                  Clock: 51
+        
+
+    52) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Mul
+                          UpdateInt 1
+                          Return }
+                 
+                  Stack:[ #39: *Ap #7 #38 (locked by task#0)
+                          #38: 16 ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[ 16, 2 ]
+                  Clock: 52
+        
+
+    53) Output: ""
+        Sparks: 
+        Task #0:   Code:{ UpdateInt 1
+                          Return }
+                 
+                  Stack:[ #39: *Ap #7 #38 (locked by task#0)
+                          #38: 16 ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[ 32 ]
+                  Clock: 53
+        
+
+    54) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Return }
+                 
+                  Stack:[ #39: 32
+                          #38: 16 ]
+                   Dump:[ <{Print}, [], []>
+                          <{Update 2; Pop 2; Unwind; ...}, [#29, #28, #9], []> ]
+                 Vstack:[  ]
+                  Clock: 54
+        
+
+    55) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Update 2
+                          Pop 2
+                          Unwind
+                          Slide 2 }
+                 
+                  Stack:[ #9: *Global main (locked by task#)0)
+                          #28: Ind #30
+                          #29: Ind #31
+                          #39: 32 ]
+                   Dump:[ <{Print}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 55
+        
+
+    56) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Pop 2
+                          Unwind
+                          Slide 2 }
+                 
+                  Stack:[ #9: Ind #39
+                          #28: Ind #30
+                          #29: Ind #31 ]
+                   Dump:[ <{Print}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 56
+        
+
+    57) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Unwind
+                          Slide 2 }
+                 
+                  Stack:[ #9: Ind #39 ]
+                   Dump:[ <{Print}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 57
+        
+
+    58) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Unwind }
+                 
+                  Stack:[ #39: 32 ]
+                   Dump:[ <{Print}, [], []> ]
+                 Vstack:[  ]
+                  Clock: 58
+        
+
+    59) Output: ""
+        Sparks: 
+        Task #0:   Code:{ Print }
+                 
+                  Stack:[ #39: 32 ]
+                   Dump:[  ]
+                 Vstack:[  ]
+                  Clock: 59
+        
+
+    60) Output: "32"
+        Sparks: 
+        
+
+Heap: #43: 32
+      #42: 16
+      #41: 8
+      #40: 4
+      #39: 32
+      #38: 16
+      #37: 8
+      #36: 4
+      #35: Ind #39
+      #34: Ind #37
+      #33: Ind #35
+      #32: 2
+      #31: *Ap #8 #28 (locked by task#0)
+      #30: *Ap #8 #7 (locked by task#0)
+      #29: Ind #31
+      #28: Ind #30
+      #27: Global False
+      #26: Global True
+      #25: Global par
+      #24: Global if
+      #23: Global not
+      #22: Global ||
+      #21: Global &&
+      #20: Global <
+      #19: Global <=
+      #18: Global >
+      #17: Global >=
+      #16: Global /=
+      #15: Global ==
+      #14: Global negate
+      #13: Global /
+      #12: Global *
+      #11: Global -
+      #10: Global +
+      #9: Ind #39
+      #8: Global twicep
+      #7: Global mul2
+      #6: Global twice
+      #5: Global compose
+      #4: Global S
+      #3: Global K1
+      #2: Global K
+      #1: Global I
+
+live durations = []
+total tasks    = 0
+total clocks   = 0
+all outputs: (32)

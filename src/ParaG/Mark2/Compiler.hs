@@ -56,6 +56,7 @@ initialTask addr = PgmLocalState
                  , stack   = singletonStack addr
                  , dump    = emptyStack
                  , vstack  = emptyStack
+                 , locks   = []
                  , clock   = 0
                  , taskid  = 0
                  , ruleid  = 0

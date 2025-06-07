@@ -12,6 +12,7 @@ import Data.Bool
 import Data.Char
 import Data.Function
 import Data.List
+import Data.Maybe
 
 import Language
 import Heap
@@ -60,14 +61,28 @@ eval state = state : restStates
         nextState = doAdmin (steps state)
 
 doAdmin :: PgmState -> PgmState
-doAdmin state = state { pgmGlobal = state.pgmGlobal { stats = stats'}
-                      , pgmLocals = locals 
+doAdmin state = state { pgmGlobal = global
+                      , pgmLocals = catMaybes locals
                       }
     where
-        (locals, stats') = foldr phi ([], state.pgmGlobal.stats) state.pgmLocals
-        phi l (ls, sts) 
-            | null l.code = (ls, sts { durations = l.clock : sts.durations })
-            | otherwise   = (l:ls, sts)
+        (global, locals) = mapAccumL phi state.pgmGlobal state.pgmLocals
+        phi g = \ case
+            l | null l.code -> (g', Nothing)
+              | otherwise   -> (g,  Just l')
+              where
+                (g',l') = foldl psi (g,l) l.locks
+                psi gms a = case unlock a gms of
+                    (g2,l2) -> ( g2 { stats = g2.stats { durations = l2.clock : g2.stats.durations }}, l2 )
+
+-- doAdmin :: PgmState -> PgmState
+-- doAdmin state = state { pgmGlobal = state.pgmGlobal { stats = stats'}
+--                       , pgmLocals = locals 
+--                       }
+--     where
+--         (locals, stats') = foldr phi ([], state.pgmGlobal.stats) state.pgmLocals
+--         phi l (ls, sts) 
+--             | null l.code = (ls, sts { durations = l.clock : sts.durations })
+--             | otherwise   = (l:ls, sts)
 
 gmFinal :: PgmState -> Bool
 gmFinal state = null state.pgmLocals && null state.pgmGlobal.sparks
@@ -96,6 +111,7 @@ makeTask tid addr = PgmLocalState
     , stack  = singletonStack addr
     , dump   = emptyStack 
     , vstack = emptyStack
+    , locks  = []
     , clock  = 0
     , taskid = tid
     , ruleid = 0
@@ -106,8 +122,8 @@ tick local = local { clock = succ local.clock }
 
 lock :: Addr -> GmState -> GmState
 lock addr (global, local)
-    = ( global { heap = heap'}
-      , local
+    = ( global { heap = heap' }
+      , local  { locks = addr : local.locks }
       )
     where
         heap' = newHeap node
@@ -256,14 +272,14 @@ unwind gl@(global, local)
                     ((i',stk',vstk'), dump') = Stk.pop local.dump 
             NLAp _ _ tid -> (global', trace msg local' { code = [Unwind] })
                 where
-                    (global',local') = bool id (trace ulmsg unlock a) (tid `__cmp__` local.taskid) gl
+                    (global',local') = bool id (trace ulmsg unlock a) (tid `__cmp__` local.taskid || local.taskid == 0) gl
                     msg = "task#"++show local.taskid ++     " meets   #"
                         ++ show a ++ " : " ++ iDisplay (showNode global a node)
                     ulmsg = "task#" ++ show local.taskid ++ " unlocks #" 
                           ++ show a ++ " : " ++ iDisplay (showNode global a node)
             NLGlobal _ _ tid -> (global', trace msg local' { code = [Unwind]} )
                 where 
-                    (global',local') = bool id (trace ulmsg unlock a) (tid `__cmp__` local.taskid) gl
+                    (global',local') = bool id (trace ulmsg unlock a) (tid `__cmp__` local.taskid || local.taskid == 0) gl
                     msg = "task#"++show local.taskid ++     " meets   #"
                         ++ show a ++ " : " ++ iDisplay (showNode global a node)
                     ulmsg = "task#" ++ show local.taskid ++ " unlocks #" 
