@@ -404,14 +404,17 @@ allocNodes m heap = case m of
 
 evalop :: GmState -> GmState
 evalop (global, local)
-    = ( global
-      , local { code   = [Unwind]
-              , stack  = Stk.push a emptyStack
-              , vstack = emptyStack
-              , dump   = Stk.push (local.code, stk, local.vstack) local.dump
-              , ruleid = 48
-              }
-      )
+    = case hLookup global.heap a of
+        NNum _      -> (global, local)
+        NConstr _ _ -> (global, local)
+        _           -> (global
+                       ,local { code   = [Unwind]
+                              , stack  = Stk.push a emptyStack
+                              , vstack = emptyStack
+                              , dump   = Stk.push (local.code, stk, local.vstack) local.dump
+                              , ruleid = 48
+                              }
+                       )
     where
         (a,stk) = Stk.pop local.stack
 
