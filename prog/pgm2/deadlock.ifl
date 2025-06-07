@@ -1,0 +1,6 @@
+mul2 x = x * 2;
+twicep f x = par f (f x);
+main = letrec
+         f = twicep mul2;
+         g = twicep f
+       in g 2

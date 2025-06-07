@@ -548,27 +548,29 @@ mkInt (global, local)
 
 updateBool :: Int -> GmState -> GmState
 updateBool n (global, local)
-    = ( global' { heap = heap' }
-      , local' { stack = stk' }
+    = ( global'' { heap = heap' }
+      , local'' { stack = stk' }
       )
     where
         (global',local') = mkBool (global,local)
         (a, stk') = Stk.pop local'.stack
         node = hLookup global'.heap a
-        a' = stk'.stkItems !! n
-        heap' = hUpdate global'.heap a' node
+        ra = stk'.stkItems !! n
+        (global'',local'') = unlock ra (global',local')
+        heap' = hUpdate global''.heap ra node
 
 updateInt :: Int -> GmState -> GmState
 updateInt n (global, local)
-    = ( global' { heap = heap' }
-      , local' { stack = stk' }
+    = ( global'' { heap = heap' }
+      , local'' { stack = stk' }
       )
     where
         (global', local') = mkInt (global, local)
         (a, stk') = Stk.pop local'.stack
         node = hLookup global'.heap a
-        a' = stk'.stkItems !! n
-        heap' = hUpdate global'.heap a' node
+        ra = stk'.stkItems !! n
+        (global'',local'') = unlock ra (global',local')
+        heap' = hUpdate global''.heap ra node
 
 gmGet :: GmState -> GmState
 gmGet (global, local)
@@ -631,8 +633,8 @@ rearrange n heap stk
 getArg :: Node -> Addr
 getArg (NAp _ a2)    = a2
 getArg (NLAp _ a2 _) = a2
-getArg (NInd a)    = a
-getArg _           = error "getArg: Not application node"
+getArg (NInd a)      = a
+getArg n             = error $ "getArg: Not application node: " ++ show n
 
 pgmPar :: GmState -> GmState
 pgmPar (global, local)
