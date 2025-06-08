@@ -61,28 +61,17 @@ eval state = state : restStates
         nextState = doAdmin (steps state)
 
 doAdmin :: PgmState -> PgmState
-doAdmin state = state { pgmGlobal = global
-                      , pgmLocals = catMaybes locals
+doAdmin state = state { pgmGlobal = global { stats = stats'}
+                      , pgmLocals = locals 
                       }
     where
-        (global, locals) = mapAccumL phi state.pgmGlobal state.pgmLocals
-        phi g = \ case
-            l | null l.code -> (g', Nothing)
-              | otherwise   -> (g,  Just l')
-              where
-                (g',l') = foldl psi (g,l) l.locks
-                psi gms a = case unlock a gms of
-                    (g2,l2) -> ( g2 { stats = g2.stats { durations = l2.clock : g2.stats.durations }}, l2 )
-
--- doAdmin :: PgmState -> PgmState
--- doAdmin state = state { pgmGlobal = state.pgmGlobal { stats = stats'}
---                       , pgmLocals = locals 
---                       }
---     where
---         (locals, stats') = foldr phi ([], state.pgmGlobal.stats) state.pgmLocals
---         phi l (ls, sts) 
---             | null l.code = (ls, sts { durations = l.clock : sts.durations })
---             | otherwise   = (l:ls, sts)
+        (global, _)      = mapAccumL phi state.pgmGlobal state.pgmLocals where
+            phi g l          = bool (g,l) (g',l) (null l.code) where
+                (g',_)           = foldl' (flip unlock) (g,l) l.locks
+        (locals, stats') = foldr phi ([], global.stats) state.pgmLocals where
+            phi l (ls, sts) 
+                | null l.code = (ls, sts { durations = l.clock : sts.durations })
+                | otherwise   = (l:ls, sts)
 
 gmFinal :: PgmState -> Bool
 gmFinal state = null state.pgmLocals && null state.pgmGlobal.sparks
