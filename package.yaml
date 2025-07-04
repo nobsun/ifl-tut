@@ -58,6 +58,14 @@ library:
   source-dirs: src
 
 executables:
+  pgm3:
+    main:               Main.hs
+    source-dirs:        app/pgm3
+    ghc-options:
+    - -rtsopts
+    dependencies:
+    - ifl-tut
+
   pgm2:
     main:               Main.hs
     source-dirs:        app/pgm2
