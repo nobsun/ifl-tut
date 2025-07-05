@@ -1,7 +1,7 @@
 module Main where
 
 import System.Environment ( getArgs )
-import ParaG.Mark2.Machine ( run )
+import ParaG.Mark3.Machine ( run )
 
 main :: IO ()
 main = do

@@ -1,0 +1,2 @@
+twicep f x = par f (f x);
+main = twicep (twicep (twicep (S K K))) 3
