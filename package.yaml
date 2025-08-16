@@ -53,11 +53,20 @@ ghc-options:
 - -Wno-unused-imports
 - -Wno-unused-top-binds
 - -Wno-orphans
+- -Wno-x-partial
 
 library:
   source-dirs: src
 
 executables:
+  pgm4:
+    main:               Main.hs
+    source-dirs:        app/pgm4
+    ghc-options:
+    - -rtsopts
+    dependencies:
+    - ifl-tut
+
   pgm3:
     main:               Main.hs
     source-dirs:        app/pgm3

@@ -63,6 +63,12 @@ cradle:
     - path: "./app/pgm3/Paths_ifl_tut.hs"
       component: "ifl-tut:exe:pgm3"
 
+    - path: "./app/pgm4/Main.hs"
+      component: "ifl-tut:exe:pgm4"
+
+    - path: "./app/pgm4/Paths_ifl_tut.hs"
+      component: "ifl-tut:exe:pgm4"
+
     - path: "./app/ti1/Main.hs"
       component: "ifl-tut:exe:ti1"
 

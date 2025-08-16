@@ -1,4 +1,4 @@
-snapshot: nightly-2025-07-04
+snapshot: lts-24.4
 
 packages:
 - .

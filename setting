@@ -1,19 +1,9 @@
 #!/bin/bash
 
-if type "add-entry" > /dev/null 2>&1; then
-  add-entry $1
-else 
-  stack install ifl-tut:exe:add-entry
-  add-entry $1
-fi
+entr $1
 
 echo "export CURRENT_STACK_EXE_ENTRY=$1" > .curname
 
 stack build ifl-tut:exe:$1
 
-if type "gen-hie" > /dev/null 2>&1; then
-  gen-hie > hie.yaml
-else
-  stack install implicit-hie
-  gen-hie > hie.yaml
-fi
+gen-hie > hie.yaml
