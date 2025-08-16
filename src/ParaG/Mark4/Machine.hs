@@ -74,16 +74,6 @@ doAdmin state = state { pgmGlobal = global
               where
                 (g',l') = foldl (flip unlock) (g,l) l.locks
                 g'' = g' { stats = g'.stats { durations = l'.clock : g'.stats.durations}}
-        
--- doAdmin :: PgmState -> PgmState
--- doAdmin state = state { pgmGlobal = state.pgmGlobal { stats = stats'}
---                       , pgmLocals = locals 
---                       }
---     where
---         (locals, stats') = foldr phi ([], state.pgmGlobal.stats) state.pgmLocals
---         phi l (ls, sts) 
---             | null l.code = (ls, sts { durations = l.clock : sts.durations })
---             | otherwise   = (l:ls, sts)
 
 gmFinal :: PgmState -> Bool
 gmFinal state = null state.pgmLocals && null state.pgmGlobal.sparks
@@ -105,8 +95,8 @@ steps state = case concatMap (map toLower) $ take 1 state.ctrl of
 
 scheduler :: PgmState -> PgmState
 scheduler state 
-    = state { pgmGlobal = global
-            , pgmLocals = nonRunning ++ running
+    = state { pgmGlobal = global { sparks = global.sparks ++ nonRunning }
+            , pgmLocals = {- nonRunning ++ -} running
             }
     where
         (global, running) = mapAccumL step 

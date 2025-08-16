@@ -1,0 +1,5 @@
+dsum lo hi = let mid = (lo + hi) / 2 in
+             let add x y = x + y in
+             if (lo == hi) hi (par (add (dsum lo mid))
+                                   (dsum (mid + 1) hi)) ;
+main = dsum 1 10
