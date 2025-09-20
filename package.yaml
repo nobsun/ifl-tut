@@ -31,8 +31,10 @@ dependencies:
 - containers
 - extra
 - text
+- free
+- recursion-schemes
 
-language: GHC2021
+language: GHC2024
 
 default-extensions:
 - LambdaCase
@@ -59,6 +61,14 @@ library:
   source-dirs: src
 
 executables:
+  lift1:
+    main:               Main.hs
+    source-dirs:        app/lift1
+    ghc-options:
+    - -rtsopts
+    dependencies:
+    - ifl-tut
+
   pgm4:
     main:               Main.hs
     source-dirs:        app/pgm4

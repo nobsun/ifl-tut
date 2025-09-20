@@ -13,52 +13,8 @@ import Data.Bool
 import Data.Char
 import Data.Maybe
 import Language hiding (pprint, pprExpr)
+import Lambda
 import Iseq
-
-data ExprF a r
-    = EVarF Name
-    | ENumF Int
-    | EConstrF
-        Tag
-        Arity
-    | EApF r r
-    | ELetF
-        IsRec
-        (BindersF a r)
-        r
-    | ECaseF
-        r 
-        (AltersF a r)
-    | ELamF
-        [a]
-        r
-    deriving (Eq, Show, Functor, Generic)
-
-type BindersF a r = [(a, r)]
-
-type AltersF a r = [(Tag, [a], r)]
-
-type instance Base (Expr a) = ExprF a
-
-instance Recursive (Expr a) where
-    project = \ case
-        EVar n -> EVarF n
-        ENum n -> ENumF n
-        EConstr tag ary -> EConstrF tag ary
-        EAp e1 e2       -> EApF e1 e2
-        ELet isrec bs e -> ELetF isrec bs e
-        ECase e alts    -> ECaseF e alts
-        ELam xs e       -> ELamF xs e
-
-instance Corecursive (Expr a) where
-    embed = \ case
-        EVarF n -> EVar n
-        ENumF n -> ENum n
-        EConstrF tag ary -> EConstr tag ary
-        EApF e1 e2       -> EAp e1 e2
-        ELetF isrec bs e -> ELet isrec bs e
-        ECaseF e alts    -> ECase e alts
-        ELamF xs e       -> ELam xs e
 
 {- pretty printer -}
 pprint :: CoreProgram -> String
@@ -101,7 +57,7 @@ pprArgsGen ppr
 >>> es3 = [appInfixSampleE, appInfixSampleE1, appInfixSampleE2, appInfixSampleE3, appInfixSampleE4]
 >>> es4 = [letSampleE, caseSampleE, lambdaSampleE]
 >>> es = concat [es1,es2,es3,es4]
->>> putStrLn $ iDisplay $ iLayn $ map (pprExpr 0) es
+>>> putStrLn $ iDisplay $ iLayn2 $ map (pprExpr 0) es
      1) var
      2) 57
      3) Pack{1,0}
@@ -195,10 +151,10 @@ pprDefnGen ppr (name, expr)
 
 {- AnnProgram -}
 
-type AnnProgram a ann = [AnnScDefn a ann]
-type AnnScDefn a ann = (Name, [a], AnnExpr a ann)
-type AnnExpr a = Cofree (ExprF a)
-type AnnBinders a ann = [(a, AnnExpr a ann)]
+-- type AnnProgram a ann = [AnnScDefn a ann]
+-- type AnnScDefn a ann = (Name, [a], AnnExpr a ann)
+-- type AnnExpr a = Cofree (ExprF a)
+-- type AnnBinders a ann = [(a, AnnExpr a ann)]
 
 {- pprintAnn -}
 pprintAnn :: (a   -> IseqRep)

@@ -35,6 +35,13 @@ iFWNum :: Iseq iseq => Int -> Int -> iseq
 iFWNum width n = iStr 
     $ reverse $ take width $ foldl (flip (:)) (repeat ' ') (show n)
 
+iLayn2 :: Iseq iseq => [iseq] -> iseq
+iLayn2 seqs
+    = iConcat (zipWith layItem [1 ..] seqs)
+    where
+        layItem n seq' 
+            = iConcat [ iFWNum 6 n, iStr ") ", iIndent seq', iNewline]
+
 iLayn :: Iseq iseq => [iseq] -> iseq
 iLayn seqs
   = iConcat (iLayn' 1 seqs)
