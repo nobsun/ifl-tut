@@ -73,7 +73,6 @@ instance Corecursive (Expr a) where
         ECaseF e alts    -> ECase e alts
         ELamF xs e       -> ELam xs e
 
-
 {- AnnProgram -}
 
 type AnnProgram a ann = [AnnScDefn a ann]

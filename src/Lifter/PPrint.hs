@@ -251,7 +251,7 @@ pprAnnExpr ppr annppr p = para phi where
                        ]
 
     iAnn :: ann -> IseqRep -> IseqRep
-    iAnn ann iseq = iParen (iConcat [annppr ann, iStr ",", iseq])
+    iAnn ann iseq = iDAngles (iConcat [annppr ann, iStr ",", iseq])
 
 pprAnnDefns :: (a   -> IseqRep)
             -> (ann -> IseqRep)
@@ -271,3 +271,6 @@ pprAnnDefn ppr annppr (name, annexpr)
               , iStr " = "
               , iIndent (pprAnnExpr ppr annppr 0 annexpr) 
               ]
+
+pprintAnnExpr :: (ann -> IseqRep) -> AnnExpr Name ann -> String
+pprintAnnExpr pprann = iDisplay . pprAnnExpr iStr pprann 0

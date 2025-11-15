@@ -96,3 +96,6 @@ flatten col iseqs = case iseqs of
     (IIndent seq', _) : seqs
         -> flatten col ((seq', col) : seqs)
     [] -> ""
+
+iDAngles :: IseqRep -> IseqRep
+iDAngles sq = iConcat [iStr "《", sq, iStr "》"]
