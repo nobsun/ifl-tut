@@ -107,17 +107,18 @@ renameAlt env ns (t,as,e)
 
 collectSCs :: CoreProgram -> CoreProgram
 collectSCs = concatMap collectOneSc
-    where
-        collectOneSc = \ case
-            (scName, args, rhs) -> case rhs of
-                ELet isRec [(name1, ELam args' body)] (EVar name2)
-                    | not isRec && name1 == name2 
-                        -> (scName, args ++ args', body') : scs'
-                            where
-                                (scs', body') = collectSCsExpr body
-                _       -> (scName, args, rhs') : scs
-                where
-                    (scs, rhs') = collectSCsExpr rhs
+
+collectOneSc :: (Name, [Name], CoreExpr) -> [(Name, [Name], CoreExpr)]
+collectOneSc = \ case
+    (scName, args, rhs) -> case rhs of
+        ELet False [(name1, ELam args' body)] (EVar name2)
+            | name1 == name2 
+                -> (scName, args ++ args', body') : scs'
+                    where
+                        (scs', body') = collectSCsExpr body
+        _       -> (scName, args, rhs') : scs
+        where
+            (scs, rhs') = collectSCsExpr rhs
 
 collectSCsExpr :: CoreExpr -> ([CoreScDefn], CoreExpr)
 collectSCsExpr expr = case expr of
@@ -145,9 +146,15 @@ collectSCsExpr expr = case expr of
             nonSCs'  = [(name,rhs) | (name,rhs) <- defns', not (isELam rhs)]
             localSCs = [(name,args,be) | (name,ELam args be) <- scs']
             (bodySCs, body') = collectSCsExpr body
-            collectSCsDefn scs (name,rhs) = (scs ++ rhsSCs, (name, rhs'))
-                where
-                    (rhsSCs, rhs') = collectSCsExpr rhs
+            
+collectSCsDefn :: [CoreScDefn] -> (Name, CoreExpr) -> ([CoreScDefn], (Name, Expr Name))
+collectSCsDefn scs (name,rhs) = case rhs of
+    ELet False [(name1, ELam rhsArgs rhsBody)] (EVar name2)
+        | name1 == name2 -> case collectSCsExpr rhsBody of
+            (scs'', rhs'')     -> (scs ++ scs'', (name, ELam rhsArgs rhs''))
+    _ -> (scs ++ rhsSCs, (name, rhs'))
+    where
+        (rhsSCs, rhs') = collectSCsExpr rhs
 
 mkELet :: IsRec -> [(a, Expr a)] -> Expr a -> Expr a
 mkELet _ [] body = body
