@@ -1,7 +1,7 @@
 module Main where
 
 import System.Environment ( getArgs )
-import Lifter.Mark1.Lifter ( run )
+import Lifter.Mark2.Lifter ( run )
 
 main :: IO ()
 main = do

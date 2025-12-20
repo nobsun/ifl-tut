@@ -61,6 +61,14 @@ library:
   source-dirs: src
 
 executables:
+  lift2:
+    main:               Main.hs
+    source-dirs:        app/lift2
+    ghc-options:
+    - -rtsopts
+    dependencies:
+    - ifl-tut
+
   lift1:
     main:               Main.hs
     source-dirs:        app/lift1
