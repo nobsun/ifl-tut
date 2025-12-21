@@ -1,5 +1,5 @@
 name:                ifl-tut
-version:             6.3.3
+version:             6.5.2
 synopsis:           Implementing Fuctional Lanbuage -- a tutorial
 
 github:              "nobsun/ifl-tut"
@@ -61,6 +61,14 @@ library:
   source-dirs: src
 
 executables:
+  lift3:
+    main:               Main.hs
+    source-dirs:        app/lift3
+    ghc-options:
+    - -rtsopts
+    dependencies:
+    - ifl-tut
+
   lift2:
     main:               Main.hs
     source-dirs:        app/lift2

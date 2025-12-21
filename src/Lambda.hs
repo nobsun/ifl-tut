@@ -79,6 +79,8 @@ type AnnProgram a ann = [AnnScDefn a ann]
 type AnnScDefn a ann = (Name, [a], AnnExpr a ann)
 type AnnExpr a = Cofree (ExprF a)
 type AnnBinders a ann = [(a, AnnExpr a ann)]
+type AnnAlter a ann = (Tag, [a], AnnExpr a ann)
+type AnnAlters a ann = [AnnAlter a ann]
 
 cataAnnExpr :: (F.CofreeF (ExprF a) ann b -> b)
             -> AnnExpr a ann -> b
