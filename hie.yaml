@@ -63,6 +63,12 @@ cradle:
     - path: "./app/lift3/Paths_ifl_tut.hs"
       component: "ifl-tut:exe:lift3"
 
+    - path: "./app/lift4/Main.hs"
+      component: "ifl-tut:exe:lift4"
+
+    - path: "./app/lift4/Paths_ifl_tut.hs"
+      component: "ifl-tut:exe:lift4"
+
     - path: "./app/pgm1/Main.hs"
       component: "ifl-tut:exe:pgm1"
 

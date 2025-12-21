@@ -13,10 +13,10 @@ import Gmachine.Mark7.Machine qualified as Gm7
 import Gmachine.Mark7.Compiler qualified as Gm7
 import Gmachine.Mark7.PPrint  qualified as Gm7
 
-import Lifter.Mark3.Rename
-import Lifter.Mark3.Collect
-import Lifter.Mark3.FreeVars
-import Lifter.Mark3.Abstract
+import Lifter.FreeVars
+import Lifter.Mark4.Rename
+import Lifter.Mark4.Collect
+import Lifter.Mark4.Abstract
 
 run :: String -> ([String] -> [String])
 run prog inputs 
