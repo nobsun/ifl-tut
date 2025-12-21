@@ -1,10 +1,10 @@
--- # Lifter.Mark3.Lifter
+-- # Lifter.Mark4.Lifter
 {-# LANGUAGE ImplicitParams #-}
 {-# LANGUAGE NoFieldSelectors #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-module Lifter.Mark3.Lifter
+module Lifter.Mark4.Lifter
     where
 
 import Language
@@ -13,9 +13,9 @@ import Gmachine.Mark7.Machine qualified as Gm7
 import Gmachine.Mark7.Compiler qualified as Gm7
 import Gmachine.Mark7.PPrint  qualified as Gm7
 
-import Lifter.FreeVars
 import Lifter.Mark3.Rename
 import Lifter.Mark3.Collect
+import Lifter.Mark3.FreeVars
 import Lifter.Mark3.Abstract
 
 run :: String -> ([String] -> [String])

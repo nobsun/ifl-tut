@@ -1,25 +1,37 @@
--- # Lifter.Mark3.Abstract
+-- # Lifter.Mark4.Abstract
 {-# LANGUAGE ImplicitParams #-}
 {-# LANGUAGE NoFieldSelectors #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-module Lifter.Mark3.Abstract
+module Lifter.Mark4.Abstract
     where
 
+import Data.Char
+import Data.Function
 import Data.List
 import Data.Set qualified as S
 
 import Control.Arrow
 import Control.Comonad.Cofree
+import Control.Comonad.Trans.Cofree qualified as F
+import Data.Functor.Foldable
 
 import Lambda
 import Language
+import Heap
 import qualified Stack as Stk (push, pop, npop, discard)
 import Stack hiding (push, pop, npop, discard)
 import Utils
+import Iseq
 
-import Lifter.FreeVars
+import Gmachine.Mark7.Machine qualified as Gm7
+import Gmachine.Mark7.Compiler qualified as Gm7
+import Gmachine.Mark7.PPrint  qualified as Gm7
+
+import Lifter.Mark3.Rename
+import Lifter.Mark3.Collect
+import Lifter.Mark3.FreeVars
 
 abstractJ :: AnnProgram Name (S.Set Name) -> CoreProgram
 abstractJ prog = [ (name, args, abstractJExpr [] rhs)
