@@ -97,31 +97,3 @@ improveFreesOfBindings env bs
     where
         env' = map (second S.toList) bs ++ env
 
-{- --
-abstract :: [(Name, [Name], AnnExpr Name (S.Set Name))] -> [(Name, [Name], CoreExpr)]
-abstract prog = [ (name, args, abstractExpr rhs)
-                | (name, args, rhs) <- prog
-                ]
-
-abstractExpr :: AnnExpr Name (S.Set Name) -> CoreExpr
-abstractExpr = \ case
-    _free :< EVarF v -> EVar v
-    _free :< ENumF n -> ENum n
-    _free :< EConstrF t a -> EConstr t a
-    _free :< EApF e1 e2 -> EAp (abstractExpr e1) (abstractExpr e2)
-    _free :< ELetF isRec defns body
-        -> ELet isRec (map (second abstractExpr) defns) (abstractExpr body)
-    free  :< ELamF args body
-        -> foldl' EAp sc (map EVar fvs)
-        where
-            fvs = S.toList free
-            sc = ELet False [("sc", scRhs)] (EVar "sc")
-            scRhs = ELam (fvs ++ args) (abstractExpr body)
-    _free :< ECaseF e alts -> abstractCase e alts
-
-abstractCase :: AnnExpr Name (S.Set Name) -> AnnAlters Name (S.Set Name) -> CoreExpr
-abstractCase e alts = ECase (abstractExpr e) (map abstractAlter alts)
-
-abstractAlter :: AnnAlter Name (S.Set Name) -> CoreAlt
-abstractAlter (tag, args, rhs) = (tag, args, abstractExpr rhs)
--- -}

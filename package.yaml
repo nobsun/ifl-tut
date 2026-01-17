@@ -6,7 +6,7 @@ github:              "nobsun/ifl-tut"
 license:             BSD3
 author:              "Nobuo Yamashita"
 maintainer:          "nobsun@sampou.org"
-copyright:           "Copyright: (c) 2022-2024 Nobuo Yamashita"
+copyright:           "Copyright: (c) 2022-2025 Nobuo Yamashita"
 
 extra-source-files:
 - README.md
