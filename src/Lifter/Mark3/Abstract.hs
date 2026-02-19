@@ -96,4 +96,3 @@ improveFreesOfBindings env bs
     = map (second (S.fromList . actualFrees env')) bs
     where
         env' = map (second S.toList) bs ++ env
-

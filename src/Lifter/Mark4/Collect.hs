@@ -7,6 +7,7 @@
 module Lifter.Mark4.Collect
     where
 
+import Control.Arrow
 import Data.List
 
 import Language
@@ -15,6 +16,7 @@ collectSCs :: CoreProgram -> CoreProgram
 collectSCs = concatMap collectOneSc
 
 collectOneSc :: (Name, [Name], CoreExpr) -> [(Name, [Name], CoreExpr)]
+
 collectOneSc = \ case
     (scName, args, rhs) -> case rhs of
         ELet False [(name1, ELam args' body)] (EVar name2)
@@ -28,16 +30,14 @@ collectOneSc = \ case
 
 collectSCsExpr :: CoreExpr -> ([CoreScDefn], CoreExpr)
 collectSCsExpr expr = case expr of
-    ENum _    -> ([], expr)
-    EVar _    -> ([], expr)
-    EAp e1 e2 -> (scs1 ++ scs2, EAp e1' e2')
+    ENum _      -> ([], expr)
+    EConstr _ _ -> ([], expr)
+    EVar _      -> ([], expr)
+    EAp e1 e2   -> (scs1 ++ scs2, EAp e1' e2')
         where
             (scs1, e1') = collectSCsExpr e1
             (scs2, e2') = collectSCsExpr e2
-    ELam args body -> (scs, ELam args body')
-        where
-            (scs, body') = collectSCsExpr body
-    EConstr _ _ -> ([], expr)
+    ELam args body -> second (ELam args) (collectSCsExpr body)
     ECase e alts -> (scsExpr ++ scsAlts, ECase e' alts')
         where
             (scsExpr, e') = collectSCsExpr e

@@ -98,3 +98,20 @@ apoAnnExpr :: (b -> F.CofreeF (ExprF a) ann (Either (AnnExpr a ann) b))
            -> b -> AnnExpr a ann
 apoAnnExpr = apo
 
+deAnnProg :: AnnProgram a ann -> Program a
+deAnnProg = map deAnnScDefn
+
+deAnnScDefn :: AnnScDefn a ann -> ScDefn a
+deAnnScDefn = \ case
+    (name, as, ae) -> (name, as, deAnnExpr ae)
+
+deAnnExpr :: AnnExpr a ann -> Expr a
+deAnnExpr = cataAnnExpr phi where
+    phi = \ case
+        _ F.:< ENumF n       -> ENum n
+        _ F.:< EVarF v       -> EVar v
+        _ F.:< EConstrF t a  -> EConstr t a
+        _ F.:< EApF e1 e2    -> EAp e1 e2
+        _ F.:< ECaseF e alts -> ECase e alts
+        _ F.:< ELetF r ds e  -> ELet r ds e
+        _ F.:< ELamF as e    -> ELam as e

@@ -1,0 +1,3 @@
+g y = let z = x * x
+      in let p = z * z
+         in p + y

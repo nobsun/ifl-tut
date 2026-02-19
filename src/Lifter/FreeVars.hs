@@ -24,8 +24,8 @@ freeVarsExpr lv = paraExpr phi where
     phi :: ExprF Name (CoreExpr, AnnExpr Name (S.Set Name)) -> AnnExpr Name (S.Set Name)
     phi = \ case
         EVarF v
-            | S.member v lv -> S.singleton v :< EVarF v
-            | otherwise     -> S.empty :< EVarF v
+            | S.member v lv -> S.empty :< EVarF v
+            | otherwise     -> S.singleton v :< EVarF v
         ENumF n -> S.empty :< ENumF n
         EConstrF tag arity -> freeVarsExpr rlv (ELam llv' (foldl' EAp (EConstr tag arity) (map EVar llv')))
             where
@@ -50,8 +50,8 @@ freeVarsExpr lv = paraExpr phi where
             where
                 eFree = freeVarsOf e'
                 altsFree = S.unions (freeVarsOf . rhsOfAlter <$> alts')
-                alts' = map freeVarsAlter alts
-                freeVarsAlter (tag,args,(rhs, _)) = (tag,args,freeVarsExpr rhsLv rhs)
+                alts' = map freeVarsAlt alts
+                freeVarsAlt (tag,args,(rhs, _)) = (tag,args,freeVarsExpr rhsLv rhs)
                     where
                         rhsLv = S.union (S.fromList args) lv
                 rhsOfAlter (_,_,rhs) = rhs

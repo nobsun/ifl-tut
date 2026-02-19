@@ -1,2 +1,6 @@
-f x = letrec g = \y -> cons (x*y) (g y) in g 3;
+h p q = p * q;
+f x = let
+        g = \ y -> h x x + y
+      in g 3 + g 4;
 main = f 6
+      

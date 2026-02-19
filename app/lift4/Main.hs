@@ -1,7 +1,7 @@
 module Main where
 
 import System.Environment ( getArgs )
-import ParaG.Mark2.Machine ( run )
+import Lifter.Mark4.Lifter ( run )
 
 main :: IO ()
 main = do
@@ -11,3 +11,10 @@ main = do
 
 drive :: ([String] -> [String]) -> String -> String
 drive f = unlines . f . lines
+
+{-
+λ. ./executing prog/lift4/sample661.ifl
+...
+lift4: pushglobal: undeclared global: x_0_1
+...
+-}

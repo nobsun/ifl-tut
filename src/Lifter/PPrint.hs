@@ -40,7 +40,7 @@ pprScDefnGen ppr = \ case
         -> iConcat [ iStr name
                    , if null args 
                         then iNil 
-                        else iAppend iSpace (pprArgsGen ppr args)
+                        else {- iAppend iSpace -}(pprArgsGen ppr args)
                    , iStr " = "
                    , iIndent (pprExprGen ppr 0 body)
                    ]
@@ -185,7 +185,7 @@ pprAnnScDefn ppr annppr = \ case
                    , iIndent (pprAnnExpr ppr annppr 0 body)
                    ]
 
-pprAnnExpr :: forall a ann. (a   -> IseqRep)
+pprAnnExpr :: forall a ann. (a -> IseqRep)
            -> (ann -> IseqRep)
            -> Precedence
            -> AnnExpr a ann
@@ -222,7 +222,8 @@ pprAnnExpr ppr annppr p = para phi where
                         $ iConcat
                         [ iStr keyword, iNewline
                         , iStr "  "
-                        , iIndent (pprAnnDefns ppr annppr (map (undefined) defns)), iNewline
+                        , iIndent (pprAnnDefns ppr annppr (map (second fst) defns))
+                        , iNewline
                         , iStr "in ", pprAnnExpr ppr annppr 0 (fst body) ]
                 keyword | isrec     = "letrec"
                         | otherwise = "let"

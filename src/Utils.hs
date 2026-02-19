@@ -1,7 +1,7 @@
 module Utils
     ( space, layn, rjustify
     , Assoc, aLookup, aDomain, aRange, aEmpty, aInsert
-    , merge, list
+    , merge, list, third
     )
     where
 
@@ -58,3 +58,6 @@ list :: b -> (a -> [a] -> b) -> [a] -> b
 list z c xxs = case xxs of
     []   -> z
     x:xs -> c x xs
+
+third :: (c -> d) -> (a,b,c) -> (a,b,d)
+third h (x,y,z) = (x,y,h z)

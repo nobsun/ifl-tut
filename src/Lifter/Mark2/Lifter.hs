@@ -7,21 +7,13 @@
 module Lifter.Mark2.Lifter
     where
 
-import Data.Char
-import Data.Function
-import Data.List
 import Data.Set qualified as S
--- import Text.ParserCombinators.ReadP
+
 import Control.Comonad.Cofree
 import Control.Comonad.Trans.Cofree qualified as F
-import Data.Functor.Foldable
 
 import Lambda
 import Language
-import Heap
-import qualified Stack as Stk (push, pop, npop, discard)
-import Stack hiding (push, pop, npop, discard)
-import Utils
 import Iseq
 
 import Gmachine.Mark7.Machine qualified as Gm7
@@ -39,11 +31,14 @@ run prog inputs
     $ lambdaLift
     $ parse prog
 
+lambdaRun :: String -> IO ()
+lambdaRun = putStrLn . runS
+
 runS :: String -> String
 runS = pprint . lambdaLift . parse 
 
 lambdaLift :: CoreProgram -> CoreProgram
-lambdaLift = collectSCs . rename . abstract . freeVars
+lambdaLift = collectScs . rename . abstract . freeVars
 
 freeVars :: CoreProgram -> AnnProgram Name (S.Set Name)
 freeVars prog = [ (name, args, freeVarsExpr (S.fromList args) body)
@@ -111,5 +106,4 @@ abstractExpr = cataAnnExpr phi where
             sc = ELet nonRecursive [("sc", scRhs)] (EVar "sc")
             scRhs = ELam (fvList ++ args) body
         _free F.:< ECaseF e alts -> ECase e alts
-
 

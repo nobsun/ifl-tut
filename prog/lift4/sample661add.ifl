@@ -1,0 +1,8 @@
+main = f 6;
+
+add x y = x + y;
+
+f x = let 
+        g = \ y -> add (x * x) y 
+      in g 3 + g 4
+

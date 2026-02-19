@@ -7,8 +7,7 @@
 module Lifter.Mark2.Rename
     where
 
-import Data.Char
-import Data.Function
+import Control.Arrow
 import Data.List
 import Data.Set qualified as S
 -- import Text.ParserCombinators.ReadP
@@ -105,8 +104,8 @@ renameAlt env ns (t,as,e)
         (ns1,as',env') -> case renameExpr (env' ++ env) ns1 e of
             (ns2,e')       -> (ns2, (t,as',e'))
 
-collectSCs :: CoreProgram -> CoreProgram
-collectSCs = concatMap collectOneSc
+collectScs :: CoreProgram -> CoreProgram
+collectScs = concatMap collectOneSc
 
 collectOneSc :: (Name, [Name], CoreExpr) -> [(Name, [Name], CoreExpr)]
 collectOneSc = \ case
@@ -136,7 +135,7 @@ collectSCsExpr expr = case expr of
         where
             (scsExpr, e') = collectSCsExpr e
             (scsAlts, alts') = mapAccumL collectSCsAlt [] alts
-            collectSCsAlt scs (tag,args,rhs) =(scs ++ scsRhs, (tag, args, rhs'))
+            collectSCsAlt scs (tag,args,rhs) = (scs ++ scsRhs, (tag, args, rhs'))
                 where
                     (scsRhs, rhs') = collectSCsExpr rhs
     ELet isRec defns body -> (rhssSCs ++ bodySCs ++ localSCs, mkELet isRec nonSCs' body')
@@ -164,4 +163,3 @@ isELam :: Expr a -> Bool
 isELam = \ case
     ELam _ _ -> True
     _        -> False
-        

@@ -1,0 +1,3 @@
+#!/bin/bash
+
+stack exec -- ghci src/Lifter/Mark$1/Lifter.hs
