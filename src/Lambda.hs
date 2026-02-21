@@ -56,6 +56,9 @@ cataExpr = cata
 paraExpr :: (ExprF a (Expr a, b) -> b) -> Expr a -> b
 paraExpr = para
 
+zygoExpr :: (ExprF a c -> c) -> (ExprF a (c, b) -> b) -> Expr a -> b
+zygoExpr = zygo
+
 anaExpr :: (b -> ExprF a b) -> b -> Expr a
 anaExpr = ana
 
@@ -72,6 +75,9 @@ instance Corecursive (Expr a) where
         ELetF isrec bs e -> ELet isrec bs e
         ECaseF e alts    -> ECase e alts
         ELamF xs e       -> ELam xs e
+
+hyloExpr :: (ExprF a c -> c) -> (b -> ExprF a b) -> b -> c
+hyloExpr = hylo
 
 {- AnnProgram -}
 
@@ -90,6 +96,11 @@ paraAnnExpr :: (F.CofreeF (ExprF a) ann (AnnExpr a ann, b) -> b)
             -> AnnExpr a ann -> b
 paraAnnExpr = para
 
+zygoAnnExpr :: (F.CofreeF (ExprF a) ann c -> c)
+            -> (F.CofreeF (ExprF a) ann (c, b) -> b) 
+            -> AnnExpr a ann -> b
+zygoAnnExpr = zygo
+
 anaAnnExpr :: (b -> F.CofreeF (ExprF a) ann b)
            -> b -> AnnExpr a ann
 anaAnnExpr = ana
@@ -104,6 +115,11 @@ deAnnProg = map deAnnScDefn
 deAnnScDefn :: AnnScDefn a ann -> ScDefn a
 deAnnScDefn = \ case
     (name, as, ae) -> (name, as, deAnnExpr ae)
+
+hyloAnnExpr :: (F.CofreeF (ExprF a) ann c -> c)
+            -> (b -> F.CofreeF (ExprF a) ann b)
+            -> b -> c
+hyloAnnExpr = hylo
 
 deAnnExpr :: AnnExpr a ann -> Expr a
 deAnnExpr = cataAnnExpr phi where
