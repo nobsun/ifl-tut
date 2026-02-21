@@ -40,7 +40,7 @@ pprScDefnGen ppr = \ case
         -> iConcat [ iStr name
                    , if null args 
                         then iNil 
-                        else {- iAppend iSpace -}(pprArgsGen ppr args)
+                        else pprArgsGen ppr args
                    , iStr " = "
                    , iIndent (pprExprGen ppr 0 body)
                    ]
@@ -180,8 +180,8 @@ pprAnnScDefn ppr annppr = \ case
         -> iConcat [ iStr name
                    , if null args
                         then iNil
-                        else iAppend iSpace (pprArgsGen ppr args)
-                   , iStr "="
+                        else {- iAppend iSpace -} (pprArgsGen ppr args)
+                   , iSpace, iStr "=", iSpace
                    , iIndent (pprAnnExpr ppr annppr 0 body)
                    ]
 
