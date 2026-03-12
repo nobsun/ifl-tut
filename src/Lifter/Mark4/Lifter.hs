@@ -52,12 +52,12 @@ sample2 = readFile "prog/lift4/sample2.ifl"
 check :: (CoreProgram -> CoreProgram) -> String -> IO ()
 check f = putStrLn . pprint . f . parse
 
-checkGen :: Show a => (CoreProgram -> Program a) -> String -> IO ()
+checkGen :: (VarRep a, Show a) => (CoreProgram -> Program a) -> String -> IO ()
 checkGen f = putStrLn . pprintGen def . f . parse
     where
         def = iStr . show
 
-checkAnnGen :: (Show a, Show ann )
+checkAnnGen :: (VarRep a, Show a, Show ann )
             => (CoreProgram -> AnnProgram a ann) -> String -> IO ()
 checkAnnGen f = putStrLn . pprintAnn def defann . f . parse
     where
@@ -83,58 +83,3 @@ elimLambda = map elim
 
 sampleMini :: IO String
 sampleMini = return "g y = a (m x x) y"
-
-hoge :: Int -> Int
-hoge x
-    = let
-        g = \ y -> (x * x) + y
-      in g 3 + g 4
-
-hugo :: Int -> Int
-hugo x 
-    = let
-        g = huga x
-      in  let
-            v = g 3 + g 4
-          in v
-
-huga :: Int -> Int -> Int
-huga x y 
-    = let
-        v = (+) (x * x)
-      in  v y
-
-huge :: Int -> Int
-huge x
-    = let
-        u = x * x
-      in  let
-            g = hage u
-          in g 3 + g 4
-
-hage :: Int -> Int -> Int
-hage u y = u + y
-
-tracing :: Show a => a -> a
-tracing a = trace (show a) a
-
-{-
-変換前
-f x = let
-        g = \ y -> x * x + y
-      in g 3 + g 4
-main = f 6
-
-変換後
-f x = let
-        g = sc x
-      in let
-           v = g 3 + g 4
-         in v
-
-sc x y = let
-           v = (+) (x * x) 
-         in
-           v y
-main = f 6
--}

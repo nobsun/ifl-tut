@@ -19,7 +19,7 @@ data Expr a
   | EAp (Expr a) (Expr a)     -- ^ 適用
   | ELet                      -- ^ let(rec)式
       IsRec                     -- ^ 再帰的か
-      [(a, Expr a)]             -- ^ 定義
+      [Binder a]             -- ^ 定義
       (Expr a)                  -- ^ let(rec)式の本体
   | ECase                     -- ^ case式
       (Expr a)                  -- ^ 分析対象の式
@@ -65,8 +65,9 @@ nonRecursive :: IsRec
 nonRecursive = False
 
 {- | バインダ -}
-type Binder a b = (a, b)
-bindersOf :: [Binder a b] -> [a]
+type Binder a = (a, Expr a)
+
+bindersOf :: [(a, b)] -> [a]
 bindersOf defns = [ name | (name, _) <- defns ]
 
 rhssOf :: [(a, b)] -> [b]

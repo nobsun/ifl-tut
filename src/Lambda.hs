@@ -56,11 +56,20 @@ cataExpr = cata
 paraExpr :: (ExprF a (Expr a, b) -> b) -> Expr a -> b
 paraExpr = para
 
+zygoExpr :: (ExprF a c -> c) -> (ExprF a (c, b) -> b) -> Expr a -> b
+zygoExpr = zygo
+
 anaExpr :: (b -> ExprF a b) -> b -> Expr a
 anaExpr = ana
 
 apoExpr :: (b -> ExprF a (Either (Expr a) b)) -> b -> Expr a
 apoExpr = apo
+
+hyloExpr :: (ExprF a c -> c) -> (b -> ExprF a b) -> b -> c
+hyloExpr = hylo
+
+histoExpr :: (ExprF a (AnnExpr a b) -> b) -> Expr a -> b
+histoExpr = histo
 
 instance Corecursive (Expr a) where
     embed :: Base (Expr a) (Expr a) -> Expr a
@@ -90,6 +99,11 @@ paraAnnExpr :: (F.CofreeF (ExprF a) ann (AnnExpr a ann, b) -> b)
             -> AnnExpr a ann -> b
 paraAnnExpr = para
 
+zygoAnnExpr :: (F.CofreeF (ExprF a) ann c -> c)
+            -> (F.CofreeF (ExprF a) ann (c, b) -> b) 
+            -> AnnExpr a ann -> b
+zygoAnnExpr = zygo
+
 anaAnnExpr :: (b -> F.CofreeF (ExprF a) ann b)
            -> b -> AnnExpr a ann
 anaAnnExpr = ana
@@ -97,6 +111,17 @@ anaAnnExpr = ana
 apoAnnExpr :: (b -> F.CofreeF (ExprF a) ann (Either (AnnExpr a ann) b))
            -> b -> AnnExpr a ann
 apoAnnExpr = apo
+
+hyloAnnExpr :: (F.CofreeF (ExprF a) ann c -> c)
+            -> (b -> F.CofreeF (ExprF a) ann b)
+            -> b -> c
+hyloAnnExpr = hylo
+
+
+histoAnnExpr :: (F.CofreeF (ExprF a) ann (Cofree (F.CofreeF (ExprF a) ann) b) -> b)
+             -> AnnExpr a ann -> b
+histoAnnExpr = histo
+
 
 deAnnProg :: AnnProgram a ann -> Program a
 deAnnProg = map deAnnScDefn
@@ -115,3 +140,18 @@ deAnnExpr = cataAnnExpr phi where
         _ F.:< ECaseF e alts -> ECase e alts
         _ F.:< ELetF r ds e  -> ELet r ds e
         _ F.:< ELamF as e    -> ELam as e
+
+class VarRep a where
+    vname :: a -> Name
+
+instance VarRep Name where
+    vname :: Name -> Name
+    vname = id
+
+instance VarRep (a, Name) where
+    vname :: (a, Name) -> Name
+    vname = snd
+
+instance VarRep (Name, a) where
+    vname :: (Name, a) -> Name
+    vname = fst

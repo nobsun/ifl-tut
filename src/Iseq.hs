@@ -1,6 +1,7 @@
 module Iseq
     where
 
+import Data.Bool
 import Utils
 
 class Iseq iseq where
@@ -25,8 +26,23 @@ iInterleave sep iseqs = case iseqs of
 iParen :: Iseq iseq => iseq -> iseq
 iParen iseq = iConcat [ iStr "(", iseq, iStr ")" ]
 
+iParen' :: Iseq iseq => Bool -> iseq -> iseq
+iParen' p = bool id iParen p
+
+iAngle :: Iseq iseq => iseq -> iseq
+iAngle iseq = iConcat [ iStr "<", iseq, iStr ">"]
+
+iDAngle :: Iseq iseq => iseq -> iseq
+iDAngle iseq = iConcat [ iStr "⟪", iseq, iStr "⟫"]
+
+iSemi :: Iseq iseq => iseq
+iSemi = iStr ";"
+
 iSpace :: Iseq iseq => iseq
 iSpace = iStr " "
+
+iSpaces :: Iseq iseq => Int -> iseq
+iSpaces n = iStr (replicate n ' ')
 
 iNum :: Iseq iseq => Int -> iseq
 iNum = iStr . show
@@ -69,18 +85,24 @@ data IseqRep
     deriving (Eq, Show)
 
 instance Iseq IseqRep where
+    iNil :: IseqRep
     iNil =  INil
+    iStr :: String -> IseqRep
     iStr "" = INil
     iStr cs = case break ('\n' ==) cs of
         (_, "")   -> IStr cs
         (xs,_:ys) -> case xs of
             "" -> INewline `iAppend` iStr ys
             _  -> IStr xs `iAppend` INewline `iAppend` iStr ys
+    iAppend :: IseqRep -> IseqRep -> IseqRep
     iAppend INil seq2 = seq2
     iAppend seq1 INil = seq1
     iAppend seq1 seq2 = IAppend seq1 seq2
+    iIndent :: IseqRep -> IseqRep
     iIndent seq' = IIndent seq'
+    iNewline :: IseqRep
     iNewline = INewline
+    iDisplay :: IseqRep -> String
     iDisplay seq' = flatten 0 [(seq', 0)]
 
 flatten :: Int
@@ -96,6 +118,3 @@ flatten col iseqs = case iseqs of
     (IIndent seq', _) : seqs
         -> flatten col ((seq', col) : seqs)
     [] -> ""
-
-iDAngles :: IseqRep -> IseqRep
-iDAngles sq = iConcat [iStr "《", sq, iStr "》"]

@@ -1,4 +1,5 @@
 -- # Lifter.PPrint
+{-# LANGUAGE GHC2024 #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE LambdaCase #-}
 module Lifter.PPrint
@@ -11,45 +12,55 @@ import Control.Comonad.Trans.Cofree qualified as F
 import Data.Functor.Foldable
 import Data.Bool
 import Data.Char
+import Data.List
 import Data.Maybe
-import Language hiding (pprint, pprExpr)
+import Language hiding (pprint, pprExpr, pprArgs, binOps)
 import Lambda
 import Iseq
+import Bop
+
+tabSize :: Int
+tabSize = 4
+
+iTab :: IseqRep
+iTab = iSpaces tabSize
 
 {- pretty printer -}
 pprint :: CoreProgram -> String
 pprint = pprintGen iStr
 
-pprintGen :: (a -> IseqRep)
+pprintGen :: VarRep a
+          => (a -> IseqRep)
           -> Program a
           -> String
 pprintGen ppr
     = iDisplay . pprProgramGen ppr
 
-pprProgramGen :: (a -> IseqRep)
+pprProgramGen :: VarRep a
+              => (a -> IseqRep)
               -> Program a
               -> IseqRep
 pprProgramGen ppr
-    = iInterleave (iAppend (iStr " ;") iNewline) . map (pprScDefnGen ppr)
+    = iInterleave (iAppend (iStr ";") iNewline) . map (pprScDefnGen ppr)
 
-pprScDefnGen :: (a -> IseqRep)
+pprScDefnGen :: VarRep a
+             => (a -> IseqRep)
              -> ScDefn a
              -> IseqRep
 pprScDefnGen ppr = \ case
     (name,args,body) 
         -> iConcat [ iStr name
-                   , if null args 
-                        then iNil 
-                        else {- iAppend iSpace -}(pprArgsGen ppr args)
-                   , iStr " = "
-                   , iIndent (pprExprGen ppr 0 body)
+                   , pprArgsGen ppr args
+                   , iSpace, iStr "=", iSpace
+                   , iIndent (pprExprGen ppr body)
                    ]
 
 pprArgsGen :: (a -> IseqRep)
            -> [a]
            -> IseqRep
-pprArgsGen ppr
-    = iConcat . map (iAppend iSpace . ppr)
+pprArgsGen ppr args
+    = if null args then iNil
+      else iConcat [iSpace, iInterleave iSpace (map ppr args)]
 
 {- |
 >>> es1 = [varSampleE, numSampleE]
@@ -57,85 +68,227 @@ pprArgsGen ppr
 >>> es3 = [appInfixSampleE, appInfixSampleE1, appInfixSampleE2, appInfixSampleE3, appInfixSampleE4]
 >>> es4 = [letSampleE, caseSampleE, lambdaSampleE]
 >>> es = concat [es1,es2,es3,es4]
->>> putStrLn $ iDisplay $ iLayn2 $ map (pprExpr 0) es
+>>> putStrLn $ iDisplay $ iLayn2 $ map pprExpr es
      1) var
      2) 57
      3) Pack{1,0}
      4) Pack{2,1}
      5) x + y < p * length xs
-     6) (12 / 2) / (6 / 3)
-     7) (12 * 2) / (6 * 3)
-     8) (12 * 2) * (6 * 3)
+     6) 12 / 2 / (6 / 3)
+     7) 12 * 2 / (6 * 3)
+     8) 12 * 2 * (6 * 3)
      9) 12 * 2 - 6 * 3
     10) letrec
-          y = x + 1;
-          z = Y * 2
-        in z
+            y = x + 1;
+            z = Y * 2
+        in
+            z
     11) case xxs of
-          <1> -> 0;
-          <2> x xs -> 1 + length xs
-    12) \ x y -> Pack{1,2} x y
+            <1> → 0;
+            <2> x xs → 1 + length xs
+    12) λ x y → Pack{1,2} x y
 <BLANKLINE>
 -}
-pprExpr :: Precedence
-        -> CoreExpr
+pprExpr :: CoreExpr
         -> IseqRep
 pprExpr = pprExprGen iStr
 
-pprExprGen :: (a -> IseqRep)
-           -> Precedence
+pprExprGen :: forall a. VarRep a
+           => (a -> IseqRep)
            -> Expr a
            -> IseqRep
-pprExprGen ppr p = para phi where
+pprExprGen ppr = snd . histoExpr phi where
+    phi :: ExprF a (AnnExpr a (Precedence, IseqRep)) -> (Precedence, IseqRep)
     phi = \ case
-        EVarF v -> iStr v
-        ENumF n -> iNum n
-        EConstrF tag ary
-            -> iConcat [ iStr "Pack{", iNum tag, iStr ",", iNum ary, iStr "}" ]
-        EApF (EAp (EVar op) e1, _) (e2, _)
-            | isJust mfx -> bool id iParen (p >= p') infixexpr
-            where
-                mfx = lookup op binOps
-                (p',_) = fromJust mfx
-                infixexpr = iConcat
-                          [ pprExprGen ppr p' e1
-                          , iSpace, iStr op, iSpace
-                          , pprExprGen ppr p' e2
-                          ]
-        EApF (e1,_) (e2,_) -> bool id iParen (p > 6) appexpr
-            where
-                appexpr = iConcat [ pprExprGen ppr 6 e1
-                                  , iStr " "
-                                  , pprExprGen ppr 7 e2 ]
-        ELetF isrec defns body 
-            -> bool id iParen (p > 0) letexpr
-            where
-                letexpr = iConcat [ iStr keyword, iNewline
-                                  , iStr "  ", iIndent (pprDefnsGen ppr (map (second fst) defns)), iNewline
-                                  , iStr "in ", pprExprGen ppr 0 (fst body) ]
-                keyword | isrec     = "letrec"
-                        | otherwise = "let"
-        ECaseF e alts
-            -> bool id iParen (p > 0) caseexpr
-            where
-                third f (x,y,z) = (x,y,f z)
-                caseexpr = iConcat [ iStr "case ", iIndent (pprExprGen ppr 0 (fst e)), iStr " of", iNewline
-                                   , iStr "  ", iIndent (iInterleave iNl (map (pprAlt . third fst) alts)) ]
-                iNl = iConcat [ iStr ";", iNewline ]
-                pprAlt (tag, args, rhs)
-                    = iConcat [ iStr "<", iNum tag, iStr ">"
-                              , pprArgsGen ppr args, iStr " -> "
-                              , iIndent (pprExprGen ppr 0 rhs) ]
-        ELamF args body
-            -> bool id iParen (p > 0) lambda
-            where
-                lambda = iConcat [ iStr "\\", pprArgsGen ppr args
-                                 , iStr " -> "
-                                 , iIndent (pprExprGen ppr 0 (fst body)) ]
+        EVarF v -> (maxBound, iStr v)
+        ENumF n -> (maxBound, iNum n)
+        EConstrF t a -> (maxBound, doc) where
+            doc = iConcat [ iStr "Pack{", iNum t, iStr ",", iNum a, iStr "}" ]
+        EApF e1 e2 -> case e1 of
+            _ :< EApF e11 e12 -> case e11 of
+                (_,i11) :< EVarF bop
+                    | isBop bop -> case bopInfoOf bop of
+                        (p,Infix)  -> case e12 of
+                            (o1,do1) :< _ -> case e2 of
+                                (o2,do2) :< _ -> (p, doc) where
+                                                 doc = iConcat 
+                                                     [ iParen' (p >= o1) do1
+                                                     , iSpace, i11, iSpace
+                                                     , iParen' (p >= o2) do2
+                                                     ]
+                        (p,InfixL) -> case e12 of
+                            (o1,do1) :< _ -> case e2 of
+                                (o2,do2) :< _ -> (p, doc) where
+                                                 doc = iConcat 
+                                                     [ iParen' (p >  o1) do1
+                                                     , iSpace, i11, iSpace
+                                                     , iParen' (p >= o2) do2
+                                                     ]
+                        (p,InfixR) -> case e12 of
+                            (o1,do1) :< _ -> case e2 of
+                                (o2,do2) :< _ -> (p, doc) where
+                                                 doc = iConcat 
+                                                     [ iParen' (p >= o1) do1
+                                                     , iSpace, i11, iSpace
+                                                     , iParen' (p >  o2) do2
+                                                     ]
+                    | otherwise -> pprEAp e1 e2
+                _ -> pprEAp e1 e2
+            _ -> pprEAp e1 e2
+        ELetF isRec defns body -> (minBound, doc) where
+            doc = iConcat
+                [ iStr "let", bool iNil (iStr "rec") isRec, iNewline
+                , iTab, iIndent defns', iNewline
+                , iStr "in", iNewline
+                , iTab, iIndent body'
+                ]
+            defns' = pprBinders defns
+            body'  = case body of (_,e) :< _ -> e
 
-type Binders a = [(a, Expr a)]
+        ECaseF e alts -> (minBound, doc) where
+            doc = iConcat
+                [ iStr "case", iSpace, e', iSpace, iStr "of", iNewline
+                , iTab, iIndent alts'
+                ]
+            e' = case e of
+                (_,de) :< _ -> de
+            alts' = pprAlts alts
+                
+        ELamF args body -> case sectionType args body of
+            NotSection      -> pprELam args body
+            SectionBoth bop -> (maxBound, bop') where
+                bop' = pprBop bop
+            SectionL bop info (p,d1) -> case info of                 -- (x +)
+                (o,Infix)  -> (maxBound, iParen sec) where
+                    sec = iConcat 
+                        [ iParen' (o >= p) d1, iSpace, iStr bop ]
+                (o,InfixL) -> (maxBound, iParen secl) where
+                    secl = iConcat 
+                         [ iParen' (o >= p) d1, iSpace, iStr bop ]
+                (o,InfixR) -> (maxBound, iParen secl) where
+                    secl = iConcat
+                         [ iParen' (o >  p) d1, iSpace, iStr bop ]
+            SectionR bop info (q,d2) -> case info of                 -- (+ y)
+                (o,Infix)  -> (maxBound, iParen secr) where
+                    secr = iConcat
+                         [ iStr bop, iSpace, iParen' (o >= q) d2 ]
+                (o,InfixL) -> (maxBound, iParen secr) where
+                    secr = iConcat
+                         [ iStr bop, iSpace, iParen' (o >  q) d2 ]
+                (o,InfixR) -> (maxBound, iParen secr) where
+                    secr = iConcat
+                         [ iStr bop, iSpace, iParen' (o >= q) d2 ]
 
-pprDefnsGen :: (a -> IseqRep)
+    pprEAp :: AnnExpr a (Precedence, IseqRep)
+           -> AnnExpr a (Precedence, IseqRep)
+           -> (Precedence, IseqRep)
+    pprEAp fun arg = case (pprFun fun, pprArg arg) of
+        (dfun, darg) -> (10 :: Int, doc) where
+            doc = iConcat
+                [ dfun, iSpace, darg]
+        where
+            pprFun = \ case
+                (p,doc) :< _ -> iParen' (p < 10) doc
+            pprArg = \ case
+                (p,doc) :< _ -> iParen' (p < maxBound) doc
+
+    pprBinders :: AnnBinders a (Precedence, IseqRep)
+               -> IseqRep
+    pprBinders = iInterleave sep . map pprBinder where
+        pprBinder = \ case
+            (a,(_,rhs) :< _) -> iConcat [ppr a, iStr " = ", rhs]
+        sep = iConcat [iSemi, iNewline]
+
+    pprAlts :: AnnAlters a (Precedence, IseqRep)
+            -> IseqRep
+    pprAlts = iInterleave sep . map pprAlt where
+        pprAlt = \ case
+            (t,as,(_,rhs) :< _) -> iConcat
+                [ iAngle (iNum t)
+                , pprArgs ppr as, iSpace
+                , iStr "→", iSpace
+                , rhs
+                ]
+        sep = iConcat [iSemi, iNewline]
+
+    pprELam :: [a] 
+            -> AnnExpr a (Precedence, IseqRep)
+            -> (Precedence, IseqRep)
+    pprELam xs body = (minBound, lam) where
+        lam = case body of
+            (_,body') :< _ -> iConcat
+                [ iStr "λ"
+                , pprArgs ppr xs, iSpace
+                , iStr "→", iSpace
+                , body'
+                ]
+
+    pprBop :: Name -> IseqRep
+    pprBop = \ case
+        bop | "`" `isPrefixOf` bop -> iStr (trim bop)
+            | otherwise            -> iParen (iStr bop)
+        where
+            trim = dropWhileEnd ('`' ==) . dropWhile ('`' ==)
+
+pprArgs :: (a -> IseqRep) -> [a] -> IseqRep
+pprArgs ppr = \ case
+    [] -> iNil
+    xs -> iConcat [iSpace, iInterleave iSpace (map ppr xs)]
+
+data SectionType d
+    = NotSection
+    | SectionBoth Name
+    | SectionL Name BopInfo d
+    | SectionR Name BopInfo d
+
+sectionType :: VarRep a 
+            => [a] 
+            -> AnnExpr a (Int, IseqRep)
+            -> SectionType (Int, IseqRep)
+sectionType xs body = case xs of
+    [x] -> case body of
+        _ :< EApF e1 e2 -> case e1 of
+            _ :< EApF e11 e12 -> case e11 of
+                _ :< EVarF bop
+                    | isBop bop -> case e12 of
+                        ae12 :< EVarF y -> case e2 of
+                            ae2 :< EVarF z
+                                | y == z       -> NotSection
+                                | vname x == y -> SectionR bop (bopInfoOf bop) ae2
+                                | vname x == z -> SectionL bop (bopInfoOf bop) ae12
+                                | otherwise    -> NotSection
+                            ae2 :< _
+                                | vname x == y -> SectionR bop (bopInfoOf bop) ae2
+                                | otherwise    -> NotSection
+                        ae12 :< _       -> case e2 of
+                            _ :< EVarF z
+                                | vname x == z -> SectionL bop (bopInfoOf bop) ae12
+                                | otherwise    -> NotSection
+                            _                  -> NotSection
+                _               -> NotSection
+            _                 -> NotSection
+        _               -> NotSection
+    [x,y] -> case body of
+        _ :< EApF e1 e2 -> case e2 of
+            _ :< EVarF w
+                | vname y /= w  -> NotSection
+                | otherwise     -> case e1 of
+                    _ :< EApF e11 e12 -> case e11 of
+                        _ :< EVarF bop
+                            | isBop bop   -> case e12 of
+                                _ :< EVarF z
+                                    | vname x == z -> SectionBoth bop
+                                _                  -> NotSection
+                        _                 -> NotSection
+                    _                 -> NotSection
+            _               -> NotSection
+        _               -> NotSection
+    _   -> NotSection
+
+type Binders a = [Binder a]
+
+pprDefnsGen :: VarRep a
+            => (a -> IseqRep)
             -> Binders a
             -> IseqRep
 pprDefnsGen ppr
@@ -143,11 +296,12 @@ pprDefnsGen ppr
     where
         sep = iConcat [ iStr ";", iNewline ]
 
-pprDefnGen :: (a -> IseqRep)
+pprDefnGen :: VarRep a
+           => (a -> IseqRep)
            -> (a, Expr a)
            -> IseqRep
 pprDefnGen ppr (name, expr)
-    = iConcat [ ppr name, iStr " = ", iIndent (pprExprGen ppr 0 expr) ]
+    = iConcat [ ppr name, iStr " = ", iIndent (pprExprGen ppr expr) ]
 
 {- AnnProgram -}
 
@@ -157,104 +311,136 @@ pprDefnGen ppr (name, expr)
 -- type AnnBinders a ann = [(a, AnnExpr a ann)]
 
 {- pprintAnn -}
-pprintAnn :: (a   -> IseqRep)
+pprintAnn :: VarRep a 
+          => (a   -> IseqRep)
           -> (ann -> IseqRep)
           -> AnnProgram a ann
           -> String
 pprintAnn ppr annppr
     = iDisplay . pprAnnProgram ppr annppr
 
-pprAnnProgram :: (a   -> IseqRep)
+pprAnnProgram :: VarRep a
+              => (a   -> IseqRep)
               -> (ann -> IseqRep)
               -> AnnProgram a ann
               -> IseqRep
 pprAnnProgram ppr annppr
     = iInterleave (iAppend (iStr ";") iNewline) . map (pprAnnScDefn ppr annppr)
 
-pprAnnScDefn :: (a   -> IseqRep)
+pprAnnScDefn :: VarRep a
+             => (a   -> IseqRep)
              -> (ann -> IseqRep)
              -> AnnScDefn a ann
              -> IseqRep
 pprAnnScDefn ppr annppr = \ case
     (name,args,body)
         -> iConcat [ iStr name
-                   , if null args
-                        then iNil
-                        else iAppend iSpace (pprArgsGen ppr args)
-                   , iStr "="
-                   , iIndent (pprAnnExpr ppr annppr 0 body)
+                   , pprArgs ppr args
+                   , iSpace, iStr "=", iSpace
+                   , iIndent (pprAnnExpr ppr annppr body)
                    ]
 
-pprAnnExpr :: forall a ann. (a -> IseqRep)
+pprAnnExpr :: forall a ann. VarRep a
+           => (a -> IseqRep)
            -> (ann -> IseqRep)
-           -> Precedence
            -> AnnExpr a ann
            -> IseqRep
-pprAnnExpr ppr annppr p = para phi where
-    phi :: F.CofreeF (ExprF a) ann (AnnExpr a ann, IseqRep) -> IseqRep
-    phi (ann F.:< exprf) = case exprf of
-        EVarF v -> iAnn ann (iStr v)
-        ENumF n -> iAnn ann (iNum n)
-        EConstrF tag ary 
-            -> iAnn ann iseq where
-                iseq = iConcat [ iStr "Pack{", iNum tag, iStr ",", iNum ary, iStr "}" ]
-        EApF (_ :< EApF (_ :< EVarF op) e1, _) (e2, _)
-            | isJust mfx -> iAnn ann infixexpr
-            where
-                mfx = lookup op binOps
-                (p',_) = fromJust mfx
-                infixexpr = bool id iParen (p >= p')
-                          $ iConcat
-                          [ pprAnnExpr ppr annppr p' e1
-                          , iSpace, iStr op, iSpace
-                          , pprAnnExpr ppr annppr p' e2
-                          ]
-        EApF (e1,_) (e2,_) -> iAnn ann appexpr
-            where
-                appexpr = bool id iParen (p > 6)
-                        $ iConcat [ pprAnnExpr ppr annppr 6 e1
-                                  , iStr " "
-                                  , pprAnnExpr ppr annppr 7 e2 ]
-        ELetF isrec defns body
-            -> iAnn ann letexpr
-            where
-                letexpr = bool id iParen (p > 0)
-                        $ iConcat
-                        [ iStr keyword, iNewline
-                        , iStr "  "
-                        , iIndent (pprAnnDefns ppr annppr (map (second fst) defns))
-                        , iNewline
-                        , iStr "in ", pprAnnExpr ppr annppr 0 (fst body) ]
-                keyword | isrec     = "letrec"
-                        | otherwise = "let"
-        ECaseF e alts
-            -> iAnn ann caseexpr
-            where
-                third f (x,y,z) = (x,y,f z)
-                caseexpr = bool id iParen (p > 0)
-                         $ iConcat
-                         [ iStr "case ", iIndent (pprAnnExpr ppr annppr 0 (fst e)), iStr " of", iNewline
-                         , iStr "  ", iIndent (iInterleave iNl (map (pprAnnAlt . third fst) alts))
-                         ]
-                iNl = iConcat [ iStr ";", iNewline ]
-                pprAnnAlt (tag, args, rhs)
-                    = iConcat [ iStr "<", iNum tag, iStr ">"
-                              , pprArgsGen ppr args, iStr " -> "
-                              , iIndent (pprAnnExpr ppr annppr 0 rhs)]
-        ELamF args body
-            -> iAnn ann lambda
-            where
-                lambda = bool id iParen (p > 0)
-                       $ iConcat
-                       [ iStr "\\", pprArgsGen ppr args
-                       , iStr " -> "
-                       , iIndent (pprAnnExpr ppr annppr 0 (fst body))
-                       ]
+pprAnnExpr ppr annppr = snd . histoAnnExpr phi where
+    phi :: F.CofreeF (ExprF a) ann (Cofree (F.CofreeF (ExprF a) ann) (Precedence, IseqRep)) -> (Precedence, IseqRep)
+    phi = \ case
+        ann F.:< EVarF v      -> (maxBound, v') where v' = iAnn ann (iStr v)
+        ann F.:< ENumF n      -> (maxBound, n') where n' = iAnn ann (iNum n)
+        ann F.:< EConstrF t a -> (maxBound, c')  where 
+            c'  = iAnn ann c
+            c   = iConcat [iStr "Pack{", iNum t, iStr ",", iNum a, iStr "}"]
+        ann F.:< EApF e1 e2 -> case e1 of
+            _ :< _ F.:< EApF e11 e12 -> case e11 of
+                (_,i11) :< ann11 F.:< EVarF bop
+                    | isBop bop -> case bopInfoOf bop of
+                        (p,Infix)   -> case e12 of
+                            (o1,do1) :< ann12 F.:< _ -> case e2 of
+                                (o2,do2) :< ann2 F.:< _ -> (p, doc) where
+                                    doc = iAnn ann $ iConcat
+                                        [ iAnn ann12 $ iParen' (p >= o1) do1
+                                        , iSpace, iAnn ann11 i11, iSpace
+                                        , iAnn ann2  $ iParen' (p >= o2) do2
+                                        ]
+                        (p,InfixL)  -> case e12 of
+                            (o1,do1) :< ann12 F.:< _ -> case e2 of
+                                (o2,do2) :< ann2 F.:< _ -> (p, doc) where
+                                    doc = iAnn ann $ iConcat
+                                        [ iAnn ann12 $ iParen' (p >  o1) do1
+                                        , iSpace, iAnn ann11 i11, iSpace
+                                        , iAnn ann2  $ iParen' (p >= o2) do2
+                                        ]
+                        (p,InfixR)  -> case e12 of
+                            (o1,do1) :< ann12 F.:< _ -> case e2 of
+                                (o2,do2) :< ann2 F.:< _ -> (p, doc) where
+                                    doc = iAnn ann $ iConcat
+                                        [ iAnn ann12 $ iParen' (p >= o1) do1
+                                        , iSpace, iAnn ann11 i11, iSpace
+                                        , iAnn ann2  $ iParen' (p >  o2) do2
+                                        ]
+                    | otherwise -> second (iAnn ann) $ pprAnnEAp e1 e2
+                _ -> second (iAnn ann) $ pprAnnEAp e1 e2
+            _ -> second (iAnn ann) $ pprAnnEAp e1 e2
+        ann F.:< ELetF isRec defns body -> (minBound, dlet) where
+            dlet = iAnn ann $ iConcat
+                [ iStr "let", bool iNil (iStr "rec") isRec, iNewline
+                , iTab, iIndent defns', iNewline
+                , iStr "in", iNewline
+                , iTab, iIndent body'
+                ]
+            defns' = pprAnnBinders defns
+            body'  = case body of (_,e) :< _ F.:< _ -> e
+        ann F.:< ECaseF ((_,e) :< _) alts -> (minBound, dcase) where
+            dcase = iAnn ann $ iConcat
+                [ iStr "case", iSpace, e, iSpace, iStr "of", iNewline
+                , iTab, iIndent alts'
+                ]
+            alts' = pprAnnAlts alts
+        ann F.:< ELamF xs body -> (minBound, lam) where
+            lam = case body of
+                (_,body') :< _ -> iAnn ann $ iConcat
+                    [ iStr "λ", pprArgs ppr xs, iSpace
+                    , iStr "→", iSpace
+                    , body'
+                    ]
 
     iAnn :: ann -> IseqRep -> IseqRep
-    iAnn ann iseq = iDAngles (iConcat [annppr ann, iStr ",", iseq])
+    iAnn ann iseq = iDAngle (iConcat [annppr ann, iStr ",", iseq])
 
-pprAnnDefns :: (a   -> IseqRep)
+    pprAnnEAp :: Cofree (F.CofreeF (ExprF a) ann) (Precedence, IseqRep)
+              -> Cofree (F.CofreeF (ExprF a) ann) (Precedence, IseqRep)
+              -> (Precedence, IseqRep)
+    pprAnnEAp fun arg = case (pprAnnFun fun, pprAnnArg arg) of
+        (dfun, darg) -> (10 :: Int, fapp) where
+            fapp = iConcat [dfun, iSpace, darg]
+        where
+            pprAnnFun = \ case
+                (p,doc) :< annf F.:< _ -> iAnn annf $ iParen' (p < 10) doc
+            pprAnnArg = \ case
+                (p,doc) :< annarg F.:< _ -> iAnn annarg $ iParen' (p < 10) doc
+
+    pprAnnBinders :: BindersF a (Cofree (F.CofreeF (ExprF a) ann) (Precedence, IseqRep)) -> IseqRep
+    pprAnnBinders = iInterleave sep . map pprAnnBinder where
+        pprAnnBinder = \ case
+            (x, (_,rhs) :< _) -> iConcat [ppr x, iStr " = ", rhs]
+        sep = iConcat [iSemi, iNewline]
+
+    pprAnnAlts :: [(Tag, [a], Cofree (F.CofreeF (ExprF a) ann) (Precedence, IseqRep))] -> IseqRep
+    pprAnnAlts = iInterleave sep . map pprAnnAlt where
+        pprAnnAlt = \ case
+            (t, xs, (_,rhs) :< _) -> iConcat
+                [ iAngle (iNum t)
+                , pprArgs ppr xs, iSpace
+                , iStr "→", iSpace
+                , rhs
+                ]
+        sep = iConcat [iSemi, iNewline]
+
+pprAnnDefns :: VarRep a
+            => (a   -> IseqRep)
             -> (ann -> IseqRep)
             -> AnnBinders a ann
             -> IseqRep
@@ -263,15 +449,16 @@ pprAnnDefns ppr annppr
     where
         sep = iConcat [ iStr ";", iNewline ]
 
-pprAnnDefn :: (a -> IseqRep) 
+pprAnnDefn :: VarRep a
+           => (a -> IseqRep) 
            -> (ann -> IseqRep)
            -> (a, AnnExpr a ann)
            -> IseqRep
 pprAnnDefn ppr annppr (name, annexpr)
     = iConcat [ ppr name
               , iStr " = "
-              , iIndent (pprAnnExpr ppr annppr 0 annexpr) 
+              , iIndent (pprAnnExpr ppr annppr annexpr) 
               ]
 
 pprintAnnExpr :: (ann -> IseqRep) -> AnnExpr Name ann -> String
-pprintAnnExpr pprann = iDisplay . pprAnnExpr iStr pprann 0
+pprintAnnExpr pprann = iDisplay . pprAnnExpr iStr pprann
