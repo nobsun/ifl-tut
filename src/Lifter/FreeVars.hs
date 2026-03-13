@@ -7,6 +7,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 module Lifter.FreeVars
     ( freeVars
+    , freeVarsOf
     ) where
 
 import Control.Arrow
