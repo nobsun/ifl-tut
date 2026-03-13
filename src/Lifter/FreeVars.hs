@@ -20,7 +20,6 @@ import Lambda
 import Language
 import Utils
 
-
 freeVars :: CoreProgram -> AnnProgram Name (S.Set Name)
 freeVars prog = [ (name, args, freeVarsExpr (S.fromList args) body)
                 | (name, args, body) <- prog ]
