@@ -5,7 +5,7 @@ module ParaG.Mark2.Code
     )
     where
 
-import Parser
+import ParserCombinator
 import Language hiding (takeFirstParse)
 import Utils
 

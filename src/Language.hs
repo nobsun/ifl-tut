@@ -5,7 +5,7 @@ import Data.Char ( isDigit, isAlpha, isSpace )
 import Data.Maybe ( fromJust, isJust )
 
 import Iseq
-import Parser hiding ( pVar, takeFirstParse )
+import ParserCombinator hiding ( pVar, takeFirstParse )
 import Utils
 
 {- ** コア式の抽象構文木 -}
