@@ -65,13 +65,13 @@ checkAnnGen f = putStrLn . pprintAnn def defann . f . parse
         defann = iStr . show
 
 runF :: String -> String
-runF = pprint . lambdaLift . fullyLazyLift . parse
+runF = pprint . fullyLazyLift . parse
 
 runS :: String -> String
 runS = pprint . lambdaLift . parse
 
 lambdaLift :: CoreProgram -> CoreProgram
-lambdaLift = collectSCs . rename . abstract . freeVars . elimLambda
+lambdaLift = collectSCs . rename . abstract . freeVars
 
 elimLambda :: CoreProgram -> CoreProgram
 elimLambda = map elim
@@ -82,4 +82,4 @@ elimLambda = map elim
             scdefn                       -> scdefn
 
 sampleMini :: IO String
-sampleMini = return "g y = a (m x x) y"
+sampleMini = return "g y = x * x + y"

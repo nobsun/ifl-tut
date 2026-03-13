@@ -100,20 +100,21 @@ pprExprGen :: forall a. VarRep a
 pprExprGen ppr = snd . histoExpr phi where
     phi :: ExprF a (AnnExpr a (Precedence, IseqRep)) -> (Precedence, IseqRep)
     phi = \ case
-        EVarF v -> (maxBound, iStr v)
+        EVarF v -> (maxBound, v') where
+            v' = bool iStr (pprBop True) (isBop v) v
         ENumF n -> (maxBound, iNum n)
         EConstrF t a -> (maxBound, doc) where
             doc = iConcat [ iStr "Pack{", iNum t, iStr ",", iNum a, iStr "}" ]
         EApF e1 e2 -> case e1 of
             _ :< EApF e11 e12 -> case e11 of
-                (_,i11) :< EVarF bop
+                _ :< EVarF bop
                     | isBop bop -> case bopInfoOf bop of
                         (p,Infix)  -> case e12 of
                             (o1,do1) :< _ -> case e2 of
                                 (o2,do2) :< _ -> (p, doc) where
                                                  doc = iConcat 
                                                      [ iParen' (p >= o1) do1
-                                                     , iSpace, i11, iSpace
+                                                     , iSpace, pprBop False bop, iSpace
                                                      , iParen' (p >= o2) do2
                                                      ]
                         (p,InfixL) -> case e12 of
@@ -121,7 +122,7 @@ pprExprGen ppr = snd . histoExpr phi where
                                 (o2,do2) :< _ -> (p, doc) where
                                                  doc = iConcat 
                                                      [ iParen' (p >  o1) do1
-                                                     , iSpace, i11, iSpace
+                                                     , iSpace, pprBop False bop, iSpace
                                                      , iParen' (p >= o2) do2
                                                      ]
                         (p,InfixR) -> case e12 of
@@ -129,11 +130,31 @@ pprExprGen ppr = snd . histoExpr phi where
                                 (o2,do2) :< _ -> (p, doc) where
                                                  doc = iConcat 
                                                      [ iParen' (p >= o1) do1
-                                                     , iSpace, i11, iSpace
+                                                     , iSpace, pprBop False bop, iSpace
                                                      , iParen' (p >  o2) do2
                                                      ]
                     | otherwise -> pprEAp e1 e2
                 _ -> pprEAp e1 e2
+            _ :< EVarF bop
+                | isBop bop -> case bopInfoOf bop of
+                    (p,Infix)  -> case e2 of
+                        (q, do1) :< _ -> (maxBound, iParen doc) where
+                            doc = iConcat
+                                [ iParen' (p >= q) do1
+                                , iSpace, pprBop False bop
+                                ]
+                    (p,InfixL) -> case e2 of
+                        (q, do1) :< _ -> (maxBound, iParen doc) where
+                            doc = iConcat
+                                [ iParen' (p > q) do1
+                                , iSpace, pprBop False bop
+                                ]
+                    (p,InfixR) -> case e2 of
+                        (q, do1) :< _ -> (maxBound, iParen doc) where
+                            doc = iConcat
+                                [ iParen' (p >= q) do1
+                                , iSpace, pprBop False bop
+                                ]
             _ -> pprEAp e1 e2
         ELetF isRec defns body -> (minBound, doc) where
             doc = iConcat
@@ -157,7 +178,7 @@ pprExprGen ppr = snd . histoExpr phi where
         ELamF args body -> case sectionType args body of
             NotSection      -> pprELam args body
             SectionBoth bop -> (maxBound, bop') where
-                bop' = pprBop bop
+                bop' = pprBop True bop
             SectionL bop info (p,d1) -> case info of                 -- (x +)
                 (o,Infix)  -> (maxBound, iParen sec) where
                     sec = iConcat 
@@ -223,12 +244,12 @@ pprExprGen ppr = snd . histoExpr phi where
                 , body'
                 ]
 
-    pprBop :: Name -> IseqRep
-    pprBop = \ case
-        bop | "`" `isPrefixOf` bop -> iStr (trim bop)
-            | otherwise            -> iParen (iStr bop)
-        where
-            trim = dropWhileEnd ('`' ==) . dropWhile ('`' ==)
+pprBop :: Bool -> Name -> IseqRep
+pprBop solo = \ case
+    bop | "`" `isPrefixOf` bop -> iStr (bool id trim solo bop)
+        | otherwise            -> bool id iParen solo (iStr bop)
+    where
+        trim = dropWhileEnd ('`' ==) . dropWhile ('`' ==)
 
 pprArgs :: (a -> IseqRep) -> [a] -> IseqRep
 pprArgs ppr = \ case
@@ -348,21 +369,22 @@ pprAnnExpr :: forall a ann. VarRep a
 pprAnnExpr ppr annppr = snd . histoAnnExpr phi where
     phi :: F.CofreeF (ExprF a) ann (Cofree (F.CofreeF (ExprF a) ann) (Precedence, IseqRep)) -> (Precedence, IseqRep)
     phi = \ case
-        ann F.:< EVarF v      -> (maxBound, v') where v' = iAnn ann (iStr v)
+        ann F.:< EVarF v      -> (maxBound, v') where
+            v' = iAnn ann (bool iStr (pprBop True) (isBop v) v)
         ann F.:< ENumF n      -> (maxBound, n') where n' = iAnn ann (iNum n)
         ann F.:< EConstrF t a -> (maxBound, c')  where 
             c'  = iAnn ann c
             c   = iConcat [iStr "Pack{", iNum t, iStr ",", iNum a, iStr "}"]
         ann F.:< EApF e1 e2 -> case e1 of
             _ :< _ F.:< EApF e11 e12 -> case e11 of
-                (_,i11) :< ann11 F.:< EVarF bop
+                _ :< ann11 F.:< EVarF bop
                     | isBop bop -> case bopInfoOf bop of
                         (p,Infix)   -> case e12 of
                             (o1,do1) :< ann12 F.:< _ -> case e2 of
                                 (o2,do2) :< ann2 F.:< _ -> (p, doc) where
                                     doc = iAnn ann $ iConcat
                                         [ iAnn ann12 $ iParen' (p >= o1) do1
-                                        , iSpace, iAnn ann11 i11, iSpace
+                                        , iSpace, iAnn ann11 (pprBop False bop), iSpace
                                         , iAnn ann2  $ iParen' (p >= o2) do2
                                         ]
                         (p,InfixL)  -> case e12 of
@@ -370,7 +392,7 @@ pprAnnExpr ppr annppr = snd . histoAnnExpr phi where
                                 (o2,do2) :< ann2 F.:< _ -> (p, doc) where
                                     doc = iAnn ann $ iConcat
                                         [ iAnn ann12 $ iParen' (p >  o1) do1
-                                        , iSpace, iAnn ann11 i11, iSpace
+                                        , iSpace, iAnn ann11 (pprBop False bop), iSpace
                                         , iAnn ann2  $ iParen' (p >= o2) do2
                                         ]
                         (p,InfixR)  -> case e12 of
@@ -378,11 +400,31 @@ pprAnnExpr ppr annppr = snd . histoAnnExpr phi where
                                 (o2,do2) :< ann2 F.:< _ -> (p, doc) where
                                     doc = iAnn ann $ iConcat
                                         [ iAnn ann12 $ iParen' (p >= o1) do1
-                                        , iSpace, iAnn ann11 i11, iSpace
+                                        , iSpace, iAnn ann11 (pprBop False bop), iSpace
                                         , iAnn ann2  $ iParen' (p >  o2) do2
                                         ]
                     | otherwise -> second (iAnn ann) $ pprAnnEAp e1 e2
                 _ -> second (iAnn ann) $ pprAnnEAp e1 e2
+            _ :< ann1 F.:< EVarF bop
+                | isBop bop -> case bopInfoOf bop of
+                    (p,Infix)  -> case e2 of
+                        (q,do1) :< ann2 F.:< _ -> (maxBound, iParen doc) where
+                            doc = iAnn ann $ iConcat
+                                [ iAnn ann2 $ iParen' (p >= q) do1
+                                , iSpace, iAnn ann1 (pprBop False bop)
+                                ]
+                    (p,InfixL) -> case e2 of
+                        (q,do1) :< ann2 F.:< _ -> (maxBound, iParen doc) where
+                            doc = iAnn ann $ iConcat
+                                [ iAnn ann2 $ iParen' (p > q) do1
+                                , iSpace, iAnn ann1 (pprBop False bop)
+                                ]
+                    (p,InfixR) -> case e2 of
+                        (q,do1) :< ann2 F.:< _ -> (maxBound, iParen doc) where
+                            doc = iAnn ann $ iConcat
+                                [ iAnn ann2 $ iParen' (p >= q) do1
+                                , iSpace, iAnn ann1 (pprBop False bop)
+                                ]
             _ -> second (iAnn ann) $ pprAnnEAp e1 e2
         ann F.:< ELetF isRec defns body -> (minBound, dlet) where
             dlet = iAnn ann $ iConcat
@@ -425,7 +467,7 @@ pprAnnExpr ppr annppr = snd . histoAnnExpr phi where
     pprAnnBinders :: BindersF a (Cofree (F.CofreeF (ExprF a) ann) (Precedence, IseqRep)) -> IseqRep
     pprAnnBinders = iInterleave sep . map pprAnnBinder where
         pprAnnBinder = \ case
-            (x, (_,rhs) :< _) -> iConcat [ppr x, iStr " = ", rhs]
+            (x, (_,rhs) :< _) -> iConcat [ppr x, iSpace, iStr "=", iSpace, rhs]
         sep = iConcat [iSemi, iNewline]
 
     pprAnnAlts :: [(Tag, [a], Cofree (F.CofreeF (ExprF a) ann) (Precedence, IseqRep))] -> IseqRep
@@ -433,8 +475,8 @@ pprAnnExpr ppr annppr = snd . histoAnnExpr phi where
         pprAnnAlt = \ case
             (t, xs, (_,rhs) :< _) -> iConcat
                 [ iAngle (iNum t)
-                , pprArgs ppr xs, iSpace
-                , iStr "→", iSpace
+                , pprArgs ppr xs
+                , iSpace, iStr "→", iSpace
                 , rhs
                 ]
         sep = iConcat [iSemi, iNewline]
@@ -456,7 +498,7 @@ pprAnnDefn :: VarRep a
            -> IseqRep
 pprAnnDefn ppr annppr (name, annexpr)
     = iConcat [ ppr name
-              , iStr " = "
+              , iSpace, iStr "=", iSpace
               , iIndent (pprAnnExpr ppr annppr annexpr) 
               ]
 
