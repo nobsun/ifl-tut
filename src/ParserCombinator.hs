@@ -1,5 +1,5 @@
-
-module Parser
+-- # ParserCombinator
+module ParserCombinator
   ( -- * パーザ
     Loc
   , Token
@@ -47,11 +47,8 @@ pSat p str = case str of
     | p s       -> [(s,toks)]
   _             -> []
 
-pVar :: Parser String
-pVar = pSat ((&&) . isAlpha . head <*> (`notElem` keywords))
-
-keywords :: [String]
-keywords = ["let", "letrec", "case", "in", "of", "Pack"]
+pVar :: [String] -> Parser String
+pVar kws = pSat ((&&) . isAlpha . head <*> (`notElem` kws))
 
 pNum :: Parser Int
 pNum = read <$$> pSat (all isDigit)
@@ -117,12 +114,6 @@ p1 <** p2 = const <$$> p1 <**> p2
 
 (**>) :: Parser a -> Parser b -> Parser b
 p1 **> p2 = const id <$$> p1 <**> p2
-
-{-
-pThen  combine p1 p2 = combine <$$> p1 <**> p2
-pThen3 combine p1 p2 p3 = combine <$$> p1 <**> p2 <**> p3
-pThen4 combine p1 p2 p3 p4 = combine <$$> p1 <**> p2 <**> p3 <**> p4
--}
 
 infixl 4 <$$>, <$$, <**>, <**, **>
 

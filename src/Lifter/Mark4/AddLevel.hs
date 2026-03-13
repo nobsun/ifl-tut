@@ -14,7 +14,8 @@ import Control.Comonad.Cofree
 import Control.Comonad.Trans.Cofree qualified as F
 import Data.Functor.Foldable
 
-import Language hiding (pprint)
+import Language
+import Pretty
 import Lambda
 import Utils
 import Iseq
@@ -23,7 +24,6 @@ import Gmachine.Mark7.Machine qualified as Gm7
 import Gmachine.Mark7.Compiler qualified as Gm7
 import Gmachine.Mark7.PPrint  qualified as Gm7
 
-import Lifter.PPrint
 import Lifter.FreeVars
 import Lifter.Mark4.Rename
 import Lifter.Mark4.Collect

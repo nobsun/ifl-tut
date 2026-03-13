@@ -13,6 +13,7 @@ import Data.Maybe
 import GHC.Stack
 
 import Language
+import Parse
 import Heap
 import qualified Stack as Stk (push, append, top, pop, npop, discard, emptyStack, isEmptyStack)
 import Stack hiding (push, pop, npop, discard)

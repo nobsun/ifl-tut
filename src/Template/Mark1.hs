@@ -9,6 +9,7 @@ module Template.Mark1
 import Data.List
 
 import Language
+import Parse
 import Heap
 import Stack
 import Iseq

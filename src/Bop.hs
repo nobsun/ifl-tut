@@ -1,4 +1,4 @@
--- # Core.Bop
+-- # Bop
 -- 2項演算子
 -- 
 -- ## 言語拡張と`module`宣言
@@ -28,13 +28,15 @@ isAscSymbol = flip S.member ascSymbols
 isBopString :: String -> Bool
 isBopString = all isAscSymbol 
 
+type Precedence = Int
+
 data Fixity
     = Infix
     | InfixL
     | InfixR
     deriving (Eq, Show, Read)
 
-type BopInfo = (Int, Fixity)
+type BopInfo = (Precedence, Fixity)
 
 preludeOperators :: M.Map String BopInfo
 preludeOperators = M.fromList 
@@ -103,6 +105,6 @@ False
 precedenceOf: unknown operator "&&&"
 >>> fixityOf ">>"
 InfixL
->>> fixityOf ">>>"
+>>> fixityOf ">>>"i
 fixityOf: unknown operator">>>"
 -}

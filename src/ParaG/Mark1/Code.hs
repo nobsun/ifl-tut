@@ -5,8 +5,9 @@ module ParaG.Mark1.Code
     )
     where
 
-import Parser
-import Language hiding (takeFirstParse)
+import ParserCombinator
+import Language
+import Parse
 import Utils
 
 type GmCode = [Instruction]

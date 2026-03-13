@@ -8,6 +8,7 @@ module Template.Mark5.Machine
 import Data.List
 
 import Language
+import Parse
 import Heap
 import Stack
 import Utils

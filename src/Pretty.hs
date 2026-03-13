@@ -1,8 +1,8 @@
--- # Lifter.PPrint
+-- # Pretty
 {-# LANGUAGE GHC2024 #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE LambdaCase #-}
-module Lifter.PPrint
+module Pretty
     where
 
 import GHC.Generics (Generic)
@@ -14,7 +14,7 @@ import Data.Bool
 import Data.Char
 import Data.List
 import Data.Maybe
-import Language hiding (pprint, pprExpr, pprArgs, binOps)
+import Language
 import Lambda
 import Iseq
 import Bop
