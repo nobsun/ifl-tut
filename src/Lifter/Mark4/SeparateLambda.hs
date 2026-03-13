@@ -1,9 +1,9 @@
 -- # Lifter.Mark4.SeparateLambda
+{-# LANGUAGE GHC2024 #-}
 {-# LANGUAGE ImplicitParams #-}
 {-# LANGUAGE NoFieldSelectors #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedRecordDot #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 module Lifter.Mark4.SeparateLambda
     ( separateLams
     ) where

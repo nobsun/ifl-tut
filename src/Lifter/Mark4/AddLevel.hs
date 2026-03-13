@@ -1,9 +1,9 @@
 -- # Lifter.Mark4.AddLevel
+{-# LANGUAGE GHC2024 #-}
 {-# LANGUAGE ImplicitParams #-}
 {-# LANGUAGE NoFieldSelectors #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedRecordDot #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 module Lifter.Mark4.AddLevel
     where
 
@@ -14,7 +14,7 @@ import Control.Comonad.Cofree
 import Control.Comonad.Trans.Cofree qualified as F
 import Data.Functor.Foldable
 
-import Language hiding (pprint, )
+import Language hiding (pprint)
 import Lambda
 import Utils
 import Iseq
