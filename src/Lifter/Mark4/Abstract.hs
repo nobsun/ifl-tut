@@ -21,12 +21,13 @@ import Data.Functor.Foldable
 import Iseq
 import Lambda
 import Language
+import Parse
+import Pretty
 import qualified Stack as Stk (push, pop, npop, discard)
 import Stack hiding (push, pop, npop, discard)
 import Utils
 
 import Lifter.FreeVars
-import Lifter.PPrint (pprintAnn)
 
 abstract :: AnnProgram Name (S.Set Name) -> CoreProgram
 abstract = map (third abstractExpr)

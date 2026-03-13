@@ -6,7 +6,8 @@ module ParaG.Mark3.Code
     where
 
 import ParserCombinator
-import Language hiding (takeFirstParse)
+import Language
+import Parse
 import Utils
 
 type GmCode = [Instruction]

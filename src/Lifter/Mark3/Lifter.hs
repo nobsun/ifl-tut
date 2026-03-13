@@ -8,6 +8,8 @@ module Lifter.Mark3.Lifter
     where
 
 import Language
+import Parse
+import Pretty
 
 import Gmachine.Mark7.Machine qualified as Gm7
 import Gmachine.Mark7.Compiler qualified as Gm7

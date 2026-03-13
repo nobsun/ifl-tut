@@ -14,6 +14,8 @@ import Control.Comonad.Trans.Cofree qualified as F
 
 import Lambda
 import Language
+import Parse
+import Pretty
 import Iseq
 
 import Gmachine.Mark7.Machine qualified as Gm7

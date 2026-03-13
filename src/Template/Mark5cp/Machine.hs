@@ -11,6 +11,7 @@ import Data.Char
 import Data.List
 
 import Language
+import Parse
 import Heap
 import Stack
 import Iseq

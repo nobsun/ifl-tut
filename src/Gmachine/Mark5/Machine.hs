@@ -11,6 +11,7 @@ import Data.Char
 import Data.List
 
 import Language
+import Parse
 import Heap
 import qualified Stack as Stk (push, pop, discard)
 import Stack hiding (push, pop, discard)

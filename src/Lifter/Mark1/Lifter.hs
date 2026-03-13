@@ -18,6 +18,8 @@ import Data.Functor.Foldable
 
 import Lambda
 import Language
+import Parse
+import Pretty
 import Heap
 import qualified Stack as Stk (push, pop, npop, discard)
 import Stack hiding (push, pop, npop, discard)

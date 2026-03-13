@@ -14,12 +14,12 @@ import Control.Comonad.Cofree
 import Control.Comonad.Trans.Cofree qualified as F
 import Data.Functor.Foldable
 
-import Language hiding (pprint)
+import Language
 import Lambda
+import Pretty
 import Utils
 import Iseq
 
-import Lifter.PPrint
 import Lifter.FreeVars
 import Lifter.Mark4.Rename
 import Lifter.Mark4.Collect
