@@ -13,15 +13,15 @@ clex :: Loc -> String -> [Token]
 clex i ('-' : '-' : cs) = clex i (dropWhile ('\n' /=) cs)
 clex i ('-' : '>' : cs) = (i, "→") : clex i cs
 clex i (c1 : c2 : cs)
-  | isBop [c1,c2] = (i,[c1,c2]) : clex i cs
+    | isBop [c1,c2] = (i,[c1,c2]) : clex i cs
 clex i ('\n' : cs) = clex (succ i) cs
 clex i (c : cs)
-  | isDigit c = case span isDigit cs of 
-      (ds, rs) -> (i, c : ds) : clex i rs
-  | isAlpha c = case span isIdChar cs of
-      (vs, rs) -> (i, c : vs) : clex i rs
-  | isSpace c = clex i cs
-  | otherwise = (i,[c]) : clex i cs 
+    | isDigit c = case span isDigit cs of 
+        (ds, rs) -> (i, c : ds) : clex i rs
+    | isAlpha c = case span isIdChar cs of
+        (vs, rs) -> (i, c : vs) : clex i rs
+    | isSpace c = clex i cs
+    | otherwise = (i,[c]) : clex i cs 
 clex _ "" = []
 
 isIdChar :: Char -> Bool
@@ -79,13 +79,13 @@ pAlters :: Parser [CoreAlt]
 pAlters = pOneOrMoreWithSep pAlter (pLit ";")
 
 pAlter :: Parser CoreAlt
-pAlter = (,,) <$$> pTag <**> pMunch pVarStr <** pLit "->" <**> pExpr
+pAlter = (,,) <$$> pTag <**> pMunch pVarStr <** pLit "→" <**> pExpr
 
 pTag :: Parser Tag
 pTag = pLit "<" **> pNum <** pLit ">"
 
 pELam :: Parser CoreExpr
-pELam = ELam <$$ pLit "\\" <**> pMunch1 pVarStr <** pLit "->" <**> pExpr
+pELam = ELam <$$ pLit "\\" <**> pMunch1 pVarStr <** pLit "→" <**> pExpr
 
 pAexpr :: Parser CoreExpr
 pAexpr = pEVar `pAlt` pENum `pAlt` pEConstr

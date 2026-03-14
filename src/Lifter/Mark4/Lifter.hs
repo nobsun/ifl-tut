@@ -29,8 +29,9 @@ import Lifter.FreeVars
 import Lifter.Mark4.Rename
 import Lifter.Mark4.Collect
 import Lifter.Mark4.Abstract
+import Lifter.Mark4.AddLevel
 import Lifter.Mark4.FullLazy
-import Lifter.Mark3.Lifter (lambdaLiftJ)
+import Lifter.Mark4.SeparateLambda
 
 run :: String -> ([String] -> [String])
 run prog inputs 
@@ -42,11 +43,12 @@ run prog inputs
     $ fullyLazyLift
     $ parse prog
 
-sample0, sample1, sample2 :: IO String
+sample0, sample1, sample2, sample3, sample4 :: IO String
 sample0 = readFile "prog/lift4/sample0.ifl"
 sample1 = readFile "prog/lift4/sample1.ifl"
 sample2 = readFile "prog/lift4/sample2.ifl"
-
+sample3 = readFile "prog/lift4/sample661.ifl"
+sample4 = pure "main = f 8"
 {-
 -}
 

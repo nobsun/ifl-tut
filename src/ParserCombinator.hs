@@ -1,4 +1,6 @@
 -- # ParserCombinator
+{-# LANGUAGE GHC2024 #-}
+{-# LANGUAGE CPP #-}
 module ParserCombinator
   ( -- * パーザ
     Loc
@@ -128,11 +130,11 @@ pOneOrMoreWithSep p sep = (:) <$$> p <**> pMunch (sep **> p)
 
 takeFirstParse :: [(a, [Token])] -> a
 takeFirstParse res = case res of
-  (x, []) : _ 
-    -> x
-  (_, (i,_) : _): ps 
-    -> case ps of
-      _ : _ -> takeFirstParse ps
-      []    -> error $ "syntax error at line " ++ show i
-  _ -> error  "syntax error at line 1"
+    (x,[]):_       -> x
+    (_,(i,_):_):ps -> case ps of
+        _ : _ -> takeFirstParse ps
+        []    -> error $ "takeFirstParse: syntax error at line " 
+                       ++ show i
+    _ -> error $ "takeFirstParse: no parse: " 
+               ++ show @Int __LINE__
   
