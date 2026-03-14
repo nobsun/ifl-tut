@@ -59,10 +59,11 @@ freeToLevelE level env = \ case
     _ :< ENumF k      -> 0 :< ENumF k
     _ :< EVarF v      -> aLookup env v 0 :< EVarF v
     _ :< EConstrF t a -> 0 :< EConstrF t a
-    _ :< EApF e1 e2    -> max lv1 lv2 :< EApF e1' e2'
+    _ :< EApF e1 e2   -> lv :< EApF (lv :< e1') (lv :< e2')
         where
-            e1'@(lv1 :< _) = freeToLevelE level env e1
-            e2'@(lv2 :< _) = freeToLevelE level env e2
+            lv = max lv1 lv2
+            lv1 :< e1' = freeToLevelE level env e1
+            lv2 :< e2' = freeToLevelE level env e2
     free :< ELamF args body
         -> freeSetToLevel env free :< ELamF args' body'
         where

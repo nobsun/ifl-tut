@@ -29,9 +29,10 @@ import Lifter.FreeVars
 import Lifter.Mark4.Rename
 import Lifter.Mark4.Collect
 import Lifter.Mark4.Abstract
-import Lifter.Mark4.AddLevel
-import Lifter.Mark4.FullLazy
 import Lifter.Mark4.SeparateLambda
+import Lifter.Mark4.AddLevel
+import Lifter.Mark4.IdentifyMFE
+import Lifter.Mark4.FullLazy
 
 run :: String -> ([String] -> [String])
 run prog inputs 
