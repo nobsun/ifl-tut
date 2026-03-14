@@ -376,32 +376,35 @@ pprAnnExpr ppr annppr = snd . histoAnnExpr phi where
             c'  = iAnn ann c
             c   = iConcat [iStr "Pack{", iNum t, iStr ",", iNum a, iStr "}"]
         ann F.:< EApF e1 e2 -> case e1 of
-            _ :< _ F.:< EApF e11 e12 -> case e11 of
+            _ :< ann1 F.:< EApF e11 e12 -> case e11 of
                 _ :< ann11 F.:< EVarF bop
                     | isBop bop -> case bopInfoOf bop of
                         (p,Infix)   -> case e12 of
-                            (o1,do1) :< ann12 F.:< _ -> case e2 of
-                                (o2,do2) :< ann2 F.:< _ -> (p, doc) where
+                            (o1,do1) :< _ann12 F.:< _ -> case e2 of
+                                (o2,do2) :< _ann2 F.:< _ -> (p, doc) where
                                     doc = iAnn ann $ iConcat
-                                        [ iAnn ann12 $ iParen' (p >= o1) do1
-                                        , iSpace, iAnn ann11 (pprBop False bop), iSpace
-                                        , iAnn ann2  $ iParen' (p >= o2) do2
+                                        [ iAnn ann1 $ iConcat [ iParen' (p >= o1) do1
+                                                              , iSpace, iAnn ann11 (pprBop False bop)
+                                                              ]
+                                        , iSpace, iParen' (p >= o2) do2
                                         ]
                         (p,InfixL)  -> case e12 of
-                            (o1,do1) :< ann12 F.:< _ -> case e2 of
-                                (o2,do2) :< ann2 F.:< _ -> (p, doc) where
+                            (o1,do1) :< _ann12 F.:< _ -> case e2 of
+                                (o2,do2) :< _ann2 F.:< _ -> (p, doc) where
                                     doc = iAnn ann $ iConcat
-                                        [ iAnn ann12 $ iParen' (p >  o1) do1
-                                        , iSpace, iAnn ann11 (pprBop False bop), iSpace
-                                        , iAnn ann2  $ iParen' (p >= o2) do2
+                                        [ iAnn ann1 $ iConcat [ iParen' (p >  o1) do1
+                                                              , iSpace, iAnn ann11 (pprBop False bop)
+                                                              ]
+                                        , iSpace , iParen' (p >= o2) do2
                                         ]
                         (p,InfixR)  -> case e12 of
-                            (o1,do1) :< ann12 F.:< _ -> case e2 of
-                                (o2,do2) :< ann2 F.:< _ -> (p, doc) where
+                            (o1,do1) :< _ann12 F.:< _ -> case e2 of
+                                (o2,do2) :< _ann2 F.:< _ -> (p, doc) where
                                     doc = iAnn ann $ iConcat
-                                        [ iAnn ann12 $ iParen' (p >= o1) do1
-                                        , iSpace, iAnn ann11 (pprBop False bop), iSpace
-                                        , iAnn ann2  $ iParen' (p >  o2) do2
+                                        [ iAnn ann1 $ iConcat [ iParen' (p >= o1) do1
+                                                              , iSpace, iAnn ann11 (pprBop False bop)
+                                                              ]
+                                        , iSpace, iParen' (p >  o2) do2
                                         ]
                     | otherwise -> second (iAnn ann) $ pprAnnEAp e1 e2
                 _ -> second (iAnn ann) $ pprAnnEAp e1 e2
@@ -460,9 +463,9 @@ pprAnnExpr ppr annppr = snd . histoAnnExpr phi where
             fapp = iConcat [dfun, iSpace, darg]
         where
             pprAnnFun = \ case
-                (p,doc) :< annf F.:< _ -> iAnn annf $ iParen' (p < 10) doc
+                (p,doc) :< _annf F.:< _ -> iParen' (p < 10) doc
             pprAnnArg = \ case
-                (p,doc) :< annarg F.:< _ -> iAnn annarg $ iParen' (p < 10) doc
+                (p,doc) :< _annarg F.:< _ -> iParen' (p < 10) doc
 
     pprAnnBinders :: BindersF a (Cofree (F.CofreeF (ExprF a) ann) (Precedence, IseqRep)) -> IseqRep
     pprAnnBinders = iInterleave sep . map pprAnnBinder where
