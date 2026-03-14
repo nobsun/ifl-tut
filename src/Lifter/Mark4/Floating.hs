@@ -81,7 +81,7 @@ partitionFloats :: Level -> FloatedDefns -> (FloatedDefns, FloatedDefns)
 partitionFloats thisLevel fds
     = partition isThisLevel fds
     where
-        isThisLevel (level, _, _) = level >= thisLevel
+        isThisLevel (level, _, _) = level < thisLevel
 
 install :: FloatedDefns -> Expr Name -> Expr Name
 install defnGroups e
