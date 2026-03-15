@@ -1,10 +1,5 @@
 -- # Lifter.FreeVars
 {-# LANGUAGE GHC2024 #-}
-{-# LANGUAGE ImplicitParams #-}
-{-# LANGUAGE NoFieldSelectors #-}
-{-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE OverloadedRecordDot #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 module Lifter.FreeVars
     ( freeVars
     , freeVarsOf

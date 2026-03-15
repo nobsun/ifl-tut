@@ -1,34 +1,16 @@
 -- # Lifter.Mark4.IdentifyMFE
-{-# LANGUAGE ImplicitParams #-}
-{-# LANGUAGE NoFieldSelectors #-}
-{-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE OverloadedRecordDot #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE GHC2024 #-}
 module Lifter.Mark4.IdentifyMFE
     where
 
-import Control.Arrow
-import Data.List
 import Data.Set qualified as S
 import Control.Comonad.Cofree
-import Control.Comonad.Trans.Cofree qualified as F
-import Data.Functor.Foldable
 
 import Language
 import Lambda
-import Pretty
 import Utils
-import Iseq
 
-import Gmachine.Mark7.Machine qualified as Gm7
-import Gmachine.Mark7.Compiler qualified as Gm7
-import Gmachine.Mark7.PPrint  qualified as Gm7
-
-import Lifter.FreeVars
 import Lifter.Mark4.Rename
-import Lifter.Mark4.Collect
-import Lifter.Mark4.Abstract
-import Lifter.Mark4.Floating
 
 -- ### 6.6.7 Identifying MFEs
 

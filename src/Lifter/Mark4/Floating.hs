@@ -1,29 +1,15 @@
 -- # Lifter.Mark4.Floating
-{-# LANGUAGE ImplicitParams #-}
-{-# LANGUAGE NoFieldSelectors #-}
-{-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE OverloadedRecordDot #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE GHC2024 #-}
 module Lifter.Mark4.Floating
     where
 
-import Control.Arrow
 import Data.List
-import Data.Set qualified as S
-import Control.Comonad.Cofree
 import Control.Comonad.Trans.Cofree qualified as F
 import Data.Functor.Foldable
 
 import Language
-import Lambda
-import Pretty
-import Utils
-import Iseq
 
-import Lifter.FreeVars
 import Lifter.Mark4.Rename
-import Lifter.Mark4.Collect
-import Lifter.Mark4.Abstract
 
 float :: Program  (Name, Level) -> CoreProgram
 float = concatMap floatSc

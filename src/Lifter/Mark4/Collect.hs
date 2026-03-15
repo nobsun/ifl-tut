@@ -1,9 +1,6 @@
 -- # Lifter.Mark4.Collect
-{-# LANGUAGE ImplicitParams #-}
-{-# LANGUAGE NoFieldSelectors #-}
-{-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE OverloadedRecordDot #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE GHC2024 #-}
+{-# LANGUAGE LambdaCase #-}
 module Lifter.Mark4.Collect
     where
 
@@ -70,4 +67,3 @@ isELam :: Expr a -> Bool
 isELam = \ case
     ELam _ _ -> True
     _        -> False
-        

@@ -1,9 +1,5 @@
 -- # Lifter.Mark4.Rename
-{-# LANGUAGE ImplicitParams #-}
-{-# LANGUAGE NoFieldSelectors #-}
-{-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE OverloadedRecordDot #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE GHC2024 #-}
 module Lifter.Mark4.Rename
     ( Level
     , renameL

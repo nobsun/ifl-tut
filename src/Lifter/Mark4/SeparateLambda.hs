@@ -1,16 +1,12 @@
 -- # Lifter.Mark4.SeparateLambda
 {-# LANGUAGE GHC2024 #-}
-{-# LANGUAGE ImplicitParams #-}
-{-# LANGUAGE NoFieldSelectors #-}
-{-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE OverloadedRecordDot #-}
 module Lifter.Mark4.SeparateLambda
     ( separateLams
     ) where
 
 import Data.Functor.Foldable
 
-import Language hiding (pprint, )
+import Language
 import Lambda
 
 -- ### 6.6.5 Separating the lambdas

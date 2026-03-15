@@ -1,36 +1,18 @@
 -- # Lifter.Mark4.AddLevel
 {-# LANGUAGE GHC2024 #-}
-{-# LANGUAGE ImplicitParams #-}
-{-# LANGUAGE NoFieldSelectors #-}
-{-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE OverloadedRecordDot #-}
 module Lifter.Mark4.AddLevel
     where
 
-import Control.Arrow
-import Data.List
 import Data.Set qualified as S
 import Control.Comonad.Cofree
 import Control.Comonad.Trans.Cofree qualified as F
-import Data.Functor.Foldable
 
 import Language
-import Pretty
 import Lambda
 import Utils
-import Iseq
-
-import Gmachine.Mark7.Machine qualified as Gm7
-import Gmachine.Mark7.Compiler qualified as Gm7
-import Gmachine.Mark7.PPrint  qualified as Gm7
 
 import Lifter.FreeVars
 import Lifter.Mark4.Rename
-import Lifter.Mark4.Collect
-import Lifter.Mark4.Abstract
-import Lifter.Mark4.Floating
-import Lifter.Mark4.IdentifyMFE
-import Lifter.Mark4.SeparateLambda
 
 -- ### 6.6.6 Adding level numbers
 
@@ -100,8 +82,16 @@ freeToLevelExpr
     -> AnnExpr (Name, Level) Level  -- ^ Result expression
 freeToLevelExpr level env annexpr
     = hyloAnnExpr phi psi (level, env, annexpr) where
-        
+        phi :: F.CofreeF (ExprF Name) (Level, Assoc Name Level) (AnnExpr (Name, Level) Level)
+            -> AnnExpr (Name, Level) Level
         phi = \ case
+            _ F.:< EVarF v      -> 0 :< EVarF v
+            _ F.:< ENumF n      -> 0 :< ENumF n
+            _ F.:< EConstrF t a -> 0 :< EConstrF t a
+            _ F.:< EApF (lv1 :< e1) (lv2 :< e2) -> lv :< EApF (lv :< e1) (lv :< e2)
+                where
+                    lv = max lv1 lv2
+            
             _ -> undefined
         psi :: (Level, Assoc Name Level, AnnExpr Name (S.Set Name))
             -> F.CofreeF (ExprF Name) (Level, Assoc Name Level)
