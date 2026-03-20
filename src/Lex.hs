@@ -31,6 +31,8 @@ reserveds = S.fromList
 >>> sample = "main = f 6;\nf x = x + 7"
 >>> clex sample
 [(1,LIde "main"),(1,LBop "="),(1,LIde "f"),(1,LNum 6),(1,LSemi),(2,LIde "f"),(2,LIde "x"),(2,LBop "="),(2,LIde "x"),(2,LBop "+"),(2,LNum 7)]
+
+>>> sample2 = unlines 
 -}
 
 clex :: String -> [Token]
@@ -57,7 +59,9 @@ llex = ana psi where
                 (_,[])               -> Cons (lc,LUnkn '`') (lc,rs)
                 (o,_:rs')             -> Cons (lc,LBop (bq o)) (lc,rs')
                 | isBopSymbol c -> case span isBopSymbol ccs' of
-                    (bop,rs')        -> Cons (lc,LBop bop) (lc,rs')
+                    (bop,rs')        
+                        | bop == "=" -> Cons (lc,LBnd) (lc,rs')
+                        | otherwise  -> Cons (lc,LBop bop) (lc,rs')
                 | isDigit c     -> case span isDigit ccs' of
                     (ds,rs')         -> Cons (lc,LNum (read ds)) (lc,rs')
                 | isAlpha c     -> case span isIden ccs' of

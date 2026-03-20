@@ -27,10 +27,10 @@ parseSc :: String -> CoreScDefn
 parseSc = takeFirstParse . pSc.parser . clex
 
 pProgram :: Parser CoreProgram
-pProgram = pMunch1WithSep pSc (pLit LComm)
+pProgram = pMunch1WithSep pSc (pLit LSemi)
 
 pSc :: Parser CoreScDefn
-pSc = (,,) <$> pVarStr <*> pMunch pVarStr <* pLit (LBop "=") <*> pExpr
+pSc = (,,) <$> pVarStr <*> pMunch pVarStr <* pLit LBnd <*> pExpr
 
 pVarStr :: Parser Name
 pVarStr = fromLexeme <$> pSat p where
@@ -54,10 +54,10 @@ pIsRec = (pLit (LRsv "letrec") *> pure recursive)
      <++ (pLit (LRsv "let") *> pure nonRecursive)
 
 pDefns :: Parser (Assoc Name CoreExpr)
-pDefns = pMunchWithSep pDefn (pLit LComm)
+pDefns = pMunchWithSep pDefn (pLit LSemi)
 
 pDefn :: Parser (Name, CoreExpr)
-pDefn = (,) <$> pVarStr <* pLit (LBop "=") <*> pExpr
+pDefn = (,) <$> pVarStr <* pLit LBnd <*> pExpr
 
 parseDefn :: String -> (Name, CoreExpr)
 parseDefn = takeFirstParse . pDefn.parser . clex
@@ -67,7 +67,7 @@ pECase :: Parser CoreExpr
 pECase = ECase <$ pLit (LRsv "case") <*> pExpr <*> pAlts
 
 pAlts :: Parser [CoreAlt]
-pAlts = pMunch1WithSep pAlt (pLit LComm)
+pAlts = pMunch1WithSep pAlt (pLit LSemi)
 
 pAlt :: Parser CoreAlt
 pAlt = (,,) <$> pTag <*> pMunch pVarStr <* pLit LRarr <*> pExpr
@@ -268,6 +268,12 @@ EAp (EAp (EVar "+") (EAp (EVar "g") (ENum 3))) (EAp (EVar "g") (ENum 4))
 >>> parseDefn "g = \\ y -> x * x + y"
 ("g",ELam ["y"] (EAp (EAp (EVar "+") (EAp (EAp (EVar "*") (EVar "x")) (EVar "x"))) (EVar "y")))
 
->>> parseExpr $ unlines [ "let", "    g = \\ y -> x * x + y", "in", "    g 3 + g 4"]
+>>> parseExpr "(x * x +)"
+ELam ["y"] (EAp (EAp (EVar "+") (EAp (EAp (EVar "*") (EVar "x")) (EVar "x"))) (EVar "y"))
+
+>>> parseExpr $ unlines [ "let", "    g = (x * x +)", "in", "    g 3 + g 4"]
 ELet False [("g",ELam ["y"] (EAp (EAp (EVar "+") (EAp (EAp (EVar "*") (EVar "x")) (EVar "x"))) (EVar "y")))] (EAp (EAp (EVar "+") (EAp (EVar "g") (ENum 3))) (EAp (EVar "g") (ENum 4)))
+
+>>> parse $ unlines [ "f x = let", "          g = (x * x +)", "      in", "          g 3 + g 4"]
+[("f",["x"],ELet False [("g",ELam ["y"] (EAp (EAp (EVar "+") (EAp (EAp (EVar "*") (EVar "x")) (EVar "x"))) (EVar "y")))] (EAp (EAp (EVar "+") (EAp (EVar "g") (ENum 3))) (EAp (EVar "g") (ENum 4))))]
 -}

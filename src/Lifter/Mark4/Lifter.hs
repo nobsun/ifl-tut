@@ -44,13 +44,6 @@ runS = pprint . lambdaLift . parse
 {- test -}
 sample :: Int -> IO String
 sample = \ case
-    0 -> pure "main = f 6"
-    1 -> pure $ unlines
-       [ "f x = let"
-       , "          g = \\ y -> x * x + y"
-       , "      in"
-       , "          g 3 + g 4"]
-       
     _ -> readFile "prog/lift4/sample661.ifl"
 
 {- |

@@ -7,6 +7,7 @@ data Lexeme
     | LIde String  -- ^ 識別子
     | LBop String  -- ^ 二項演算子
     | LNum Int     -- ^ 数
+    | LBnd         -- ^ = バインディング
     | LLambda      -- ^ λ
     | LOpar        -- ^ 開き括弧
     | LCpar        -- ^ 閉じ括弧
@@ -25,6 +26,7 @@ fromLexeme = \ case
     LIde s  -> s
     LBop s  -> s
     LNum n  -> show n
+    LBnd    -> "="
     LLambda -> "\\"
     LOpar   -> "("
     LCpar   -> ")"
