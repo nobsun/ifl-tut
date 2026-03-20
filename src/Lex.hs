@@ -23,6 +23,7 @@ reserveds = S.fromList
     , "of"
     , "let"
     , "letrec"
+    , "in"
     , "Pack"
     ]
 

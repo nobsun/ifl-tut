@@ -65,10 +65,10 @@ nonRecursive = False
 {- | バインダ -}
 type Binder a = (a, Expr a)
 
-bindersOf :: [(a, b)] -> [a]
+bindersOf :: Assoc a b -> [a]
 bindersOf defns = [ name | (name, _) <- defns ]
 
-rhssOf :: [(a, b)] -> [b]
+rhssOf :: Assoc a b -> [b]
 rhssOf defns = [ rhs | (_, rhs) <- defns ]
 
 {- | 選択肢 -}
@@ -83,9 +83,10 @@ type CoreAlt = Alter Name
 
 isAtomicExpr :: Expr a -> Bool
 isAtomicExpr expr = case expr of
-  EVar _ -> True
-  ENum _ -> True
-  _      -> False
+  EVar _      -> True
+  ENum _      -> True
+  EConstr _ _ -> True
+  _           -> False
 
 {- サンプル式 -}
 varSampleE :: CoreExpr

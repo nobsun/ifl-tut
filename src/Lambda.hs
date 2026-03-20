@@ -1,10 +1,10 @@
 {-# LANGUAGE GHC2021 #-}
-{-# LANGUAGE DeriveGeneric #-}
+{-  LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE LambdaCase #-}
 module Lambda
     where
 
-import GHC.Generics (Generic)
+-- import GHC.Generics (Generic)
 import Control.Arrow
 import Control.Comonad.Cofree
 import Control.Comonad.Trans.Cofree qualified as F
@@ -31,7 +31,7 @@ data ExprF a r
     | ELamF
         [a]
         r
-    deriving (Eq, Show, Functor, Generic)
+    deriving (Eq, Show, Functor)
 
 type BindersF a r = [(a, r)]
 

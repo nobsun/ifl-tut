@@ -59,6 +59,9 @@ pDefns = pMunchWithSep pDefn (pLit LComm)
 pDefn :: Parser (Name, CoreExpr)
 pDefn = (,) <$> pVarStr <* pLit (LBop "=") <*> pExpr
 
+parseDefn :: String -> (Name, CoreExpr)
+parseDefn = takeFirstParse . pDefn.parser . clex
+
 {- ECase -}
 pECase :: Parser CoreExpr
 pECase = ECase <$ pLit (LRsv "case") <*> pExpr <*> pAlts
@@ -258,4 +261,13 @@ ELam ["x1","x2"] (EAp (EAp (EConstr 2 2) (EVar "x1")) (EVar "x2"))
 
 >>> parseExpr "Pack{2,2} x"
 ELam ["x2"] (EAp (EAp (EConstr 2 2) (EVar "x")) (EVar "x2"))
+
+>>> parseExpr "g 3 + g 4"
+EAp (EAp (EVar "+") (EAp (EVar "g") (ENum 3))) (EAp (EVar "g") (ENum 4))
+
+>>> parseDefn "g = \\ y -> x * x + y"
+("g",ELam ["y"] (EAp (EAp (EVar "+") (EAp (EAp (EVar "*") (EVar "x")) (EVar "x"))) (EVar "y")))
+
+>>> parseExpr $ unlines [ "let", "    g = \\ y -> x * x + y", "in", "    g 3 + g 4"]
+ELet False [("g",ELam ["y"] (EAp (EAp (EVar "+") (EAp (EAp (EVar "*") (EVar "x")) (EVar "x"))) (EVar "y")))] (EAp (EAp (EVar "+") (EAp (EVar "g") (ENum 3))) (EAp (EVar "g") (ENum 4)))
 -}
