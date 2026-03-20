@@ -1,162 +1,205 @@
 -- # Parse
+{-# LANGUAGE GHC2024 #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE NoFieldSelectors #-}
+{-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE OverloadedRecordDot #-}
 module Parse
     where
 
 import Data.Char
 import Data.Maybe
 
+import Utils
 import Language
 import Bop
+import Lexeme
+import Lex
 import ParserCombinator
+import Data.Set qualified as S
 
-clex :: Loc -> String -> [Token]
-clex i ('-' : '-' : cs) = clex i (dropWhile ('\n' /=) cs)
-clex i ('-' : '>' : cs) = (i, "→") : clex i cs
-clex i (c1 : c2 : cs)
-    | isBop [c1,c2] = (i,[c1,c2]) : clex i cs
-clex i ('\n' : cs) = clex (succ i) cs
-clex i (c : cs)
-    | isDigit c = case span isDigit cs of 
-        (ds, rs) -> (i, c : ds) : clex i rs
-    | isAlpha c = case span isIdChar cs of
-        (vs, rs) -> (i, c : vs) : clex i rs
-    | isSpace c = clex i cs
-    | otherwise = (i,[c]) : clex i cs 
-clex _ "" = []
-
-isIdChar :: Char -> Bool
-isIdChar c = isAlpha c || isDigit c || c == '_' || c == '\''
-
-syntax :: [Token] -> CoreProgram
-syntax = takeFirstParse . pProgram
+{- CoreProgram の構文解析 -}
 
 parse :: String -> CoreProgram
-parse = syntax . clex 1
+parse = takeFirstParse . pProgram.parser. clex
 
 parseSc :: String -> CoreScDefn
-parseSc = takeFirstParse . pSc . clex 1
+parseSc = takeFirstParse . pSc.parser . clex
 
-parseExpr :: String -> CoreExpr
-parseExpr = takeFirstParse . pExpr . clex 1
-
-keywords :: [String]
-keywords = ["let", "letrec", "case", "in", "of", "Pack"]
-
-{- コア言語の構文解析 -}
 pProgram :: Parser CoreProgram
-pProgram = pOneOrMoreWithSep pSc (pLit ";")
-
-pVarStr :: Parser String
-pVarStr = pVar keywords
+pProgram = pMunch1WithSep pSc (pLit LComm)
 
 pSc :: Parser CoreScDefn
-pSc = mkSc <$$> pVarStr <**> pMunch pVarStr <** pLit "=" <**> pExpr
+pSc = (,,) <$> pVarStr <*> pMunch pVarStr <* pLit (LBop "=") <*> pExpr
 
-mkSc :: Name -> [Name] -> CoreExpr -> (Name, [Name], CoreExpr)
-mkSc = (,,)
+pVarStr :: Parser Name
+pVarStr = fromLexeme <$> pSat p where
+    p = \ case
+        LIde _ -> True
+        _      -> False
 
-{- コア式の構文解析器 -}
+{- CoreExpr の構文解析 -}
+parseExpr :: String -> CoreExpr
+parseExpr = takeFirstParse . pExpr.parser . clex
+
 pExpr :: Parser CoreExpr
-pExpr =  pELet `pAlt` (pECase `pAlt` (pELam `pAlt` (pAexpr `pAlt` pExpr1)))
+pExpr = pELet <++ pECase <++ pELam <++ pExpr0
 
+{- ELet -}
 pELet :: Parser CoreExpr
-pELet = ELet <$$> pIsRec  <**> pDefns <** pLit "in" <**> pExpr
+pELet = ELet <$> pIsRec <*> pDefns <* pLit (LRsv "in") <*> pExpr
 
 pIsRec :: Parser IsRec
-pIsRec = pLit "let" **> pEmpty nonRecursive
-  `pAlt` pLit "letrec" **> pEmpty recursive
+pIsRec = (pLit (LRsv "letrec") *> pure recursive)
+     <++ (pLit (LRsv "let") *> pure nonRecursive)
 
-pDefns :: Parser [(Name, CoreExpr)]
-pDefns = pOneOrMoreWithSep pDefn (pLit ";")
+pDefns :: Parser (Assoc Name CoreExpr)
+pDefns = pMunchWithSep pDefn (pLit LComm)
 
 pDefn :: Parser (Name, CoreExpr)
-pDefn = (,) <$$> pVarStr <** pLit "=" <**> pExpr
+pDefn = (,) <$> pVarStr <* pLit (LBop "=") <*> pExpr
 
+{- ECase -}
 pECase :: Parser CoreExpr
-pECase = ECase <$$ pLit "case" <**> pExpr <** pLit "of" <**> pAlters
+pECase = ECase <$ pLit (LRsv "case") <*> pExpr <*> pAlts
 
-pAlters :: Parser [CoreAlt]
-pAlters = pOneOrMoreWithSep pAlter (pLit ";")
+pAlts :: Parser [CoreAlt]
+pAlts = pMunch1WithSep pAlt (pLit LComm)
 
-pAlter :: Parser CoreAlt
-pAlter = (,,) <$$> pTag <**> pMunch pVarStr <** pLit "→" <**> pExpr
+pAlt :: Parser CoreAlt
+pAlt = (,,) <$> pTag <*> pMunch pVarStr <* pLit LRarr <*> pExpr
 
-pTag :: Parser Tag
-pTag = pLit "<" **> pNum <** pLit ">"
+pTag :: Parser Int
+pTag = pLit (LBop "<") *> pNum <* pLit (LBop ">")
 
+pNum :: Parser Int
+pNum = read @Int . fromLexeme <$> pSat p where
+    p = \ case
+        LNum _ -> True
+        _      -> False
+
+{- ELam -}
 pELam :: Parser CoreExpr
-pELam = ELam <$$ pLit "\\" <**> pMunch1 pVarStr <** pLit "→" <**> pExpr
+pELam = ELam <$ pLit LLambda <*> pMunch pVarStr <* pLit LRarr <*> pExpr
 
-pAexpr :: Parser CoreExpr
-pAexpr = pEVar `pAlt` pENum `pAlt` pEConstr
-  `pAlt` pParen pExpr
+{- Atomic Epression -}
+pAExpr :: Parser CoreExpr
+pAExpr = pSection <++ pParen pExpr <++ pEVar <++ pENum <++ pEConstr
 
 pParen :: Parser CoreExpr -> Parser CoreExpr
-pParen p = pLit "(" **> p <** pLit ")"
+pParen p = pLit LOpar *> p <* pLit LCpar
+
+pSection :: Parser CoreExpr
+pSection = pSecB <++ pSecL <++ pSecR
+
+pSecB :: Parser CoreExpr
+pSecB = pParen (lamB <$> pBop) where
+    lamB bop = ELam ["_x","_y"] (EAp (EAp bop (EVar "_x")) (EVar "_y"))
+
+pSecL :: Parser CoreExpr
+pSecL = pParen (lamL <$> pExpr <*> pBop) where
+    lamL e bop = ELam ["_y"] (EAp (EAp bop e) (EVar "_y"))
+
+pSecR :: Parser CoreExpr
+pSecR = pParen (lamR <$> pBop <*> pExpr) where
+    lamR bop e = ELam ["_x"] (EAp (EAp bop (EVar "_x")) e)
+
+pBop :: Parser CoreExpr
+pBop = EVar . fromLexeme <$> pSat p where
+    p = \ case
+        LBop _ -> True
+        _      -> False
+
+pBop' :: Name -> Parser CoreExpr
+pBop' bop = EVar <$> pLit (LBop bop)
 
 pEVar :: Parser CoreExpr
-pEVar = EVar <$$> pVarStr
+pEVar = EVar <$> pVarStr
 
 pENum :: Parser CoreExpr
-pENum = ENum <$$> pNum
+pENum = ENum <$> pNum
 
 pEConstr :: Parser CoreExpr
-pEConstr = uncurry EConstr <$$ pLit "Pack" <** pLit "{" <**> pTagArity <** pLit "}"
+pEConstr = uncurry EConstr <$ pLit (LRsv "Pack")
+        <* pLit LObrc <*> pTagArity <* pLit LCbrc
 
-pTagArity :: Parser (Tag, Arity)
-pTagArity = (,) <$$> pNum <** pLit "," <**> pNum
+pTagArity :: Parser (Int, Int)
+pTagArity = (,) <$> pNum <* pLit LComm <*> pNum
+
+{- Expr0 -}
+
+pExpr0 :: Parser CoreExpr
+pExpr0 = pExpr1 `pChainr1` pExpr0cR
+     <++ pExpr1 `pChainl1` pExpr0cL
+
+pExpr0cR :: Parser (CoreExpr -> CoreExpr -> CoreExpr)
+pExpr0cR = pExprC (pBop' "$!" <++ pBop' "$")
+
+pExpr0cL :: Parser (CoreExpr -> CoreExpr -> CoreExpr)
+pExpr0cL = pExprC (pBop' "`seq`")
+
+pExprC :: Parser CoreExpr -> Parser (CoreExpr -> CoreExpr -> CoreExpr)
+pExprC bop = (EAp .) . EAp <$> bop
 
 pExpr1 :: Parser CoreExpr
-pExpr1 = assembleOp <$$> pExpr2 <**> pExpr1c
+pExpr1 = pExpr2 `pChainl1` pExpr1cL
 
-data PartialExpr
-  = NoOp
-  | FoundOp Name CoreExpr
-
-assembleOp :: CoreExpr -> PartialExpr -> CoreExpr
-assembleOp e pe = case pe of
-  NoOp          -> e
-  FoundOp op e' -> EAp (EAp (EVar op) e) e'
-
-pExpr1c :: Parser PartialExpr
-pExpr1c = FoundOp <$$> pLit "||" <**> pExpr1
-   `pAlt` pEmpty NoOp
+pExpr1cL :: Parser (CoreExpr -> CoreExpr -> CoreExpr)
+pExpr1cL = pExprC (pBop' ">>=" <++ pBop' ">>")
 
 pExpr2 :: Parser CoreExpr
-pExpr2 = assembleOp <$$> pExpr3 <**> pExpr2c
+pExpr2 = pExpr3 `pChainr1` pExpr2cR
 
-pExpr2c :: Parser PartialExpr
-pExpr2c = FoundOp <$$> pLit "&&" <**> pExpr2
-   `pAlt` pEmpty NoOp
+pExpr2cR :: Parser (CoreExpr -> CoreExpr -> CoreExpr)
+pExpr2cR = pExprC (pBop' "||")
 
 pExpr3 :: Parser CoreExpr
-pExpr3 = assembleOp <$$> pExpr4 <**> pExpr3c
+pExpr3 = pExpr4 `pChainr1` pExpr3cR
 
-pExpr3c :: Parser PartialExpr
-pExpr3c = FoundOp <$$> pRelop <**> pExpr4
-   `pAlt` pEmpty NoOp
-
-pRelop :: Parser String
-pRelop = pSat (`elem` relops)
-
-relops :: [String]
-relops = ["<", "<=", "==", "/=", ">=", ">"]
+pExpr3cR :: Parser (CoreExpr -> CoreExpr -> CoreExpr)
+pExpr3cR = pExprC (pBop' "&&")
 
 pExpr4 :: Parser CoreExpr
-pExpr4 = assembleOp <$$> pExpr5 <**> pExpr4c
+pExpr4 = (rel <$> pExpr5 <*> pRel <*> pExpr5) <++ pExpr5 where
+    rel e1 o e2 = EAp (EAp o e1) e2
 
-pExpr4c :: Parser PartialExpr
-pExpr4c = FoundOp <$$> pLit "+" <**> pExpr4
-  `pAlt`  FoundOp <$$> pLit "-" <**> pExpr5
-  `pAlt`  pEmpty NoOp
+pRel :: Parser CoreExpr
+pRel = pChoice' 
+     [ pBop' o | o <- ["==","/=","<=","<",">=",">","`notElem`", "`elem`"] ]
 
 pExpr5 :: Parser CoreExpr
-pExpr5 = assembleOp <$$> pExpr6 <**> pExpr5c
+pExpr5 = pExpr6 `pChainr1` pExpr5cR
 
-pExpr5c :: Parser PartialExpr
-pExpr5c = FoundOp <$$> pLit "*" <**> pExpr5
-  `pAlt`  FoundOp <$$> pLit "/" <**> pExpr6
-  `pAlt`  pEmpty NoOp
+pExpr5cR :: Parser (CoreExpr -> CoreExpr -> CoreExpr)
+pExpr5cR = pExprC (pBop' ":" <++ pBop' "++")
 
 pExpr6 :: Parser CoreExpr
-pExpr6 = foldl1 EAp <$$> pMunch1 pAexpr
+pExpr6 = pExpr7 `pChainl1` pExpr6cL
+
+pExpr6cL :: Parser (CoreExpr -> CoreExpr -> CoreExpr)
+pExpr6cL = pExprC (pBop' "+" <++ pBop' "-")
+
+pExpr7 :: Parser CoreExpr
+pExpr7 = pExpr8 `pChainl1` pExpr7cL
+
+pExpr7cL :: Parser (CoreExpr -> CoreExpr -> CoreExpr)
+pExpr7cL = pExprC pMulDiv
+
+pMulDiv :: Parser CoreExpr
+pMulDiv = pChoice' [ pBop' o
+                   | o <- ["*","/","`div`","`mod`","`quot`","`rem`"] ]
+
+pExpr8 :: Parser CoreExpr
+pExpr8 = pExpr9 `pChainr1` pExpr8cR
+
+pExpr8cR :: Parser (CoreExpr -> CoreExpr -> CoreExpr)
+pExpr8cR = pExprC (pChoice' [pBop' o | o <- ["^^","^","**"] ])
+
+pExpr9 :: Parser CoreExpr
+pExpr9 = pExprA `pChainr1` pExpr9cR
+
+pExpr9cR :: Parser (CoreExpr -> CoreExpr -> CoreExpr)
+pExpr9cR = pExprC (pBop' ".")
+
+pExprA :: Parser CoreExpr
+pExprA = foldl1 EAp <$> pMunch1 pAExpr

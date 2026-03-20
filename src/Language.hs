@@ -25,7 +25,7 @@ data Expr a
   | ELam                      -- ^ λ抽象
       [a]                       -- ^ 束縛変数のリスト
       (Expr a)                  -- ^ λ抽象本体
-  deriving Show
+  deriving (Eq, Show)
 
 {- | コア式 -}
 type CoreExpr = Expr Name

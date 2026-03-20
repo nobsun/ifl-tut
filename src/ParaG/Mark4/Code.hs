@@ -7,6 +7,8 @@ module ParaG.Mark4.Code
 
 import ParserCombinator
 import Language
+import Lexeme
+import Lex
 import Parse
 import Utils
 
@@ -57,13 +59,13 @@ instance Read GmGlobalMode where
     readsPrec _ s = [(readGlobalMode s,"")]
 
 readGlobalMode :: String -> GmGlobalMode
-readGlobalMode = takeFirstParse . pGlobalMode . clex 1
+readGlobalMode = takeFirstParse . pGlobalMode.parser . clex
 
 pGlobalMode :: Parser GmGlobalMode
-pGlobalMode =  pGlobalPack `pAlt'` pGlobalLabel
+pGlobalMode =  pGlobalPack <++ pGlobalLabel
 
 pGlobalPack :: Parser GmGlobalMode
-pGlobalPack = uncurry GlobalPack <$$ pLit "Pack" <** pLit "{" <**> pTagArity <** pLit "}"
+pGlobalPack = uncurry GlobalPack <$ pLit (LRsv "Pack") <* pLit LObrc <*> pTagArity <* pLit LCbrc
 
 pGlobalLabel :: Parser GmGlobalMode
-pGlobalLabel = GlobalLabel <$$> pSat (const True)
+pGlobalLabel = GlobalLabel . fromLexeme <$> pSat (const True)

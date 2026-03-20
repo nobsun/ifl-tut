@@ -12,6 +12,8 @@ import Data.List
 -- import Text.ParserCombinators.ReadP
 
 import Language
+import Lex
+import ParserCombinator
 import Parse
 import Heap
 import qualified Stack as Stk (push, pop, npop, discard)
@@ -135,7 +137,7 @@ pushglobal f state = case readsPack f of
             a = aLookup state.globals f (error $ "pushglobal: undeclared global: " ++ f)
 
 readsPack :: Name -> [CoreExpr]
-readsPack = map fst . filter (null . snd) . pEConstr . clex 0
+readsPack = takeFirstParse' . pEConstr.parser . clex
 
 
 pushint :: Int -> GmState -> GmState
