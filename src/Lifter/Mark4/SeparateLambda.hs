@@ -7,7 +7,6 @@ module Lifter.Mark4.SeparateLambda
 import Data.Functor.Foldable
 
 import Language
-import Lambda
 
 -- ### 6.6.5 Separating the lambdas
 

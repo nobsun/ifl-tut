@@ -10,7 +10,6 @@ module Lifter.Mark3.FreeVars
 import Data.Set qualified as S
 import Control.Comonad.Cofree
 
-import Lambda
 import Language
 
 freeVars :: CoreProgram -> AnnProgram Name (S.Set Name)

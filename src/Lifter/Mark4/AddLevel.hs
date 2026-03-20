@@ -8,7 +8,6 @@ import Control.Comonad.Cofree
 import Control.Comonad.Trans.Cofree qualified as F
 
 import Language
-import Lambda
 import Utils
 
 import Lifter.FreeVars

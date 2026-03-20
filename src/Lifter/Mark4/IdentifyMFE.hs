@@ -7,7 +7,6 @@ import Data.Set qualified as S
 import Control.Comonad.Cofree
 
 import Language
-import Lambda
 import Utils
 
 import Lifter.Mark4.Rename

@@ -9,7 +9,6 @@ module Lifter.Mark4.Abstract
 import Data.Set qualified as S
 
 import Control.Comonad.Trans.Cofree qualified as F
-import Lambda
 import Language
 import Utils
 

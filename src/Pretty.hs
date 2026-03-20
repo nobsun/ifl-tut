@@ -15,7 +15,6 @@ import Data.Char
 import Data.List
 import Data.Maybe
 import Language
-import Lambda
 import Iseq
 import Bop
 

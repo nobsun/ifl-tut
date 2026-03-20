@@ -5,7 +5,6 @@ module Lifter.Mark4.Lifter
     where
 
 import Language
-import Lambda
 import Parse
 import Pretty
 import Iseq

@@ -13,7 +13,6 @@ import Data.Set qualified as S
 import Control.Arrow
 import Control.Comonad.Cofree
 
-import Lambda
 import Language
 import qualified Stack as Stk (push, pop, npop, discard)
 import Stack hiding (push, pop, npop, discard)

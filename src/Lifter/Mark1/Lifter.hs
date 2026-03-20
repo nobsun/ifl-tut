@@ -11,12 +11,10 @@ import Data.Char
 import Data.Function
 import Data.List
 import Data.Set qualified as S
--- import Text.ParserCombinators.ReadP
 import Control.Comonad.Cofree
 import Control.Comonad.Trans.Cofree qualified as F
 import Data.Functor.Foldable
 
-import Lambda
 import Language
 import Parse
 import Pretty
