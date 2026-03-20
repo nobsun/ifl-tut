@@ -15,6 +15,7 @@ data Lexeme
     | LRarr        -- ^ 右矢印
     | LComm        -- ^ コンマ
     | LSemi        -- ^ セミコロン
+    | LCmnt String -- ^ コメント
     | LUnkn Char   -- ^ そのほか
     deriving (Eq, Show)
 
@@ -32,4 +33,5 @@ fromLexeme = \ case
     LRarr   -> "->"
     LComm   -> ","
     LSemi   -> ";"
+    LCmnt s -> s
     LUnkn c -> [c]

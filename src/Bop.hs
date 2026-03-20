@@ -94,6 +94,17 @@ fixityOf op
     = maybe (error $ "fixityOf: unknown operator" ++ show op) snd 
     $ operators M.!? op
 
+rops :: [String]
+rops = [ "=="
+       , "/="
+       , "<"
+       , "<="
+       , ">"
+       , ">="
+       , "`elem`"
+       , "`notElem`"
+       ] 
+
 {- ^
 >>> isBop "++"
 True
