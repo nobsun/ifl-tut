@@ -94,15 +94,15 @@ pSection = pSecB <++ pSecL <++ pSecR
 
 pSecB :: Parser CoreExpr
 pSecB = pParen (lamB <$> pBop) where
-    lamB bop = ELam ["_x","_y"] (EAp (EAp bop (EVar "_x")) (EVar "_y"))
+    lamB bop = ELam ["x","y"] (EAp (EAp bop (EVar "x")) (EVar "y"))
 
 pSecL :: Parser CoreExpr
 pSecL = pParen (lamL <$> pExpr <*> pBop) where
-    lamL e bop = ELam ["_y"] (EAp (EAp bop e) (EVar "_y"))
+    lamL e bop = ELam ["y"] (EAp (EAp bop e) (EVar "y"))
 
 pSecR :: Parser CoreExpr
 pSecR = pParen (lamR <$> pBop <*> pExpr) where
-    lamR bop e = ELam ["_x"] (EAp (EAp bop (EVar "_x")) e)
+    lamR bop e = ELam ["x"] (EAp (EAp bop (EVar "x")) e)
 
 pBop :: Parser CoreExpr
 pBop = EVar . fromLexeme <$> pSat p where
@@ -202,4 +202,60 @@ pExpr9cR :: Parser (CoreExpr -> CoreExpr -> CoreExpr)
 pExpr9cR = pExprC (pBop' ".")
 
 pExprA :: Parser CoreExpr
-pExprA = foldl1 EAp <$> pMunch1 pAExpr
+pExprA = mkApplication <$> pMunch1 pAExpr
+
+mkApplication :: [CoreExpr] -> CoreExpr
+mkApplication aes = case aes of
+    EConstr _t a : rs  -> case compare a (length rs) of
+        LT -> error "mkApplication: too many arguments for this construnctor"
+        EQ -> foldl1 EAp aes
+        GT -> ELam args (foldl1 EAp (aes ++ map EVar args)) where
+            args = map (('x' :) . show) [succ (length rs) .. a]
+    _ -> foldl1 EAp aes
+
+{- ^
+>>> parseExpr "1"
+ENum 1
+
+>>> parseExpr "1 + 2"
+EAp (EAp (EVar "+") (ENum 1)) (ENum 2)
+
+>>> parseExpr "1 + 2 - 3 - 4"
+EAp (EAp (EVar "-") (EAp (EAp (EVar "-") (EAp (EAp (EVar "+") (ENum 1)) (ENum 2))) (ENum 3))) (ENum 4)
+
+>>> parseExpr "1 + 2 * 3"
+EAp (EAp (EVar "+") (ENum 1)) (EAp (EAp (EVar "*") (ENum 2)) (ENum 3))
+
+>>> parseExpr "f $ 1 + 2"
+EAp (EAp (EVar "$") (EVar "f")) (EAp (EAp (EVar "+") (ENum 1)) (ENum 2))
+
+>>> parseExpr "1 + 3 < 5"
+EAp (EAp (EVar "<") (EAp (EAp (EVar "+") (ENum 1)) (ENum 3))) (ENum 5)
+
+>>> parseExpr "f x"
+EAp (EVar "f") (EVar "x")
+
+>>> parseExpr "f x y"
+EAp (EAp (EVar "f") (EVar "x")) (EVar "y")
+
+>>> parseExpr "f . g"
+EAp (EAp (EVar ".") (EVar "f")) (EVar "g")
+
+>>> parseExpr "f (g x)"
+EAp (EVar "f") (EAp (EVar "g") (EVar "x"))
+
+>>> parseExpr "(+)"
+ELam ["x","y"] (EAp (EAp (EVar "+") (EVar "x")) (EVar "y"))
+
+>>> parseExpr "(1 +)"
+ELam ["y"] (EAp (EAp (EVar "+") (ENum 1)) (EVar "y"))
+
+>>> parseExpr "(`div` 2)"
+ELam ["x"] (EAp (EAp (EVar "`div`") (EVar "x")) (ENum 2))
+
+>>> parseExpr "Pack{2,2}"
+ELam ["x1","x2"] (EAp (EAp (EConstr 2 2) (EVar "x1")) (EVar "x2"))
+
+>>> parseExpr "Pack{2,2} x"
+ELam ["x2"] (EAp (EAp (EConstr 2 2) (EVar "x")) (EVar "x2"))
+-}
