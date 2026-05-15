@@ -1,5 +1,6 @@
 -- # Lifter.Mark4.IdentifyMFE
 {-# LANGUAGE GHC2024 #-}
+{-# LANGUAGE LambdaCase #-}
 module Lifter.Mark4.IdentifyMFE
     where
 
@@ -57,7 +58,6 @@ transformMFE' ae = case ae of
     (True, _)  :< _ -> ae
     (_, _)  :< _ -> undefined
 
-{- -}
 identifyMFEsE1 :: AnnExpr (Name, Level) Level
                -> Expr (Name,Level)
 identifyMFEsE1 = \ case
@@ -76,10 +76,11 @@ identifyMFEsE1 = \ case
             body' = identifyMFEsE level body
             defns' = [ ((name, rhsLevel), identifyMFEsE rhsLevel rhs)
                      | ((name, rhsLevel), rhs) <- defns ]
-    level :< ECaseF e alts -> identifyMFEsCase1 level e alts
+    level :< ECaseF e alts -> ECase (identifyMFEsE level e) (map identifyMFEsAlt alts)
         where
-            identifyMFEsCase1 = error "identifyMFEsCase1: not yet implemented"
--- -}
+            identifyMFEsAlt = \ case
+                (tag, [], rhs) -> (tag, [], identifyMFEsE level rhs)
+                (tag, as, rhs) -> (tag, as, identifyMFEsE (snd $ head as) rhs)
 
 identifyMFEsE1' :: AnnExpr (Name, Level) (Bool, Level)
                 -> AnnExpr (Name, Level) (Bool, Level)

@@ -8,6 +8,7 @@ import Control.Arrow
 import Data.List
 
 import Language
+import Utils
 
 collectSCs :: CoreProgram -> CoreProgram
 collectSCs = concatMap collectOneSc
@@ -26,38 +27,25 @@ collectOneSc = \ case
             (scs, rhs') = collectSCsExpr rhs
 
 collectSCsExpr :: CoreExpr -> ([CoreScDefn], CoreExpr)
-collectSCsExpr expr = case expr of
-    ENum _      -> ([], expr)
-    EConstr _ _ -> ([], expr)
-    EVar _      -> ([], expr)
-    EAp e1 e2   -> (scs1 ++ scs2, EAp e1' e2')
-        where
-            (scs1, e1') = collectSCsExpr e1
-            (scs2, e2') = collectSCsExpr e2
-    ELam args body -> second (ELam args) (collectSCsExpr body)
-    ECase e alts -> (scsExpr ++ scsAlts, ECase e' alts')
-        where
-            (scsExpr, e') = collectSCsExpr e
-            (scsAlts, alts') = mapAccumL collectSCsAlt [] alts
-            collectSCsAlt scs (tag,args,rhs) =(scs ++ scsRhs, (tag, args, rhs'))
-                where
-                    (scsRhs, rhs') = collectSCsExpr rhs
-    ELet isRec defns body -> (rhssSCs ++ bodySCs ++ localSCs, mkELet isRec nonSCs' body')
-        where
-            (rhssSCs, defns') = mapAccumL collectSCsDefn [] defns
-            scs'     = [(name,rhs) | (name,rhs) <- defns', isELam rhs]
-            nonSCs'  = [(name,rhs) | (name,rhs) <- defns', not (isELam rhs)]
-            localSCs = [(name,args,be) | (name,ELam args be) <- scs']
-            (bodySCs, body') = collectSCsExpr body
-            
-collectSCsDefn :: [CoreScDefn] -> (Name, CoreExpr) -> ([CoreScDefn], (Name, Expr Name))
-collectSCsDefn scs (name,rhs) = case rhs of
-    ELet False [(name1, ELam rhsArgs rhsBody)] (EVar name2)
-        | name1 == name2 -> case collectSCsExpr rhsBody of
-            (scs'', rhs'')     -> (scs ++ scs'', (name, ELam rhsArgs rhs''))
-    _ -> (scs ++ rhsSCs, (name, rhs'))
-    where
-        (rhsSCs, rhs') = collectSCsExpr rhs
+collectSCsExpr = cataExpr phi where
+    phi = \ case
+        EVarF v      -> ([], EVar v)
+        ENumF n      -> ([], ENum n)
+        EConstrF t a -> ([], EConstr t a)
+        EApF (scs1, e1) (scs2, e2)
+            -> (scs1 ++ scs2, EAp e1 e2)
+        ELetF isRec defns (bodySCs, body)
+            -> (rhssSCs ++ bodySCs ++ localSCs, mkELet isRec nonSCs body) where
+                rhssSCs  = concatMap (fst . snd) defns
+                defns'   = map (second snd) defns
+                (scs, nonSCs) = partition (isELam . snd) defns'
+                localSCs = [ (x,xs,e) | (x, ELam xs e) <- scs ]
+        ECaseF (exprSCs, e) alts 
+            -> (exprSCs ++ altsSCs, ECase e alts') where
+                altsSCs = concatMap (fst . thd3) alts
+                alts'   = map (third snd) alts
+        ELamF args (bodySCs, body)
+            -> (bodySCs, ELam args body)
 
 mkELet :: IsRec -> [(a, Expr a)] -> Expr a -> Expr a
 mkELet _ [] body = body

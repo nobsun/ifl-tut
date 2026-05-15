@@ -3,6 +3,7 @@
 module Lifter.Mark4.AddLevel
     where
 
+import Control.Arrow
 import Data.Set qualified as S
 import Control.Comonad.Cofree
 import Control.Comonad.Trans.Cofree qualified as F
@@ -70,10 +71,17 @@ freeToLevelE level env = \ case
             levelRhsEnv | isRec     = map (, 0) binders ++ env
                         | otherwise = env
     free :< ECaseF e alts
-        -> freeToLevelCase level env free e alts
+        -> freeSetToLevel env free :< ECaseF e' alts'
         where
-            freeToLevelCase _ _ _ = error "freeToLevelCase: not yet implemented"
+            e'    = freeToLevelE level env e
+            alts' = map freeToLevelAlt alts
+            freeToLevelAlt (tag, args, rhs)
+                = (tag, args', freeToLevelE (succ level) env' rhs)
+                where
+                    env' = args' ++ env
+                    args' = map (flip (,) (succ level)) args
 
+{- -}
 freeToLevelExpr
     :: Level                        -- ^ Level of context
     -> Assoc Name Level             -- ^ Level of in-scope names
@@ -102,16 +110,12 @@ freeToLevelExpr level env annexpr
                 _    :< EVarF v      -> (lv, ev) F.:< EVarF v where
                 _    :< EApF e1 e2   -> (lv, ev) F.:< EApF (lv, ev, e1)
                                                            (lv, ev, e2)
+                _    :< ELetF isRec defns body
+                    -> undefined
+                _    :< ECaseF e alts
+                    -> undefined
                 _    :< ELamF args body
                     -> (lv, ev) F.:< ELamF args (lv',ev',body) where
                         lv' = succ lv
                         ev' = ((,lv') <$> args) ++ ev
-                _    :< ELetF isRec defns body
-                    -> (lv, ev) F.:< ELetF isRec defns' body' where
-                        binders  = bindersOf defns
-                        rhss     = rhssOf defns
-                        binders' = undefined
-                        defns'   = undefined
-                        body'    = undefined
-                        
-                _ -> undefined
+

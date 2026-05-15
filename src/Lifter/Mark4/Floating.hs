@@ -3,6 +3,7 @@
 module Lifter.Mark4.Floating
     where
 
+import Control.Arrow
 import Data.List
 import Control.Comonad.Trans.Cofree qualified as F
 import Data.Functor.Foldable
@@ -54,9 +55,18 @@ floatE expr = case expr of
                 = (rhsFloatDefns' ++ floatedDefns, (name, rhs'))
                 where
                     (rhsFloatDefns', rhs') = floatE rhs
-    ECase e alts -> floatCase e alts
+    ECase e alts -> (eds ++ altds, ECase e' alts')
         where
-            floatCase _e _alts = error "floatCase: not yet implemented"
+            (eds, e')      = floatE e
+            (altds, alts') = first concat $ unzip $ map floatAlt alts
+            floatAlt (tag, args, rhs) = case floatE rhs of
+                (fds, rhs')
+                    | null args -> (fds, (tag, [], rhs'))
+                    | otherwise -> (fdsOuter, (tag, args', install fdThisLevel rhs'))
+                    where
+                        args'                   = map fst args
+                        thisLevel               = snd (head args)
+                        (fdsOuter, fdThisLevel) = partitionFloats thisLevel fds
 
 mkELam :: [Name] -> CoreExpr -> CoreExpr
 mkELam args expr = case expr of
