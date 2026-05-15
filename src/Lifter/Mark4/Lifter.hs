@@ -43,7 +43,8 @@ runS = pprint . lambdaLift . parse
 {- test -}
 sample :: Int -> IO String
 sample = \ case
-    _ -> readFile "prog/lift4/sample661.ifl"
+    0 -> readFile "prog/lift4/sample661.ifl"
+    _ -> readFile "prog/lift4/sample672.ifl"
 
 {- |
 >>> runPrintSource 0
@@ -147,14 +148,14 @@ f = let
         sc_0;
 main = f 6
 >>> runLambdaLiftFullyLazyLift 0
-f x_0_1 = let
-              v_3_6 = x_0_1 * x_0_1
+f x = let
+          v = x * x
+      in
+          let
+              g = sc v
           in
-              let
-                  g_1_2 = sc_3 v_3_6
-              in
-                  g_1_2 3 + g_1_2 4;
-sc_3 v_3_4 y_2_5 = v_3_4 + y_2_5;
+              g 3 + g 4;
+sc v y = v + y;
 main = f 6
 -}
 

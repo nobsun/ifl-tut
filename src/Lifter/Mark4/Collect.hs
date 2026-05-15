@@ -31,7 +31,7 @@ collectSCsExpr = cataExpr phi where
     phi = \ case
         EVarF v      -> ([], EVar v)
         ENumF n      -> ([], ENum n)
-        EConstrF t a -> ([],EConstr t a)
+        EConstrF t a -> ([], EConstr t a)
         EApF (scs1, e1) (scs2, e2)
             -> (scs1 ++ scs2, EAp e1 e2)
         ELetF isRec defns (bodySCs, body)
