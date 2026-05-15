@@ -43,7 +43,7 @@ showSC (name, il)
 showState :: TimState -> IseqRep
 showState state
     = iConcat
-    [ iStr "Code:  ", showInstructions Terse state.code, iNewline
+    [ iStr "Code:  ", showInstructions Terse state.curinstr, iNewline
     , showFrame state.heap state.frame
     , showStack state.stack
     , showValueStack state.vstack

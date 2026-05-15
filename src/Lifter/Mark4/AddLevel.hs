@@ -110,9 +110,9 @@ freeToLevelExpr level env annexpr
                 _    :< EVarF v      -> (lv, ev) F.:< EVarF v where
                 _    :< EApF e1 e2   -> (lv, ev) F.:< EApF (lv, ev, e1)
                                                            (lv, ev, e2)
-                _    :< ELetF isRec defns body
+                _    :< ELetF _isRec _defns _body
                     -> undefined
-                _    :< ECaseF e alts
+                _    :< ECaseF _e _alts
                     -> undefined
                 _    :< ELamF args body
                     -> (lv, ev) F.:< ELamF args (lv',ev',body) where

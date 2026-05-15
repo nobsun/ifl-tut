@@ -44,15 +44,15 @@ evacuateFromDump :: TimHeap -> TimHeap -> TimDump -> ((TimHeap, TimHeap), TimDum
 evacuateFromDump from to dump = ((from, to), dump)
 
 evacuateFromFramePtr :: TimHeap -> TimHeap -> (CCode, FramePtr) -> ((TimHeap, TimHeap), FramePtr)
-evacuateFromFramePtr from to (ccode, fptr) = case fptr of
+evacuateFromFramePtr from to (_ccode, fptr) = case fptr of
     FrameInt _  -> ((from, to), fptr)
     FrameNull   -> ((from, to), fptr)
     FrameAddr a -> case hLookup from a of
         Forward b   -> ((from, to), FrameAddr b)
-        
+        _           -> error "evacuateFromFramePtr: unexpected"
 
 scavenge :: TimHeap -> TimHeap -> TimHeap
-scavenge from to = to
+scavenge _from to = to
 
 {-
 type TimStack

@@ -31,7 +31,7 @@ gc state
         (from0, to0)           = (state.heap, hInitial)
         ((from1, to1), stack') = evacuateFromStack from0 to0 state.stack
         ((from2, to2), dump')  = evacuateFromDump  from1 to1 state.dump
-        ((from3, to3), frame') = evacuateFromFramePtr from2 to2 (state.code, state.frame)
+        ((from3, to3), frame') = evacuateFromFramePtr from2 to2 (state.curinstr, state.frame)
 
 evacuateFromStack :: TimHeap -> TimHeap -> TimStack -> ((TimHeap, TimHeap), TimStack)
 evacuateFromStack from to stack
@@ -44,15 +44,16 @@ evacuateFromDump :: TimHeap -> TimHeap -> TimDump -> ((TimHeap, TimHeap), TimDum
 evacuateFromDump from to dump = ((from, to), dump)
 
 evacuateFromFramePtr :: TimHeap -> TimHeap -> (CCode, FramePtr) -> ((TimHeap, TimHeap), FramePtr)
-evacuateFromFramePtr from to (ccode, fptr) = case fptr of
+evacuateFromFramePtr from to (_ccode, fptr) = case fptr of
     FrameInt _  -> ((from, to), fptr)
     FrameNull   -> ((from, to), fptr)
     FrameAddr a -> case hLookup from a of
         Forward b   -> ((from, to), FrameAddr b)
+        _           -> error "evacuateFromFramePtr: unexpected"
         
 
 scavenge :: TimHeap -> TimHeap -> TimHeap
-scavenge from to = to
+scavenge _from to = to
 
 {-
 type TimStack

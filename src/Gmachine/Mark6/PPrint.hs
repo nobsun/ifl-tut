@@ -25,7 +25,7 @@ showFullResults gs = case gs of
             ++ "(" 
             ++ unwords ( filter (all isDigit) 
                        $ filter (not . null) 
-                       $ map (\ s -> s.output) gs)
+                       $ map (\ st -> st.output) gs)
             ++ ")"]
 
 showResults :: [GmState] -> [String]

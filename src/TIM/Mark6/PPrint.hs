@@ -23,7 +23,7 @@ showFullResults ts = case ts of
     []  -> error "impossible"
     s:_ -> iDisplay (showSCDefns s)
          : showResults ts
-         ++ ["all outputs: " ++ unwords (mapMaybe (\ s -> s.output) ts)]
+         ++ ["all outputs: " ++ unwords (mapMaybe (\ st -> st.output) ts)]
 
 showResults :: [TimState] -> [String]
 showResults = map iDisplay . iLayn' 0 . mapoid (showState outputOnly, showStats)
@@ -54,7 +54,7 @@ showSC (name, il)
 showState :: Bool -> TimState -> IseqRep
 showState False state
     = iConcat
-    [ iStr "Code:  ", showInstructions Full state.code, iNewline
+    [ iStr "Code:  ", showInstructions Full state.curinstr, iNewline
     , showFrame state.heap state.frame
     , showStack state.stack
     , showValueStack state.vstack
@@ -183,7 +183,7 @@ showInstruction d instr = case instr of
     ReturnConstr t -> iStr "ReturnConstr " `iAppend` iNum t
 
 showBranch :: HowMuchToPrint -> (Tag, CCode) -> IseqRep
-showBranch d (tag, ccode) = iConcat [ iNum tag, iStr " -> ", showInstructions Terse ccode ]
+showBranch _d (tag, ccode) = iConcat [ iNum tag, iStr " -> ", showInstructions Terse ccode ]
 
 showArg :: HowMuchToPrint -> TimAMode -> IseqRep
 showArg d am = case am of

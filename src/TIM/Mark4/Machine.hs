@@ -63,7 +63,7 @@ defaultThreshold = 50
 compile :: CoreProgram -> TimState
 compile program = TimState
     { ctrl      = []
-    , code      = CCode [] [Enter (Label "main")]
+    , curinstr  = CCode [] [Enter (Label "main")]
     , frame     = FrameNull
     , stack     = initialArgStack
     , vstack    = initialValueStack
@@ -287,7 +287,7 @@ doAdmin :: TimState -> TimState
 doAdmin = applyToStats statIncSteps
 
 timFinal :: TimState -> Bool
-timFinal state = null state.code.code || null state.ctrl
+timFinal state = null state.curinstr.code || null state.ctrl
 
 applyToStats :: (TimStats -> TimStats) -> (TimState -> TimState)
 applyToStats f state = state { stats = f state.stats }
@@ -299,12 +299,12 @@ countUpHpAllocs :: Int -> TimState -> TimState
 countUpHpAllocs n = applyToStats (statIncHpAllocs (n+1))
 
 step :: TimState -> TimState
-step state = case state'.code of
+step state = case state'.curinstr of
     CCode _ []  -> error "step: the state is already final"
     CCode ss (Take t n : instr)
         | state.stack.curDepth >= n 
             -> countUpHpAllocs n
-            $  state' { code = CCode ss instr
+            $  state' { curinstr = CCode ss instr
                       , frame = fptr'
                       , stack = stack'
                       , heap = heap' 
@@ -316,7 +316,7 @@ step state = case state'.code of
             (heap', fptr') = fAlloc state'.heap (Frame $ cs ++ replicate (t - n) (CCode [] [], FrameNull))
     CCode ss (Move n am : instr)
         -> countUpHpAllocs n
-        $  state' { code = CCode ss instr
+        $  state' { curinstr = CCode ss instr
                   , heap = heap' 
                   }
         where
@@ -324,14 +324,14 @@ step state = case state'.code of
             fptr  = state'.frame
     CCode ss (Push am : instr)
         -> countUpExtime
-        $  state' { code = CCode ss instr
+        $  state' { curinstr = CCode ss instr
                   , stack = Stk.push clos state'.stack
                   }
         where
             clos = amToClosure am state'.frame state'.heap state'.codestore
     CCode ss (PushV FramePtr : instr)
         -> countUpExtime
-        $  state' { code = CCode ss instr
+        $  state' { curinstr = CCode ss instr
                   , vstack = Stk.push n state.vstack
                   }
         where
@@ -340,19 +340,19 @@ step state = case state'.code of
                 _          -> error "invalid frame pointer in the case"
     CCode ss (PushV (IntVConst n) : instr)
         -> countUpExtime
-        $  state' { code = CCode ss instr
+        $  state' { curinstr = CCode ss instr
                   , vstack = Stk.push n state.vstack
                   }
     CCode ss (PushMarker x : i)
         -> countUpExtime
-        $  state' { code = CCode ss i
+        $  state' { curinstr = CCode ss i
                   , stack = empty state'.stack
                   , dump  = Stk.push (TimDumpItem state'.frame x state'.stack) state'.dump
                   }
     CCode ss (UpdateMarkers n : i)
         | n <= state'.stack.curDepth
             -> countUpExtime
-            $  state' { code = CCode ss i }
+            $  state' { curinstr = CCode ss i }
         | otherwise
             -> countUpExtime
             $  state' { stack = Stk.append state'.stack clos
@@ -371,7 +371,7 @@ step state = case state'.code of
 
     CCode _ (Enter am : instr) -> case instr of
         []  -> countUpExtime
-            $  state' { code = instr'
+            $  state' { curinstr = instr'
                       , frame = fptr'
                       }
         _   -> error "step: invalid code sequence"
@@ -391,7 +391,7 @@ step state = case state'.code of
                         (n, _) = Stk.pop state'.vstack
         | otherwise
             -> countUpExtime
-            $  state' { code = instr' 
+            $  state' { curinstr = instr' 
                       , frame = fptr'
                       , stack = stack'
                       }
@@ -399,7 +399,7 @@ step state = case state'.code of
                 ((instr',fptr'), stack') = Stk.pop state'.stack
     CCode ss (Op Add : instr)
         -> countUpExtime
-        $  state' { code   = CCode ss instr
+        $  state' { curinstr   = CCode ss instr
                   , vstack = Stk.push (n1 + n2) vstack'
                   }
         where
@@ -407,7 +407,7 @@ step state = case state'.code of
             (vs,vstack') = Stk.npop 2 state'.vstack
     CCode ss (Op Sub : instr)
         -> countUpExtime
-        $  state' { code   = CCode ss instr
+        $  state' { curinstr   = CCode ss instr
                   , vstack = Stk.push (n1 - n2) vstack'
                   }
         where
@@ -415,7 +415,7 @@ step state = case state'.code of
             (vs,vstack') = Stk.npop 2 state'.vstack
     CCode ss (Op Mul : instr)
         -> countUpExtime
-        $  state' { code   = CCode ss instr
+        $  state' { curinstr   = CCode ss instr
                   , vstack = Stk.push (n1 * n2) vstack'
                   }
         where
@@ -423,7 +423,7 @@ step state = case state'.code of
             (vs,vstack') = Stk.npop 2 state'.vstack
     CCode ss (Op Div : instr)
         -> countUpExtime
-        $  state' { code   = CCode ss instr
+        $  state' { curinstr   = CCode ss instr
                   , vstack = Stk.push (n1 `div` n2) vstack'
                   }
         where
@@ -431,7 +431,7 @@ step state = case state'.code of
             (vs,vstack') = Stk.npop 2 state'.vstack
     CCode ss (Op Eq : instr)
         -> countUpExtime
-        $ state' { code = CCode ss instr
+        $ state' { curinstr = CCode ss instr
                  , vstack = Stk.push (bool 1 0 (n1 == n2)) vstack'
                  }
         where
@@ -439,7 +439,7 @@ step state = case state'.code of
             (vs,vstack') = Stk.npop 2 state'.vstack
     CCode ss (Op Ne : instr)
         -> countUpExtime
-        $ state' { code = CCode ss instr
+        $ state' { curinstr = CCode ss instr
                  , vstack = Stk.push (bool 1 0 (n1 /= n2)) vstack'
                  }
         where
@@ -447,7 +447,7 @@ step state = case state'.code of
             (vs,vstack') = Stk.npop 2 state'.vstack
     CCode ss (Op Lt : instr)
         -> countUpExtime
-        $ state' { code = CCode ss instr
+        $ state' { curinstr = CCode ss instr
                  , vstack = Stk.push (bool 1 0 (n1 < n2)) vstack'
                  }
         where
@@ -455,7 +455,7 @@ step state = case state'.code of
             (vs,vstack') = Stk.npop 2 state'.vstack
     CCode ss (Op Le : instr)
         -> countUpExtime
-        $ state' { code = CCode ss instr
+        $ state' { curinstr = CCode ss instr
                  , vstack = Stk.push (bool 1 0 (n1 <= n2)) vstack'
                  }
         where
@@ -463,7 +463,7 @@ step state = case state'.code of
             (vs,vstack') = Stk.npop 2 state'.vstack
     CCode ss (Op Gt : instr)
         -> countUpExtime
-        $ state' { code = CCode ss instr
+        $ state' { curinstr = CCode ss instr
                  , vstack = Stk.push (bool 1 0 (n1 > n2)) vstack'
                  }
         where
@@ -471,7 +471,7 @@ step state = case state'.code of
             (vs,vstack') = Stk.npop 2 state'.vstack
     CCode ss (Op Ge : instr)
         -> countUpExtime
-        $ state' { code = CCode ss instr
+        $ state' { curinstr = CCode ss instr
                  , vstack = Stk.push (bool 1 0 (n1 >= n2)) vstack'
                  }
         where
@@ -479,7 +479,7 @@ step state = case state'.code of
             (vs,vstack') = Stk.npop 2 state'.vstack
     CCode _ (Cond i1 i2 : [])
         -> countUpExtime
-        $  state' { code = if v == 0 then i1 else i2
+        $  state' { curinstr = if v == 0 then i1 else i2
                   , vstack = vstack'
                   }
         where
